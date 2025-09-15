@@ -1,0 +1,32 @@
+{
+	"description" : "The CodeIgniter Application with Composer",
+	"require": {
+		"php": ">=5.3.2",
+		"codeigniter/framework": "3.1.*",
+		"luthier/luthier": "^1.0",
+		"adodb/adodb-php": "^5.22",
+		"jenssegers/blade": "^1.4",
+		"chriskacerguis/codeigniter-restserver": "^3.1",
+		"vlucas/phpdotenv": "^5.5",
+		"kenjis/ci-phpunit-test": "^3.0",
+		"yidas/codeigniter-psr4-autoload": "^2.0",
+		"geekcom/phpjasper": "^3.3",
+		"phpoffice/phpspreadsheet": "^1.29",
+		"aranyasen/hl7": "^2.1"
+	},
+	"require-dev": {
+		"mikey179/vfsstream": "1.1.*",
+		"phpunit/phpunit": "^9.6",
+		"kenjis/phpunit-helper": "^1.1"
+	},
+	"autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "app/tests/"
+        }
+    }
+}

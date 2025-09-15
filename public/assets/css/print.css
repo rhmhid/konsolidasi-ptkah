@@ -1,0 +1,289 @@
+<style type="text/css" media="all" id="less:assets-prints-styles-prints-fancy">@charset "utf-8";
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial';
+  font-size: 11px;
+  
+
+}
+h1,
+h2,
+h3,
+h4 {
+  margin: 5px 0;
+  padding: 5px 0;
+  /*font-weight: bold;*/
+  clear: both;
+  overflow: hidden;
+  font-size: 12px;
+}
+h1.bdr,
+h2.bdr,
+h3.bdr,
+h4.bdr {
+  border-bottom: 2px solid #000000;
+}
+h1 span,
+h2 span,
+h3 span,
+h4 span {
+  display: block;
+  margin: 2px 0;
+}
+h1 span.rgt,
+h2 span.rgt,
+h3 span.rgt,
+h4 span.rgt {
+  border: 1px solid #000000;
+  float: right;
+}
+h1 span.rgt span,
+h2 span.rgt span,
+h3 span.rgt span,
+h4 span.rgt span {
+  font-size: 1em!important;
+  display: inline-block;
+  margin: 0;
+  padding: 10px;
+}
+h1 span.rgt span.bd-left,
+h2 span.rgt span.bd-left,
+h3 span.rgt span.bd-left,
+h4 span.rgt span.bd-left {
+  border-left: 1px solid #000;
+}
+h1 span.rgt span.til,
+h2 span.rgt span.til,
+h3 span.rgt span.til,
+h4 span.rgt span.til {
+  background: #000000;
+  color: #FFFFFF;
+}
+h1 span.rgt span.cas,
+h2 span.rgt span.cas,
+h3 span.rgt span.cas,
+h4 span.rgt span.cas {
+  border-bottom: 1px solid #000000;
+  display: block;
+  font-size: .7em!important;
+  letter-spacing: 2px;
+  text-align: center;
+  margin: 0;
+  padding: 2px;
+}
+h1 span.rgt span.slp,
+h2 span.rgt span.slp,
+h3 span.rgt span.slp,
+h4 span.rgt span.slp {
+  padding: 5px 10px;
+}
+h1.ctr,
+h2.ctr,
+h3.ctr,
+h4.ctr {
+  text-align: center;
+}
+h1.mbr160,
+h2.mbr160,
+h3.mbr160,
+h4.mbr160 {
+  margin-top: 160px;
+}
+h1.mbr50,
+h2.mbr50,
+h3.mbr50,
+h4.mbr50 {
+  margin-top: 50px;
+}
+h1.rgt,
+h2.rgt,
+h3.rgt,
+h4.rgt {
+  text-align: right;
+  margin-right: 20px;
+}
+h1.nul,
+h2.nul,
+h3.nul,
+h4.nul {
+  padding: 0;
+  margin: 0;
+}
+h1.upper,
+h2.upper,
+h3.upper,
+h4.upper {
+  text-transform: uppercase;
+}
+h1 {
+  font-size: 3em;
+}
+h1 span {
+  font-size: .4em;
+}
+h2 {
+  font-size: 2em;
+}
+h2 span {
+  font-size: .5em;
+}
+h3 {
+  font-size: 1.5em;
+}
+h3 span {
+  font-size: .6em;
+}
+hr {
+  border: none;
+  border-top: 1px solid #000000;
+}
+#previews {
+  margin: 20px;
+  padding: 0;
+  clear: both;
+}
+#previews.bdr {
+  border: 1px solid #000000;
+}
+#previews.bdr2 {
+  border: 3px double #000000;
+}
+#lhd {
+  border-bottom: 3px double #000000;
+  clear: both;
+  overflow: hidden;
+  margin: 10px 0;
+}
+#lhd.noborder {
+  border-bottom: none;
+}
+#lhd.jst {
+  margin: 10px 20px;
+}
+#lhd .hif {
+  float: right;
+}
+#lhd .hif ul {
+  margin: 10px 0;
+  font-size: .9em;
+}
+#lhd .hif ul li {
+  margin: 10px;
+  padding: 0;
+  white-space: nowrap;
+}
+#lhd .hif ul li span {
+  display: inline-block;
+  width: 150px;
+  font-weight: bold;
+}
+#lhd .lgo {
+  float: left;
+  margin: 0;
+}
+#lhd .lgo img {
+  /*width: 100px; */
+
+  height: 40px;
+}
+#lhd .lgo img.omni {
+  height: 58px;
+  margin: 15px 15px 15px 0;
+}
+#lhd .lgo img.bpjs {
+  height: 40px;
+  margin: 16px 15px 16px 0;
+}
+#lhd .ttl {
+  float: left;
+  line-height: 1.2em;
+  padding: 15px 0 10px 0;
+}
+#lhd .ttl span {
+  display: block;
+}
+#lhd .ttl span.nme {
+  font-family: 'Trabold';
+  font-weight: bold;
+  font-size: 1.5em;
+  margin-bottom: 5px;
+}
+#hhr {
+  width: 50%;
+}
+#hhr.ful {
+  width: 100%;
+}
+#hhr.sml {
+  font-size: .75em;
+}
+#hhr.xsl {
+  font-size: .9em;
+}
+#hhr.pad1 {
+  padding: 0 20px;
+}
+#hhr.hlf {
+  float: left;
+}
+#hhr.hrt {
+  float: right;
+}
+#hhr ul {
+  margin: 10px 0;
+  padding: 0;
+  list-style-type: none;
+}
+#hhr ul.lgr li {
+  padding-bottom: 5px;
+}
+#hhr ul.lgr li span {
+  width: 20%;
+}
+#hhr ul.lgr li span em {
+  font-size: .8em;
+  color: #999999;
+  display: block;
+}
+#hhr ul.lng li span {
+  width: 30%;
+}
+#hhr ul.lng li span em {
+  font-size: .8em;
+  color: #999999;
+  display: block;
+}
+#hhr ul.lng li span span {
+  display: block;
+  width: 100%;
+}
+#hhr ul.hl li span {
+  width: 50%;
+}
+#hhr ul.hl li span em {
+  font-size: .8em;
+  color: #999999;
+  display: block;
+}
+#hhr ul.sep li {
+  border-bottom: 1px solid #000000;
+}
+#hhr ul li {
+  margin: 5px 0;
+}
+#hhr ul li div {
+  display: inline-block;
+}
+#hhr ul li span {
+  display: inline-block;
+  width: 120px;
+  vertical-align: text-top;
+}
+.print_function {
+  padding: 5px;
+  margin: 10px;
+  border: 1px solid #ccc;
+  background: #f1f1f1 url(../media/misc/bar.gif) top left repeat-x;
+}
