@@ -9,7 +9,7 @@
 
 cd `dirname $0`/..
 
-ADDR_PORT=${1:-127.0.0.1:8001}
+ADDR_PORT=${1:-127.0.0.1:8002}
 DOC_ROOT=${2:-public}
 
 php -S "$ADDR_PORT" -t "$DOC_ROOT/" -f bin/router.php
