@@ -1,2 +1,2 @@
-# simkeu-ptjkk
-Sistem Informasi Keuangan - PT. JKK
+# simkon-ptkah
+Sistem Informasi Konsolidasi - PT. Karsa Abdi Husada
