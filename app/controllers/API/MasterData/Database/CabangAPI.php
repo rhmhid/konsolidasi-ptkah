@@ -76,7 +76,7 @@ class CabangAPI extends BaseAPIController
         $cmb_wilayah = $rs_wilayah->GetMenu2('bwid', $data_rs->bwid, true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="bwid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Wilayah" required=""');
 
         $data_coa = Modules::data_coa();
-        $cmb_coa = $data_coa->GetMenu2('coaid_branch', $data_rs->coaid_branch, true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="coaid_branch" data-control="select2" data-allow-clear="true" data-placeholder="Pilih C.O.A" required=""');
+        $cmb_coa = $data_coa->GetMenu2('coaid_branch', $data_rs->coaid_branch, true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="coaid_branch" data-control="select2" data-allow-clear="true" data-placeholder="Pilih C.O.A"');
 
         $chk_primary = $is_primary == 't' ? 'checked=""' : '';
 
