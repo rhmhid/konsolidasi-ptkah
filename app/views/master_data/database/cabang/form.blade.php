@@ -63,7 +63,7 @@
 
             <div class="row g-0 gx-4 mt-3">
                 <div class="col-lg-4">
-                    <label class="form-label form-label-sm text-dark required">C.O.A</label>
+                    <label class="form-label form-label-sm text-dark">C.O.A</label>
                     {!! $cmb_coa !!}
                 </div>
 
@@ -84,9 +84,43 @@
                 </div>
             </div>
 
+            <div class="row g-0 gx-4 mt-3">
+                <!-- SITES SECTION -->
+                <div class="separator separator-dashed my-6"></div>
+                <h5 class="fw-bolder text-dark mb-4">
+                    <i class="las la-globe me-2 fs-2 text-dark"></i> SITES
+                </h5>
+
+                <div class="row g-0 gx-4 mt-1">
+                    <div class="col-lg-4">
+                        <label class="text-dark fw-bold fs-7 pb-2">Site URL</label>
+                        <input type="text" name="cabang_url" id="cabang_url" value="{{ $data_rs->cabang_url }}" class="form-control form-control-sm rounded-1 w-100" placeholder="https://example.com" />
+                    </div>
+
+                    <div class="col-lg-4">
+                        <label class="text-dark fw-bold fs-7 pb-2">Username</label>
+                        <input type="text" name="cabang_user" id="cabang_user" value="{{ $data_rs->cabang_user }}" class="form-control form-control-sm rounded-1 w-100" placeholder="Username" />
+                    </div>
+
+                    <div class="col-lg-4">
+                        <label class="text-dark fw-bold fs-7 pb-2">Password</label>
+                        <div class="input-group input-group-sm">
+                            <input type="password" name="cabang_pass" id="cabang_pass" value="{{ $data_rs->cabang_pass }}" class="form-control rounded-1" placeholder="Password" />
+                            <span class="input-group-text cursor-pointer cabang-pass">
+                                <i class="las la-eye-slash" id="iconPass"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-3 w-100 py-4 border-top d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary btn-sm rounded-1" id="me_btn_batal" data-bs-dismiss="modal">Batal</button>
-                <button type="submit" class="btn btn-dark btn-sm rounded-1" id="me_btn_simpan">Simpan</button>
+                <button type="button" class="btn btn-secondary btn-sm rounded-1" id="btnBatal" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left"></i> Batal
+                </button>
+                <button type="submit" class="btn btn-dark btn-sm rounded-1" id="btnSimpan">
+                    <i class="bi bi-save"></i> Simpan
+                </button>
             </div>
             <!--end::Compact form-->
         </form>
@@ -205,6 +239,25 @@
                     swalShowMessage('Gagal', res.message || 'Terjadi Kesalahan saat proses data', 'error')
                 })
             }), 2e3)
+        }
+    })
+
+    $('.cabang-pass').click(function ()
+    {
+        const inp = document.getElementById("cabang_pass")
+        const icon = document.getElementById("iconPass")
+
+        if (inp.type === "password")
+        {
+            inp.type = "text"
+            icon.classList.remove("la-eye-slash")
+            icon.classList.add("la-eye")
+        }
+        else
+        {
+            inp.type = "password"
+            icon.classList.remove("la-eye")
+            icon.classList.add("la-eye-slash")
         }
     })
 </script>

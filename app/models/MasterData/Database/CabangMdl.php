@@ -263,6 +263,9 @@ class CabangMdl extends DB
         $coaid_branch = get_var('coaid_branch', NULL);
         $is_primary = get_var('is_primary', 'f');
         $is_aktif = get_var('is_aktif', 'f');
+        $cabang_url = get_var('cabang_url');
+        $cabang_user = get_var('cabang_user');
+        $cabang_pass = get_var('cabang_pass');
         $userid = Auth::user()->pid;
 
         DB::BeginTrans();
@@ -281,6 +284,9 @@ class CabangMdl extends DB
         $record['coaid_branch']     = $coaid_branch;
         $record['is_primary']       = $is_primary;
         $record['is_aktif']         = $is_aktif;
+        $record['cabang_url']       = $cabang_url;
+        $record['cabang_user']      = $cabang_user;
+        $record['cabang_pass']      = $cabang_pass;
 
         if ($rs->EOF)
         {
