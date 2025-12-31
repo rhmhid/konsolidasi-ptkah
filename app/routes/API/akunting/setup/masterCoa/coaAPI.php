@@ -6,4 +6,6 @@ Route::group('api/akunting/setup/master-coa/coa', ['middleware' => 'AuthMiddlewa
     Route::get('/create', 'API/Akunting/Setup/MasterCoa/CoaAPI@create')->name('api.akunting.setup.master_coa.coa.create');
     Route::get('/edit', 'API/Akunting/Setup/MasterCoa/CoaAPI@edit')->name('api.akunting.setup.master_coa.coa.edit');
     Route::patch('/save', 'API/Akunting/Setup/MasterCoa/CoaAPI@save')->name('api.akunting.setup.master_coa.coa.save');
+    Route::get('/mapping', 'API/Akunting/Setup/MasterCoa/CoaAPI@mapping')->name('api.akunting.setup.master_coa.coa.mapping');
+    Route::patch('/mapping-save', 'API/Akunting/Setup/MasterCoa/CoaAPI@save_mapping')->name('api.akunting.setup.master_coa.coa.save_mapping');
 });
