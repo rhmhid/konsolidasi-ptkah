@@ -40,7 +40,7 @@ class CoaMdl extends DB
         if ($istot == false) $sqlx = $sql.$lp;
         else $sqlx = $sql;
 
-        $rs = DB::Execute($sqlx, array($coatid));
+        $rs = DB::Execute($sqlx, [$coatid]);
 
         return $rs;
     } /*}}}*/
@@ -64,7 +64,7 @@ class CoaMdl extends DB
                 WHERE a.is_valid = 't' AND a.coatid = ? AND a.allow_post = 'f' AND a.coaid <> ?
                     AND a.coaid NOT IN (SELECT coaid FROM default_coa WHERE default_code IN ('RETAINEDEARNING_ACCT', 'INCOMESUMMARY_ACCT') AND coaid NOTNULL)
                 ORDER BY coa";
-        $rs = DB::Execute($sql, array($coatid, $coaid));
+        $rs = DB::Execute($sql, [$coatid, $coaid]);
 
         return $rs;
     } /*}}}*/
@@ -74,7 +74,7 @@ class CoaMdl extends DB
         // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
         $sql = "SELECT * FROM m_coa WHERE coaid = ?";
-        $rs = DB::Execute($sql, array($coaid));
+        $rs = DB::Execute($sql, [$coaid]);
 
         return $rs;
     } /*}}}*/
@@ -103,7 +103,7 @@ class CoaMdl extends DB
         DB::BeginTrans();
 
         $sql = "SELECT * FROM m_coa WHERE coaid = ?";
-        $rs = DB::Execute($sql, array($coaid));
+        $rs = DB::Execute($sql, [$coaid]);
 
         $parent_coaid = $parent_coaid;
         if ($parent_coaid == '')
@@ -114,7 +114,7 @@ class CoaMdl extends DB
         else
         {
             $parent_coaid = $parent_coaid;
-            $level = DB::GetOne("SELECT COALESCE(level, 0) + 1 FROM m_coa WHERE coaid = ?", array($parent_coaid));
+            $level = DB::GetOne("SELECT COALESCE(level, 0) + 1 FROM m_coa WHERE coaid = ?", [$parent_coaid]);
         }
 
         $record = array();
@@ -148,6 +148,84 @@ class CoaMdl extends DB
 
             $newsql = DB::UpdateSQL($rs, $record);
             $ok = DB::Execute($newsql);
+        }
+
+        if (DB::isDebug())
+        {
+            DB::RollbackTrans();
+            return 'Debug Sql Mode';
+        }
+
+        if ($ok)
+        {
+            DB::CommitTrans();
+            return 'true';
+        }
+        else
+        {
+            $errmsg = "sql error : " . DB::ErrorMsg();
+
+            DB::RollbackTrans();
+            return $errmsg;
+        }
+    } /*}}}*/
+
+    public static function coa_cabang ($coaid) /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+
+        $sql = "SELECT a.bid, (a.branch_code || ' - ' || a.branch_name) AS branch
+                    , b.coacode_from, b.coacode_to
+                FROM branch a
+                LEFT JOIN m_coa_branch b ON a.bid = b.bid AND b.coaid = ?
+                ORDER BY a.is_primary DESC, a.branch_name";
+        $rs = DB::Execute($sql, [$coaid]);
+
+        return $rs;
+    } /*}}}*/
+
+    public static function save_mapping () /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+
+        $coaid = get_var('coaid', 0);
+        $bid = get_var('bid');
+        $coacode_from = get_var('coacode_from');
+        $coacode_to = get_var('coacode_to');
+        $userid = Auth::user()->pid;
+        $ok = true;
+
+        DB::BeginTrans();
+
+        if (is_array($bid))
+        {
+            foreach ($bid as $id_branch => $val)
+            {
+                $record = array();
+                $record['coaid']           = $coaid;
+                $record['bid']             = $val;
+                $record['coacode_from']    = $coacode_from[$id_branch];
+                $record['coacode_to']      = $coacode_to[$id_branch];
+
+                $sql = "SELECT * FROM m_coa_branch WHERE coaid = ? AND bid = ?";
+                $rs = DB::Execute($sql, [$coaid, $val]);
+
+                if ($rs->EOF)
+                {
+                    $record['create_by'] = $record['modify_by'] = $userid;
+
+                    $sqli = DB::InsertSQL($rs, $record);
+                    if ($ok) $ok = DB::Execute($sqli);
+                }
+                else
+                {
+                    $record['modify_by']    = $userid;
+                    $record['modify_time']  = 'NOW()';
+
+                    $sqlu = DB::UpdateSQL($rs, $record);
+                    if ($ok) $ok = DB::Execute($sqlu);
+                }
+            }
         }
 
         if (DB::isDebug())

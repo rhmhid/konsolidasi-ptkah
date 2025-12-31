@@ -117,9 +117,25 @@
 
                         render: function (data, type, row, meta)
                         {
-                            $btnFungsi = `<a href="javascript:void(0)" data-coaid="${row.coaid}" data-coatid="${row.coatid}" title="Ubah" class="btn btn-dark btn-sm fs-8 btn-update-coa">
-                                            <i class="las la-edit"></i> Ubah
-                                        </a>`
+                            $btnFungsi =`<div class="btn-group">
+                                            <button type="button" class="btn btn-circle fs-8" data-bs-toggle="dropdown" aria-expanded="false" id="menu-dropdown">
+                                                    <i class="las la-ellipsis-v fw-bold fs-3 text-dark"></i>
+                                            </button>
+
+                                            <ul class="dropdown-menu p-3" aria-labelledby="menu-dropdown">
+                                                <li>
+                                                    <a href="javascript:void(0)" data-coaid="${row.coaid}" data-coatid="${row.coatid}" title="Ubah" class="text-dark fs-6 btn-update-coa">
+                                                        <i class="las la-edit fs-6 text-dark"></i> Ubah
+                                                    </a>                             
+                                                </li>
+                                                <li class="separator border-secondary my-1"></li>
+                                                <li>
+                                                    <a href="javascript:void(0)" data-coaid="${row.coaid}" title="Mapping" class="text-dark fs-6 coa-mapping">
+                                                        <i class="las la-database fs-6 text-dark"></i> Mapping
+                                                    </a>                            
+                                                </li>
+                                            </ul>
+                                        </div>`
 
                             return $btnFungsi
                         },
@@ -172,6 +188,26 @@
     {
         showLoading()
 
+        var getForm = async function (coaid, coatid)
+        {
+            let result
+            let link = coaid == 0 ? "{{ route('api.akunting.setup.master_coa.coa.create') }}" : "{{ route('api.akunting.setup.master_coa.coa.edit') }}"
+
+            try {
+                result = await $.ajax({
+                    url     : link,
+                    type    : 'GET',
+                    data    : { coaid: coaid, coatid: coatid }
+                })
+
+                return result
+            } catch (error) {
+                Swal.close()
+
+                swalShowMessage('Gagal', 'Gagal membuka form.', 'error')
+            }
+        }
+
         getForm(coaid, coatid).then((res) => {
             Swal.close()
 
@@ -180,24 +216,38 @@
         })
     }
 
-    async function getForm (coaid, coatid)
+    $('#myTableCoa').on('click', '.coa-mapping', function ()
     {
-        let result
-        let link = coaid == 0 ? "{{ route('api.akunting.setup.master_coa.coa.create') }}" : "{{ route('api.akunting.setup.master_coa.coa.edit') }}"
+        const coaid = $(this).data('coaid')
 
-        try {
-            result = await $.ajax({
-                url     : link,
-                type    : 'GET',
-                data    : { coaid: coaid, coatid: coatid }
-            })
+        showLoading()
 
-            return result
-        } catch (error) {
+        var getForm = async function (coaid)
+        {
+            let result
+            let link = "{{ route('api.akunting.setup.master_coa.coa.mapping') }}"
+
+            try {
+                result = await $.ajax({
+                    url     : link,
+                    type    : 'GET',
+                    data    : { coaid: coaid }
+                })
+
+                return result
+            } catch (error) {
+                Swal.close()
+
+                swalShowMessage('Gagal', 'Gagal membuka form.', 'error')
+            }
+        }
+
+        getForm(coaid).then((res) => {
             Swal.close()
 
-            swalShowMessage('Gagal', 'Gagal membuka form.', 'error')
-        }
-    }
+            // Show modal
+            openModal('popup-form-coa', res, null, true)
+        })
+    })
 </script>
 @endpush

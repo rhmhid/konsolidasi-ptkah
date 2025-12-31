@@ -188,5 +188,44 @@ class CoaAPI extends BaseAPIController
 
         $this->response($dtJSON, REST::HTTP_CREATED);
     } /*}}}*/
+
+    public function mapping_get () /*{{{*/
+    {
+        $coaid = get_var('coaid', 0, 't');
+
+        $rs = CoaMdl::coa_detail($coaid);
+
+        $data_coa = !$rs->EOF ? FieldsToObject($rs->fields) : New stdClass();
+
+        $rs_cabang = CoaMdl::coa_cabang($coaid);
+
+        $data_coa_cabang = !$rs_cabang->EOF ? FieldsToObject($rs_cabang->fields) : New stdClass();
+
+        return view('akunting.setup.master_coa.coa.mapping', compact(
+           'rs',
+           'data_coa',
+           'rs_cabang',
+           'data_coa_cabang'
+        ));
+    } /*}}}*/
+
+    public function save_mapping_patch () /*{{{*/
+    {
+        $msg = CoaMdl::save_mapping();
+
+        $dtJSON = array();
+        if ($msg == 'true')
+            $dtJSON = array(
+                'success'   => true,
+                'message'   => 'Data Berhasil Diproses'
+            );
+        else
+            $dtJSON = array(
+                'success'   => false,
+                'message'   => $msg
+            );
+
+        $this->response($dtJSON, REST::HTTP_CREATED);
+    } /*}}}*/
 }
 ?>
