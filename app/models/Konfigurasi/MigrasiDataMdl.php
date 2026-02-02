@@ -24,11 +24,23 @@ class MigrasiDataMdl extends DB
             "TRUNCATE TABLE adjusment CASCADE",
             "ALTER SEQUENCE adjusment_aid_seq RESTART WITH 1",
 
+            "TRUNCATE TABLE ap_payment CASCADE",
+            "ALTER SEQUENCE ap_payment_appid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE ap_payment_addless CASCADE",
+            "ALTER SEQUENCE ap_payment_addless_appaid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE ap_payment_d CASCADE",
+            "ALTER SEQUENCE ap_payment_d_appdid_seq RESTART WITH 1",
+
             "TRUNCATE TABLE ap_supplier CASCADE",
             "ALTER SEQUENCE ap_supplier_apsid_seq RESTART WITH 1",
 
             "TRUNCATE TABLE ap_supplier_d CASCADE",
             "ALTER SEQUENCE ap_supplier_d_apsdid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE app_process CASCADE",
+            "ALTER SEQUENCE app_process_apid_seq RESTART WITH 1",
 
             "TRUNCATE TABLE cost_item_usage CASCADE",
             "ALTER SEQUENCE cost_item_usage_ciuid_seq RESTART WITH 1",
@@ -58,14 +70,14 @@ class MigrasiDataMdl extends DB
 
             "DELETE FROM general_ledger_d_backup",
 
+            "TRUNCATE TABLE global_setup CASCADE",
+            "ALTER SEQUENCE global_setup_gsid_seq RESTART WITH 1",
+
             "TRUNCATE TABLE good_receipt CASCADE",
             "ALTER SEQUENCE good_receipt_grid_seq RESTART WITH 1",
 
             "TRUNCATE TABLE good_receipt_d CASCADE",
             "ALTER SEQUENCE good_receipt_d_grdid_seq RESTART WITH 1",
-
-            "TRUNCATE TABLE global_setup CASCADE",
-            "ALTER SEQUENCE global_setup_gsid_seq RESTART WITH 1",
 
             "TRUNCATE TABLE inventory CASCADE",
             "ALTER SEQUENCE inventory_invid_seq RESTART WITH 1",
@@ -145,17 +157,66 @@ class MigrasiDataMdl extends DB
             "TRUNCATE TABLE app_users_token CASCADE",
             "ALTER SEQUENCE app_users_token_autid_seq RESTART WITH 1",
 
+            "TRUNCATE TABLE sessions CASCADE",
+            "ALTER SEQUENCE sessions_sid_seq RESTART WITH 1",
+
             "DELETE FROM app_users WHERE pid > 1",
             "ALTER SEQUENCE app_users_asid_seq RESTART WITH 2",
 
-            'TRUNCATE TABLE login_attempts CASCADE',
+            "TRUNCATE TABLE barang_supplier CASCADE",
+            "ALTER SEQUENCE barang_supplier_bsid_seq RESTART WITH 1",
+
+            "DELETE FROM branch_assign WHERE item_type <> 1 AND base_id <> 1",
+            
+            "TRUNCATE TABLE fixed_asset_category CASCADE",
+            "ALTER SEQUENCE fixed_asset_category_facid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE fixed_asset_lokasi CASCADE",
+            "ALTER SEQUENCE fixed_asset_lokasi_falid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE konversi_satuan CASCADE",
+            "ALTER SEQUENCE konversi_satuan_ksid_seq RESTART WITH 1",
+
+            "DELETE FROM konversi_satuan_history",
+
+            "TRUNCATE TABLE login_attempts CASCADE",
             "ALTER SEQUENCE login_attempts_id_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE m_bank CASCADE",
+            "ALTER SEQUENCE m_bank_bank_id_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE m_barang CASCADE",
+            "ALTER SEQUENCE m_barang_mbid_seq RESTART WITH 1",
+
+            "DELETE FROM m_barang_history",
+
+            "DELETE FROM m_coagroup_history",
+
+            "TRUNCATE TABLE m_customer CASCADE",
+            "ALTER SEQUENCE m_customer_custid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE m_gudang CASCADE",
+            "ALTER SEQUENCE m_gudang_gid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE m_kategori_barang CASCADE",
+            "ALTER SEQUENCE m_kategori_barang_kbid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE m_supplier CASCADE",
+            "ALTER SEQUENCE m_supplier_suppid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE otorisasi_logs CASCADE",
+            "ALTER SEQUENCE otorisasi_logs_otolid_seq RESTART WITH 1",
+
+            "DELETE FROM otorisasi WHERE pid > 1",
 
             "DELETE FROM person WHERE pid > 1",
             "ALTER SEQUENCE person_pid_seq RESTART WITH 2",
 
             "TRUNCATE TABLE role_group CASCADE",
             "ALTER SEQUENCE role_group_rgid_seq RESTART WITH 1",
+
+            "TRUNCATE TABLE setup_coa CASCADE",
+            "ALTER SEQUENCE setup_coa_scid_seq RESTART WITH 1",
         );
 
         if ($opsi_reset == 'all')
