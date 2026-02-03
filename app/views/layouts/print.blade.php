@@ -35,7 +35,7 @@
     <body class="bg-putih">
         @stack('function')
 
-        <div id="previews">
+        <div id="previews" style="overflow: visible !important;">
             @stack('kop')
 
             @yield('content')
