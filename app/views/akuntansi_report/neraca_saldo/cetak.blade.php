@@ -64,20 +64,40 @@
     <span style="text-transform: uppercase;">Periode : {{ $report_month }}</span>
 </h2>
 
+@php
+    $jml_bid = 1;
+@endphp
 <table width="100%" class="bdr2 pad">
     <thead>
         <tr>
-            <th>No.</th>
-            <th>Coacode</th>
-            <th>Coaname</th>
-            <th>Dr / Cr Position</th>
-            <th>Beginning Balance</th>
-            <th>Debet</th>
-            <th>Credit</th>
-            <th>Ending Balance</th>
+            <th rowspan="2">No.</th>
+            <th rowspan="2">Coacode</th>
+            <th rowspan="2">Coaname</th>
+            <th rowspan="2">Dr / Cr Position</th>
+
+            @foreach ($data_cabang as $head)
+                @php
+                    $head = FieldsToObject($head);
+                    $jml_bid++;
+                @endphp
+
+                <th colspan="4">{{ $head->branch_name }}</th>
+            @endforeach
+
+            <th colspan="4">Total</th>
+        </tr>
+
+        <tr>
+            @for ($idx = 1; $idx <= $jml_bid; $idx++)
+                <th>Beginning Balance</th>
+                <th>Debet</th>
+                <th>Credit</th>
+                <th>Ending Balance</th>
+            @endfor
         </tr>
     </thead>
     <tbody>
+        <!--
         @foreach ($data_tb as $row)
             @php
                 $row = FieldsToObject($row);
@@ -98,12 +118,13 @@
         @endforeach
 
         <tr>
-            <td colspan="4" align="right"><b>SUBTOTAL</b></td>
+            <td colspan="4" align="right"><b>&nbsp;</b></td>
             <td align="right"><b></b></td>
             <td align="right"><b>{{ format_uang($tot_deb, 2) }}</b></td>
             <td align="right"><b>{{ format_uang($tot_cre, 2) }}</b></td>
             <td align="right"><b></b></td>
         </tr>
+        -->
     </tbody>
 </table>
 @endsection

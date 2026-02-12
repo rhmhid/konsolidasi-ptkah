@@ -349,6 +349,11 @@ class Modules
                         FROM general_ledger k, general_ledger_d j
                         WHERE j.glid = k.glid AND DATE_TRUNC('MONTH', k.gldate) = '$year-$mybulan-01'
                             AND k.is_posted = 't' AND k.bid = $bid
+                            AND (CASE WHEN $bln = 13 THEN k.jtid = -13 
+                                WHEN $bln = 14 THEN k.jtid = -14
+                                WHEN $bln = 15 THEN k.jtid = -15
+                                WHEN k.jtid < 0 THEN FALSE
+                                ELSE TRUE END)
                         GROUP BY k.bid, j.coaid
                     ) b ON d.coaid = b.coaid AND d.bid = b.bid
                     FULL JOIN m_coa e ON b.coaid = e.coaid
@@ -1008,6 +1013,30 @@ class Modules
         $rs = self::$db->Execute($sql, [$custid]);
 
         return $rs->fields;
+    } /*}}}*/
+
+    public static function data_cabang_all ($is_aktif = '') /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
+
+        $addsql = "";
+
+        if ($is_aktif) $addsql .= " AND is_aktif = '$is_aktif'";
+
+        $sql = "SELECT branch_name, bid AS id FROM branch WHERE 1 = 1 $is_aktif ORDER BY is_primary DESC, branch_name";
+        $rs = self::$db->Execute($sql);
+
+        return $rs;
+    } /*}}}*/
+
+    public static function data_cabang_combo () /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
+
+        $sql = "SELECT branch_name, bid AS id FROM branch ORDER BY branch_name";
+        $rs = self::$db->Execute($sql);
+
+        return $rs;
     } /*}}}*/
 }
 ?>
