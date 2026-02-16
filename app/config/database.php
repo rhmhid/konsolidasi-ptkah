@@ -96,3 +96,27 @@ $db['default'] = array(
 	'failover' 		=> array(),
 	'save_queries' 	=> TRUE
 );
+
+$db['jkk'] = array(
+        'dsn'                   => '',
+        'hostname'              => env('DB2_HOSTNAME'),
+        'username'              => env('DB2_USERNAME'),
+        'password'              => env('DB2_PASSWORD'),
+        'database'              => env('DB2_NAME'),
+        'dbdriver'              => env('DB2_DRIVER2'),
+        'port'                  => env('DB2_PORT'),
+        'dbprefix'              => '',
+        'pconnect'              => FALSE,
+        'db_debug'              => (ENVIRONMENT !== 'production'),
+        'cache_on'              => FALSE,
+        'cachedir'              => '',
+        'char_set'              => 'utf8',
+        'dbcollat'              => 'utf8_general_ci',
+        'swap_pre'              => '',
+        'encrypt'               => FALSE,
+        'compress'              => FALSE,
+        'stricton'              => FALSE,
+        'failover'              => array(),
+        'save_queries'  => TRUE
+);
+

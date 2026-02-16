@@ -58,7 +58,7 @@ $autoload['packages'] = array();
 |
 |	$autoload['libraries'] = array('user_agent' => 'ua');
 */
-$autoload['libraries'] = array('adodb', 'session', 'user_agent', 'upload', 'auth_library', 'modules', 'bscsvutil', 'myjasper');
+$autoload['libraries'] = array('adodb', 'session', 'user_agent', 'upload', 'auth_library', 'modules', 'bscsvutil', 'myjasper','DB2','DB3');
 
 /*
 | -------------------------------------------------------------------

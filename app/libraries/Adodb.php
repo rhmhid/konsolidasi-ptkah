@@ -28,7 +28,35 @@ class Adodb
 		log_message('debug', "ADODB Class Initialized");
 	} /*}}}*/
 
-	public function init () /*{{{*/
+		public function init($group = 'default') 
+		{
+
+		    $prefix = ($group === 'default') ? 'DB_' : strtoupper($group) . '_';
+		    $hostname = env($prefix . 'HOSTNAME');
+		    $username = env($prefix . 'USERNAME');
+		    $password = env($prefix . 'PASSWORD');
+		    $database = env($prefix . 'NAME');
+		    $driver   = env($prefix . 'DRIVER');
+		    $port     = env($prefix . 'PORT');
+
+		    // Validasi apakah konfigurasi ada
+		    if (!$hostname || !$database) {
+		        die("Error: Konfigurasi untuk group [$group] tidak ditemukan di .env (Prefix: $prefix)");
+		    }
+
+		    $db = ADONewConnection($driver);
+		    
+		    // Gunakan port jika tersedia di .env
+		    $host_conn = $port ? $hostname . ":" . $port : $hostname;
+		    
+		    if (!$db->Connect($host_conn, $username, $password, $database)) {
+		        die("Gagal Terhubung ke Group [$group]: " . $db->ErrorMsg());
+		    }
+
+		    return $db; 
+		}
+
+	public function initx ($group = 'default') /*{{{*/
 	{
 		return self::$adodb;
 	} /*}}}*/

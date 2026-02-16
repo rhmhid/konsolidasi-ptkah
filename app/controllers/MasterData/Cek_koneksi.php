@@ -11,6 +11,7 @@ class Cek_koneksi extends BaseController
         $this->load->model('MasterData/Cekkoneksimdl');
     } /*}}}*/
 
+    
     public function index () /*{{{*/
     {
 
@@ -86,6 +87,7 @@ class Cek_koneksi extends BaseController
 
     function _test_koneksi($url){
 
+
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,   // WAJIB: ambil body
@@ -131,6 +133,24 @@ class Cek_koneksi extends BaseController
             ],
         ];
         return $response;
+
+    }
+
+    function cobadb(){
+	    $rs = Cekkoneksimdl::db1();
+	    echo '<pre>';
+	      print_r($rs->fields);
+	    echo '</pre>';
+        $rs = Cekkoneksimdl::db2();
+        echo '<pre>';
+          print_r($rs->fields);
+        echo '</pre>';
+
+        $rs = Cekkoneksimdl::db3();
+        echo '<pre>';
+          print_r($rs->fields);
+        echo '</pre>';
+
 
     }
 }
