@@ -112,6 +112,13 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="row g-0 gx-4 mt-3">
+                    <div class="col-lg-4">
+                        <label class="form-label form-label-sm text-dark">Koneksi Database</label>
+                        {!! $cmb_db !!}
+                    </div>
+                </div>
             </div>
 
             <div class="mt-3 w-100 py-4 border-top d-flex justify-content-between">
