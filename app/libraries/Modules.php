@@ -1038,5 +1038,15 @@ class Modules
 
         return $rs;
     } /*}}}*/
+
+    public static function data_koneksi_db () /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
+
+        $sql = "SELECT nama, kdbid FROM mst_koneksi_db ORDER BY LOWER(nama)";
+        $rs = self::$db->Execute($sql);
+
+        return $rs;
+    } /*}}}*/
 }
 ?>

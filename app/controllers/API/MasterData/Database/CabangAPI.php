@@ -83,6 +83,9 @@ class CabangAPI extends BaseAPIController
         $chk_aktif = $is_aktif == 't' ? 'checked=""' : '';
         $txt_aktif = get_status_aktif($is_aktif);
 
+        $data_db = Modules::data_koneksi_db();
+        $cmb_db = $data_db->GetMenu2('kdbid', $data_rs->kdbid, true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="kdbid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Koneksi DB"');
+
         return view('master_data.database.cabang.form', compact(
             'data_rs',
             'cmb_tipe',
@@ -90,7 +93,8 @@ class CabangAPI extends BaseAPIController
             'cmb_coa',
             'chk_primary',
             'chk_aktif',
-            'txt_aktif'
+            'txt_aktif',
+            'cmb_db'
         ));
     } /*}}}*/
 
