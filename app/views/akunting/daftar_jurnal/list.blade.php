@@ -23,6 +23,16 @@
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
                         <div class="row g-0 gx-4">
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
+                                {!! $cmb_cabang !!}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 pb-0">
+                        <div class="row g-0 gx-4">
                            <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">Periode</label>
                                 <div class="input-group">
@@ -72,6 +82,7 @@
                 <table id="myTableDaftarJurnal" class="table table-striped table-row-bordered border border-bottom border-gray-300 align-middle rounded-0 g-4 fs-8 w-100">
                     <thead class="bg-dark text-uppercase fs-7 text-center">
                         <tr class="fw-bold text-white">
+                            <th class="border-start py-5">Cabang</th>
                             <th class="border-start py-5">Tanggal Jurnal</th>
                             <th class="border-start py-5">No. Jurnal</th>
                             <th class="border-start py-5">Keterangan</th>
@@ -130,11 +141,17 @@
                     params.is_posted        = $("#sPosted").val()
                     params.gldoc            = $("#sGlDoc").val()
                     params.keterangan       = $("#sKeterangan").val()
+                    params.bid              = $("#sBid").val()
                 },
     }
 
     const options = {
         columns:[
+                    {
+                        data: 'branch_name',
+                        name: 'branch_name',
+                        className: 'dt-body-center',
+                    },
                     {
                         data: 'jurnal_date',
                         name: 'jurnal_date',
@@ -190,7 +207,7 @@
 
                         render: function (data, type, row, meta)
                         {
-                            $btnFungsi = `<a href="javascript:void(0)" data-glid="${row.glid}" title="Cetak" class="btn btn-dark btn-sm btn-icon fs-8 jurnal-detail">
+                            $btnFungsi = `<a href="javascript:void(0)" data-glid="${row.glid}" data-bid="${row.bid}" title="Cetak" class="btn btn-dark btn-sm btn-icon fs-8 jurnal-detail">
                                             <i class="las la-eye"></i>
                                         </a>`
 
@@ -225,11 +242,13 @@
     $('#myTableDaftarJurnal').on('click', '.jurnal-detail', function ()
     {
         const glid = $(this).data('glid')
+        const bid = $(this).data('bid')
 
-        let getForm = async function (glid)
+        let getForm = async function (glid,bid)
         {
-            let link = "{{ route('api.akunting.daftar_jurnal.detail', ['myglid' => ':myglid']) }}"
+            let link = "{{ route('api.akunting.daftar_jurnal.detail', ['myglid' => ':myglid','mybid' => ':mybid']) }}"
                 link = link.replace(':myglid', glid)
+                link = link.replace(':mybid', bid)
 
             try {
                 result = await $.ajax({
@@ -248,7 +267,7 @@
 
         showLoading()
 
-        getForm(glid).then((res) => {
+        getForm(glid,bid).then((res) => {
             Swal.close()
 
             // Show modal

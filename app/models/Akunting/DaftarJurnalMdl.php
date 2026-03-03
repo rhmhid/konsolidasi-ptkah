@@ -13,14 +13,13 @@ class DaftarJurnalMdl extends DB
     {
         // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
-        $bid = Auth::user()->branch->bid;
-
         $lp = " LIMIT $paging OFFSET ".$offset;
 
         $addsql = "";
         $jurnal_speriod = $data['jurnal_speriod'];
         $jurnal_eperiod = $data['jurnal_eperiod'];
         $jtid = $data['jtid'];
+        $bid  = $data['bid'];
         $is_posted = $data['is_posted'];
         $gldoc = strtolower(trim($data['gldoc']));
         $keterangan = strtolower(trim($data['keterangan']));
@@ -33,14 +32,15 @@ class DaftarJurnalMdl extends DB
 
         if ($keterangan) $addsql .= " AND LOWER(a.keterangan) LIKE '%$keterangan%'";
 
-        $addsql .= " AND a.bid = ".$bid;
+        $addsql .= ($bid) ? " AND a.bid = ".$bid : ' AND 1=2' ; // kalau g ada bid ga dimunculin dl
 
         $sql = "SELECT a.glid, a.gldate, a.gldesc, c.nama_lengkap AS useri, a.is_posted
                     , format_glcode(a.gldate, b.doc_code, a.gldoc, a.glid) AS gldoc
-                    , b.journal_name
+                    , b.journal_name,d.branch_name,a.bid
                 FROM general_ledger a
                 INNER JOIN journal_type b ON b.jtid = a.jtid
                 JOIN person c ON c.pid = a.create_by
+                JOIN branch d ON (a.bid=d.bid)
                 WHERE DATE(a.gldate) BETWEEN DATE('$jurnal_speriod') AND DATE('$jurnal_eperiod')
                     $addsql
                 ORDER BY a.gldate DESC, a.glid DESC";
@@ -48,16 +48,15 @@ class DaftarJurnalMdl extends DB
         if ($istot == false) $sqlx = $sql.$lp;
         else $sqlx = $sql;
 
-        $rs = DB::Execute($sqlx);
+        $rs = DB2::Execute($sqlx);
 
         return $rs;
     } /*}}}*/
 
-    public static function detail_jurnal ($myglid) /*{{{*/
+    public static function detail_jurnal ($myglid,$mybid) /*{{{*/
     {
-        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
-        $bid = Auth::user()->branch->bid;
+        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
         $sql = "SELECT a.gldid, b.glid, b.gldesc, b.gldate, b.is_posted, d.journal_name, b.create_time
                     , format_glcode(b.gldate, d.doc_code, b.gldoc, b.glid) AS gldoc
@@ -84,7 +83,9 @@ class DaftarJurnalMdl extends DB
                 LEFT JOIN person j ON b.other_reff_id = j.pid
                 WHERE b.glid = ? AND b.bid = ?
                 ORDER BY a.gldid";
-        $res = DB::Execute($sql, [$myglid, $bid]);
+
+
+        $res = DB2::Execute($sql, [$myglid, $mybid]);
 
         return $res;
     } /*}}}*/
