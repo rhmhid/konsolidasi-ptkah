@@ -38,6 +38,8 @@ $files = Auth_library::glob_recursive(APPPATH.'/routes/Web/*.php');
 
 foreach ($files as $file) require_once $file;
 
+Route::get('dashboard', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('dashboard');
+
 // Masterdata
 Route::get('master-data/pola-tarif/promo', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('master_data.pola_tarif.promo');
 
