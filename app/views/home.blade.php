@@ -4,7 +4,7 @@
     if ($_isMultiTenants == 't')
         $company_logo = Auth::user()->branch->branch_logo;
     else
-        $company_logo = dataConfigs('company_logo');
+        $company_logo = dataConfigs('app_logo');
 @endphp
 
 @extends('layouts.main')
