@@ -1023,7 +1023,7 @@ class Modules
 
         if ($is_aktif) $addsql .= " AND is_aktif = '$is_aktif'";
 
-        $sql = "SELECT branch_name, bid AS id FROM branch WHERE 1 = 1 $is_aktif ORDER BY is_primary DESC, branch_name";
+        $sql = "SELECT branch_name, bid AS id, branch_code FROM branch WHERE 1 = 1 $is_aktif ORDER BY is_primary DESC, branch_name";
         $rs = self::$db->Execute($sql);
 
         return $rs;

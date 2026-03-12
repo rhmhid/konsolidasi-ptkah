@@ -48,21 +48,25 @@ class NeracaSaldo extends BaseController
 
             $rs = NeracaSaldoMdl::list($data);
 
-            // $data_db = array();
-            // while (!$rs->EOF)
-            // {
-            //     $data_db[$rs->fields['coacode']] = array(
-            //         'coaid'         => $rs->fields['coaid'],
-            //         'coaname'       => $rs->fields['coaname'],
-            //         'default_debet' => $rs->fields['default_debet'],
-            //         'openingbal'    => floatval($rs->fields['openingbal']),
-            //         'debet'         => floatval($rs->fields['debet']),
-            //         'credit'        => floatval($rs->fields['credit']),
-            //         'closingbal'    => floatval($rs->fields['closingbal']),
-            //     );
+            $data_db = array();
+            while (!$rs->EOF)
+            {
+                $data_db[$rs->fields['coacode']] = array(
+                    'branch_code'   => $rs->fields['branch_code'],
+                    'coaid'         => $rs->fields['coaid'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'default_debet' => $rs->fields['default_debet'],
+                    'openingbal'    => floatval($rs->fields['openingbal']),
+                    'debet'         => floatval($rs->fields['debet']),
+                    'credit'        => floatval($rs->fields['credit']),
+                    'closingbal'    => floatval($rs->fields['closingbal']),
+                );
 
-            //     $rs->MoveNext();
-            // }
+                $rs->MoveNext();
+            }
+
+            myprint_r($data_db);
+            // die();
 
             // $rss = Modules::laba_rugi($data);
             // $coaid_laba_periode_lalu = Modules::$laba_periode_lalu;
@@ -85,34 +89,34 @@ class NeracaSaldo extends BaseController
             //     $rss->MoveNext();
             // }
 
-            // // ORDER BY lagi
-            // ksort($data_db);
+            // ORDER BY lagi
+            ksort($data_db);
 
-            // if (!empty($data_db))
-            // {
-            //     $no = 1;
-            //     $empty_tb = false;
-            //     foreach ($data_db as $coacode => $tmp)
-            //     {
-            //         $balance = $tmp['default_debet'] == 't' ? ($tmp['debet'] - $tmp['credit']) : ($tmp['credit'] - $tmp['debet']);
-            //         $balance += $tmp['openingbal'];
+            if (!empty($data_db))
+            {
+                $no = 1;
+                $empty_tb = false;
+                foreach ($data_db as $coacode => $tmp)
+                {
+                    $balance = $tmp['default_debet'] == 't' ? ($tmp['debet'] - $tmp['credit']) : ($tmp['credit'] - $tmp['debet']);
+                    $balance += $tmp['openingbal'];
 
-            //         $data_tb[] = array(
-            //             'no'        => $no++,
-            //             'coaid'     => $tmp['coaid'],
-            //             'coacode'   => $coacode,
-            //             'coaname'   => $tmp['coaname'],
-            //             'posisi'    => $tmp['default_debet'] == 't' ? 'Dr' : 'Cr',
-            //             'opening'   => $tmp['openingbal'],
-            //             'debet'     => $tmp['debet'],
-            //             'credit'    => $tmp['credit'],
-            //             'balance'   => $balance,
-            //         );
+                    $data_tb[] = array(
+                        'no'        => $no++,
+                        'coaid'     => $tmp['coaid'],
+                        'coacode'   => $coacode,
+                        'coaname'   => $tmp['coaname'],
+                        'posisi'    => $tmp['default_debet'] == 't' ? 'Dr' : 'Cr',
+                        'opening'   => $tmp['openingbal'],
+                        'debet'     => $tmp['debet'],
+                        'credit'    => $tmp['credit'],
+                        'balance'   => $balance,
+                    );
 
-            //         $tot_deb += $tmp['debet'];
-            //         $tot_cre += $tmp['credit'];
-            //     }
-            // }
+                    $tot_deb += $tmp['debet'];
+                    $tot_cre += $tmp['credit'];
+                }
+            }
         }
 
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
