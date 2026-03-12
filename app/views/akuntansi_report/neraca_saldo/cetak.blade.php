@@ -97,7 +97,6 @@
         </tr>
     </thead>
     <tbody>
-        <!--
         @foreach ($data_tb as $row)
             @php
                 $row = FieldsToObject($row);
@@ -124,7 +123,6 @@
             <td align="right"><b>{{ format_uang($tot_cre, 2) }}</b></td>
             <td align="right"><b></b></td>
         </tr>
-        -->
     </tbody>
 </table>
 @endsection
