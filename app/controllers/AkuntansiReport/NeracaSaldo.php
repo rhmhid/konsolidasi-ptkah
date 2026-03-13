@@ -42,7 +42,7 @@ class NeracaSaldo extends BaseController
         }
 
         $empty_tb = true;
-        $data_tb = [];
+        $data_tb = $data_sum = [];
 
         $rs_period = Modules::get_period_akunting($data);
 
@@ -71,63 +71,46 @@ class NeracaSaldo extends BaseController
                 }
 
                 $data_db[$coacode]['branch'][$rs->fields['branch_code']] = [
-                    'openingbal' => floatval($rs->fields['openingbal']),
-                    'debet'      => floatval($rs->fields['debet']),
-                    'credit'     => floatval($rs->fields['credit']),
+                    'openingbal'    => floatval($rs->fields['openingbal']),
+                    'debet'         => floatval($rs->fields['debet']),
+                    'credit'        => floatval($rs->fields['credit']),
+                    'closingbal'    => floatval($rs->fields['closingbal']),
                 ];
 
                 $rs->MoveNext();
             }
 
-            // $rss = Modules::laba_rugi($data);
-            // $coaid_laba_periode_lalu = Modules::$laba_periode_lalu;
+            $rss = Modules::laba_rugi($data);
+            $coaid_laba_periode_lalu = Modules::$laba_periode_lalu;
 
-            // while (!$rss->EOF)
-            // {
-            //     if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
-            //     {
-            //         $data_db[$rss->fields['coacode']] = array(
-            //             'coaid'         => $rss->fields['coaid'],
-            //             'coaname'       => $rss->fields['coaname'],
-            //             'default_debet' => $rss->fields['default_debet'],
-            //             'openingbal'    => floatval($rss->fields['closingbal']),
-            //             'debet'         => 0,
-            //             'credit'        => 0,
-            //             'closingbal'    => 0,
-            //         );
-            //     }
+            while (!$rss->EOF)
+            {
+                $coacode = $rss->fields['coacode'];
 
-            //     $rss->MoveNext();
-            // }
+                if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
+                {
+                    if (!isset($data_db[$coacode]))
+                    {
+                        $data_db[$coacode] = array(
+                            'coaid'         => $rss->fields['coaid'],
+                            'coaname'       => $rss->fields['coaname'],
+                            'default_debet' => $rss->fields['default_debet']
+                        );
+                    }
+
+                    $data_db[$coacode]['branch'][$rss->fields['branch_code']] = [
+                        'openingbal'    => floatval($rss->fields['openingbal']),
+                        'debet'         => 0,
+                        'credit'        => 0,
+                        'closingbal'    => 0,
+                    ];
+                }
+
+                $rss->MoveNext();
+            }
 
             // ORDER BY lagi
             ksort($data_db);
-
-            /*if (!empty($data_db))
-            {
-                $no = 1;
-                $empty_tb = false;
-                foreach ($data_db as $coacode => $tmp)
-                {
-                    $balance = $tmp['default_debet'] == 't' ? ($tmp['debet'] - $tmp['credit']) : ($tmp['credit'] - $tmp['debet']);
-                    $balance += $tmp['openingbal'];
-
-                    $data_tb[] = array(
-                        'no'        => $no++,
-                        'coaid'     => $tmp['coaid'],
-                        'coacode'   => $coacode,
-                        'coaname'   => $tmp['coaname'],
-                        'posisi'    => $tmp['default_debet'] == 't' ? 'Dr' : 'Cr',
-                        'opening'   => $tmp['openingbal'],
-                        'debet'     => $tmp['debet'],
-                        'credit'    => $tmp['credit'],
-                        'balance'   => $balance,
-                    );
-
-                    $tot_deb += $tmp['debet'];
-                    $tot_cre += $tmp['credit'];
-                }
-            }*/
 
             if (!empty($data_db))
             {
@@ -136,7 +119,6 @@ class NeracaSaldo extends BaseController
 
                 foreach ($data_db as $coacode => $tmp)
                 {
-
                     $row = [
                         'no'      => $no++,
                         'coaid'   => $tmp['coaid'],
@@ -148,10 +130,7 @@ class NeracaSaldo extends BaseController
 
                     foreach ($tmp['branch'] as $branch_code => $b)
                     {
-                        $balance = $tmp['default_debet'] == 't'
-                            ? ($b['debet'] - $b['credit'])
-                            : ($b['credit'] - $b['debet']);
-
+                        $balance = $tmp['default_debet'] == 't' ? ($b['debet'] - $b['credit']) : ($b['credit'] - $b['debet']);
                         $balance += $b['openingbal'];
 
                         $row['branch'][$branch_code] = [
@@ -161,8 +140,8 @@ class NeracaSaldo extends BaseController
                             'balance' => $balance
                         ];
 
-                        $tot_deb += $b['debet'];
-                        $tot_cre += $b['credit'];
+                        $data_sum[$branch_code]['debet'] += $b['debet'];
+                        $data_sum[$branch_code]['credit'] += $b['credit'];
                     }
 
                     $data_tb[] = $row;
@@ -178,8 +157,7 @@ class NeracaSaldo extends BaseController
             'report_month',
             'data_cabang',
             'data_tb',
-            'tot_deb',
-            'tot_cre'
+            'data_sum'
         ));
     } /*}}}*/
 }
