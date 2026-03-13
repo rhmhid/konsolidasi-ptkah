@@ -98,33 +98,54 @@
     </thead>
     <tbody>
         @foreach ($data_tb as $row)
+            <tr>
+                <td align="center">{{ $row['no'] }}</td>
+                <td align="center">{{ $row['coacode'] }}</td>
+                <td>{{ $row['coaname'] }}</td>
+                <td align="center">{{ $row['posisi'] }}</td>
 
-        <tr>
-        <td align="center">{{ $row['no'] }}</td>
-        <td align="center">{{ $row['coacode'] }}</td>
-        <td>{{ $row['coaname'] }}</td>
-        <td align="center">{{ $row['posisi'] }}</td>
+                @foreach ($data_cabang as $cab)
+                    @php
+                        $cab = FieldsToObject($cab);
+                        $bcode = $cab->branch_code;
 
-        @foreach ($data_cabang as $cab)
+                        $row['opening'] += $row['branch'][$bcode]['opening'];
+                        $row['debet'] += $row['branch'][$bcode]['debet'];
+                        $row['credit'] += $row['branch'][$bcode]['credit'];
+                        $row['balance'] += $row['branch'][$bcode]['balance'];
+                    @endphp
 
-        @php
-        $cab = FieldsToObject($cab);
-        $bcode = $cab->branch_code;
-        @endphp
+                    <td align="right">{{ format_uang($row['branch'][$bcode]['opening'], 2) }}</td>
+                    <td align="right">{{ format_uang($row['branch'][$bcode]['debet'], 2) }}</td>
+                    <td align="right">{{ format_uang($row['branch'][$bcode]['credit'], 2) }}</td>
+                    <td align="right">{{ format_uang($row['branch'][$bcode]['balance'], 2) }}</td>
+                @endforeach
 
-        <td align="right">{{ format_uang($row['branch'][$bcode]['opening'] ?? 0,2) }}</td>
-        <td align="right">{{ format_uang($row['branch'][$bcode]['debet'] ?? 0,2) }}</td>
-        <td align="right">{{ format_uang($row['branch'][$bcode]['credit'] ?? 0,2) }}</td>
-        <td align="right">{{ format_uang($row['branch'][$bcode]['balance'] ?? 0,2) }}</td>
-
-        @endforeach
-
-        </tr>
-
+                <td align="right">{{ format_uang($row['opening'], 2) }}</td>
+                <td align="right">{{ format_uang($row['debet'], 2) }}</td>
+                <td align="right">{{ format_uang($row['credit'], 2) }}</td>
+                <td align="right">{{ format_uang($row['balance'], 2) }}</td>
+            </tr>
         @endforeach
 
         <tr>
             <td colspan="4" align="right"><b>&nbsp;</b></td>
+
+            @foreach ($data_cabang as $cab)
+                @php
+                    $cab = FieldsToObject($cab);
+                    $bcode = $cab->branch_code;
+
+                    $tot_deb += $data_sum[$bcode]['debet'];
+                    $tot_cre += $data_sum[$bcode]['credit'];
+                @endphp
+
+                <td align="right"><b></b></td>
+                <td align="right"><b>{{ format_uang($data_sum[$bcode]['debet'], 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($data_sum[$bcode]['credit'], 2) }}</b></td>
+                <td align="right"><b></b></td>
+            @endforeach
+
             <td align="right"><b></b></td>
             <td align="right"><b>{{ format_uang($tot_deb, 2) }}</b></td>
             <td align="right"><b>{{ format_uang($tot_cre, 2) }}</b></td>

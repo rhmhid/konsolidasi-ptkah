@@ -2,7 +2,7 @@
 
 class Modules
 {
-    private static $db;
+    private static $db, $db2, $db3;
 
     static $laba_periode_lalu, $laba_periode_berjalan, $akun_migrasi;
 
@@ -11,6 +11,10 @@ class Modules
     public function __construct () /*{{{*/
     {
         self::$db = app('adodb')->init();
+
+        self::$db2 = app('adodb')->init('db2');
+
+        self::$db3 = app('adodb')->init('db3');
 
         self::$laba_periode_lalu = self::$db->Getone("SELECT coaid FROM default_coa WHERE default_code = 'RETAINEDEARNING_ACCT'");
 
@@ -419,7 +423,7 @@ class Modules
         $month_use = $month > 12 ? 12 : $month;
 
         // Auto Update ledger_summary
-        self::balance_ledger_tb($year, $month, true);
+        // self::balance_ledger_tb($year, $month, true);
 
         // Cek periode_akunting Previous
         $sql = "SELECT * FROM periode_akunting WHERE DATE('$year-$month_use-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC";
@@ -432,18 +436,97 @@ class Modules
     {
         // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
-        $bid = Auth::user()->branch->bid;
-
         $month = $data['month'];
         $year = $data['year'];
         $paid = $data['paid'];
         $pbegin = $data['pbegin'];
         $pend = $data['pend'];
+        $record = [];
 
         $opbal = 'a.openingbal';
         for ($i = 1; $i < $month; $i++)
             $opbal .= ' + a.amount'.$i;
 
+        /* B: Create Temp Table */
+        DB::Execute("DROP TABLE IF EXISTS temp_laba_rugi");
+
+        $sqli = "CREATE TEMPORARY TABLE temp_laba_rugi (
+                    branch_code   VARCHAR,
+                    coatid        INT,
+                    coatype       VARCHAR(100),
+                    coaid         INT,
+                    coacode       VARCHAR(50),
+                    coaname       VARCHAR(255),
+                    default_debet BOOLEAN,
+                    mycoa         TEXT,
+                    pnid          INT,
+                    openingbal    NUMERIC(18,2) DEFAULT 0,
+                    closingbal    NUMERIC(18,2) DEFAULT 0
+                ) ON COMMIT PRESERVE ROWS";
+        DB::Execute($sqli);
+        /* E: Create Temp Table */
+
+        /* B: Get Data PT. JKK */
+        $sql = "SELECT a.coatid, UPPER(b.coatype) AS coatype, a.coaid, a.coacode, a.coaname, a.default_debet
+                    , (a.coacode || ' ' || a.coaname) AS mycoa, COALESCE(a.pnid, 0) AS pnid
+                    , (CASE WHEN a.coaid = ".self::$laba_periode_lalu." THEN ll.openingbal
+                    WHEN a.coaid = ".self::$laba_periode_berjalan." THEN lb.openingbal
+                    ELSE 0 END) AS openingbal
+                    , (CASE WHEN a.coaid = ".self::$laba_periode_lalu." THEN ll.closingbal
+                    WHEN a.coaid = ".self::$laba_periode_berjalan." THEN lb.closingbal
+                    ELSE 0 END) AS closingbal
+                    , (CASE WHEN a.coaid = ".self::$laba_periode_lalu." THEN ll.branch_code
+                    WHEN a.coaid = ".self::$laba_periode_berjalan." THEN lb.branch_code
+                    ELSE '' END) AS branch_code
+                FROM m_coa a
+                INNER JOIN m_coatype b ON b.coatid = a.coatid
+                LEFT JOIN (
+                    SELECT d.branch_code, ".self::$laba_periode_lalu." AS coaid
+                        , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN a.closingbal * -1 ELSE a.closingbal END) AS openingbal
+                        , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN a.closingbal * -1 ELSE a.closingbal END) AS closingbal
+                    FROM ledger_summary a
+                    INNER JOIN m_coa b ON b.coaid = a.coaid
+                    INNER JOIN periode_akunting c ON c.paid = a.paid
+                    INNER JOIN branch d ON d.bid = a.bid
+                    WHERE b.period_reset = 't' AND b.coatid > 3 AND c.pend < DATE('$pend')
+                    GROUP BY d.branch_code
+                ) ll ON a.coaid = ll.coaid
+                LEFT JOIN (
+                    SELECT d.branch_code, ".self::$laba_periode_berjalan." AS coaid
+                        , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN ($opbal) * -1 ELSE ($opbal) END) AS openingbal
+                        , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN ({$opbal} + a.amount{$month}) * -1 ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
+                    FROM ledger_summary a
+                    INNER JOIN m_coa b ON b.coaid = a.coaid
+                    INNER JOIN periode_akunting c ON c.paid = a.paid
+                    INNER JOIN branch d ON d.bid = a.bid
+                    WHERE b.period_reset = 't' AND b.coatid > 3 AND a.paid = $paid
+                    GROUP BY d.branch_code
+                ) lb ON a.coaid = lb.coaid
+                WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")
+                ORDER BY a.coatid, a.coacode";
+        $rs = self::$db2->Execute($sql);
+
+        while (!$rs->EOF)
+        {
+            $record[] = array(
+                'branch_code'   => $rs->fields['branch_code'],
+                'coatid'        => $rs->fields['coatid'],
+                'coatype'       => $rs->fields['coatype'],
+                'coaid'         => $rs->fields['coaid'],
+                'coacode'       => $rs->fields['coacode'],
+                'coaname'       => $rs->fields['coaname'],
+                'default_debet' => $rs->fields['default_debet'],
+                'mycoa'         => $rs->fields['mycoa'],
+                'pnid'          => $rs->fields['pnid'],
+                'openingbal'    => floatval($rs->fields['openingbal']),
+                'closingbal'    => floatval($rs->fields['closingbal']),
+            );
+
+            $rs->MoveNext();
+        }
+        /* E: Get Data PT. JKK */
+
+        /* B: Get Data PT. KAH */
         $sql = "SELECT a.coatid, UPPER(b.coatype) AS coatype, a.coaid, a.coacode, a.coaname, a.default_debet
                     , (a.coacode || ' ' || a.coaname) AS mycoa, COALESCE(a.pnid, 0) AS pnid
                     , (CASE WHEN a.coaid = ".self::$laba_periode_lalu." THEN ll.openingbal
@@ -460,7 +543,7 @@ class Modules
                         , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN a.closingbal * -1 ELSE a.closingbal END) AS closingbal
                     FROM ledger_summary a, m_coa b, periode_akunting c
                     WHERE b.coaid = a.coaid AND c.paid = a.paid AND b.period_reset = 't'
-                        AND b.coatid > 3 AND c.pend < DATE('$pend') AND a.bid = $bid
+                        AND b.coatid > 3 AND c.pend < DATE('$pend')
                 ) ll ON a.coaid = ll.coaid
                 LEFT JOIN (
                     SELECT ".self::$laba_periode_berjalan." AS coaid
@@ -468,11 +551,73 @@ class Modules
                         , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN ({$opbal} + a.amount{$month}) * -1 ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
                     FROM ledger_summary a, m_coa b, periode_akunting c
                     WHERE b.coaid = a.coaid AND c.paid = a.paid AND b.period_reset = 't'
-                        AND b.coatid > 3 AND a.paid = $paid AND a.bid = $bid
+                        AND b.coatid > 3 AND a.paid = $paid
                 ) lb ON a.coaid = lb.coaid
                 WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")
                 ORDER BY a.coatid, a.coacode";
-        $rs = self::$db->Execute($sql);
+        $rs = self::$db3->Execute($sql);
+
+        while (!$rs->EOF)
+        {
+            $record[] = array(
+                'branch_code'   => dataConfigs('default_kode_branch_kah'),
+                'coatid'        => $rs->fields['coatid'],
+                'coatype'       => $rs->fields['coatype'],
+                'coaid'         => $rs->fields['coaid'],
+                'coacode'       => $rs->fields['coacode'],
+                'coaname'       => $rs->fields['coaname'],
+                'default_debet' => $rs->fields['default_debet'],
+                'mycoa'         => $rs->fields['mycoa'],
+                'pnid'          => $rs->fields['pnid'],
+                'openingbal'    => floatval($rs->fields['openingbal']),
+                'closingbal'    => floatval($rs->fields['closingbal']),
+            );
+
+            $rs->MoveNext();
+        }
+        /* E: Get Data PT. KAH */
+
+        /* B: Insert To Temp Table */
+        $ok = true;
+        if (!empty($record))
+        {
+            foreach ($record as $idx => $row)
+            {
+                $data = array(
+                    'branch_code'   => $rs->fields['branch_code'],
+                    'coatid'        => $rs->fields['coatid'],
+                    'coatype'       => $rs->fields['coatype'],
+                    'coaid'         => $rs->fields['coaid'],
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'default_debet' => $rs->fields['default_debet'],
+                    'mycoa'         => $rs->fields['mycoa'],
+                    'pnid'          => $rs->fields['pnid'],
+                    'openingbal'    => floatval($rs->fields['openingbal']),
+                    'closingbal'    => floatval($rs->fields['closingbal']),
+                );
+
+                $sqli = "SELECT * FROM temp_laba_rugi WHERE 1 = 2";
+                $rsi = DB::Execute($sqli);
+                $sqli = DB::InsertSQL($rsi, $data);
+                if ($ok) $ok = DB::Execute($sqli);
+            }
+        }
+        /* E: Insert To Temp Table */
+
+        $sql = "SELECT b.*, tmp.branch_code, tmp.openingbal, tmp.closingbal
+                FROM temp_neraca_saldo tmp
+                INNER JOIN (
+                    SELECT br.bid, br.branch_code, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname, mc.default_debet
+                        , (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to, mc.pnid
+                    FROM m_coa mc
+                    INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
+                    LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
+                    LEFT JOIN branch br ON mcb.bid = br.bid
+                    WHERE mc.allow_post = 't'
+                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to";
+        $rs = DB::Execute($sql);
+        /* E: Showing Data From Temp Table */
 
         return $rs;
     } /*}}}*/
