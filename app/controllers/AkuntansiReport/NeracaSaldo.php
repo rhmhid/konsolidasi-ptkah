@@ -31,7 +31,15 @@ class NeracaSaldo extends BaseController
             'status_coa'    => get_var('status_coa'),
         );
 
-        $data_cabang = Modules::data_cabang_all($data['status_cabang']);
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang']);
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         $empty_tb = true;
         $data_tb = [];
@@ -51,22 +59,25 @@ class NeracaSaldo extends BaseController
             $data_db = array();
             while (!$rs->EOF)
             {
-                $data_db[$rs->fields['coacode']] = array(
-                    'branch_code'   => $rs->fields['branch_code'],
-                    'coaid'         => $rs->fields['coaid'],
-                    'coaname'       => $rs->fields['coaname'],
-                    'default_debet' => $rs->fields['default_debet'],
-                    'openingbal'    => floatval($rs->fields['openingbal']),
-                    'debet'         => floatval($rs->fields['debet']),
-                    'credit'        => floatval($rs->fields['credit']),
-                    'closingbal'    => floatval($rs->fields['closingbal']),
-                );
+                $coacode = $rs->fields['coacode'];
+
+                if (!isset($data_db[$coacode]))
+                {
+                    $data_db[$coacode] = array(
+                        'coaid'         => $rs->fields['coaid'],
+                        'coaname'       => $rs->fields['coaname'],
+                        'default_debet' => $rs->fields['default_debet']
+                    );
+                }
+
+                $data_db[$coacode]['branch'][$rs->fields['branch_code']] = [
+                    'openingbal' => floatval($rs->fields['openingbal']),
+                    'debet'      => floatval($rs->fields['debet']),
+                    'credit'     => floatval($rs->fields['credit']),
+                ];
 
                 $rs->MoveNext();
             }
-
-            myprint_r($data_db);
-            // die();
 
             // $rss = Modules::laba_rugi($data);
             // $coaid_laba_periode_lalu = Modules::$laba_periode_lalu;
@@ -92,7 +103,7 @@ class NeracaSaldo extends BaseController
             // ORDER BY lagi
             ksort($data_db);
 
-            if (!empty($data_db))
+            /*if (!empty($data_db))
             {
                 $no = 1;
                 $empty_tb = false;
@@ -115,6 +126,46 @@ class NeracaSaldo extends BaseController
 
                     $tot_deb += $tmp['debet'];
                     $tot_cre += $tmp['credit'];
+                }
+            }*/
+
+            if (!empty($data_db))
+            {
+                $no = 1;
+                $empty_tb = false;
+
+                foreach ($data_db as $coacode => $tmp)
+                {
+
+                    $row = [
+                        'no'      => $no++,
+                        'coaid'   => $tmp['coaid'],
+                        'coacode' => $coacode,
+                        'coaname' => $tmp['coaname'],
+                        'posisi'  => $tmp['default_debet'] == 't' ? 'Dr' : 'Cr',
+                        'branch'  => []
+                    ];
+
+                    foreach ($tmp['branch'] as $branch_code => $b)
+                    {
+                        $balance = $tmp['default_debet'] == 't'
+                            ? ($b['debet'] - $b['credit'])
+                            : ($b['credit'] - $b['debet']);
+
+                        $balance += $b['openingbal'];
+
+                        $row['branch'][$branch_code] = [
+                            'opening' => $b['openingbal'],
+                            'debet'   => $b['debet'],
+                            'credit'  => $b['credit'],
+                            'balance' => $balance
+                        ];
+
+                        $tot_deb += $b['debet'];
+                        $tot_cre += $b['credit'];
+                    }
+
+                    $data_tb[] = $row;
                 }
             }
         }

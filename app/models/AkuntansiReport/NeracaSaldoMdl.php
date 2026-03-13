@@ -11,7 +11,7 @@ class NeracaSaldoMdl extends DB
 
     public static function list ($data) /*{{{*/
     {
-        if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
         $month = $data['month'];
         $year = $data['year'];
@@ -49,17 +49,19 @@ class NeracaSaldoMdl extends DB
                 INNER JOIN m_coa b ON b.coaid = a.coaid
                 INNER JOIN m_coatype c ON c.coatid = b.coatid
                 INNER JOIN periode_akunting d ON d.paid = a.paid
-                INNER JOIN branch e ON e.bid = e.bid
+                INNER JOIN branch e ON e.bid = a.bid
                 WHERE d.pend = (
                         SELECT MAX(d.pend)
                         FROM ledger_summary e, periode_akunting d
                         WHERE d.paid = e.paid AND e.coaid = a.coaid AND d.pend <= DATE('{$pend}')
                     )";
         $rs = DB2::Execute($sql);
+        // myprint_r($sql);
 
         $ok = true;
         while (!$rs->EOF)
         {
+            // myprint_r($rs->fields);
             $record = array(
                 'branch_code'   => $rs->fields['branch_code'],
                 'coaid'         => $rs->fields['coaid'],
@@ -82,8 +84,17 @@ class NeracaSaldoMdl extends DB
             $rs->MoveNext();
         }
 
-        $sql = "SELECT tmp.*
+        $sql = "SELECT tmp.*, b.*
                 FROM temp_neraca_saldo tmp
+                INNER JOIN (
+                    SELECT br.bid, br.branch_code, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname, mc.default_debet
+                        , (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to
+                    FROM m_coa mc
+                    INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
+                    LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
+                    LEFT JOIN branch br ON mcb.bid = br.bid
+                    WHERE mc.allow_post = 't'
+                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
                 ORDER BY tmp.coacode";
         $rs = DB::Execute($sql);
 

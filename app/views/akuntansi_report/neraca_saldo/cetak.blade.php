@@ -98,22 +98,29 @@
     </thead>
     <tbody>
         @foreach ($data_tb as $row)
-            @php
-                $row = FieldsToObject($row);
-            @endphp
 
-            <tr>
-                <td align="center">{{ $row->no }}</td>
-                <td align="center">{{ $row->coacode }}</td>
-                <td>
-                    <a href="javascript:void(0)" onclick="BukuBesar('{{ $row->coaid }}');">{{ $row->coaname }}</a>
-                </td>
-                <td align="center">{{ $row->posisi }}</td>
-                <td align="right">{{ format_uang($row->opening, 2) }}</td>
-                <td align="right">{{ format_uang($row->debet, 2) }}</td>
-                <td align="right">{{ format_uang($row->credit, 2) }}</td>
-                <td align="right">{{ format_uang($row->balance, 2) }}</td>
-            </tr>
+        <tr>
+        <td align="center">{{ $row['no'] }}</td>
+        <td align="center">{{ $row['coacode'] }}</td>
+        <td>{{ $row['coaname'] }}</td>
+        <td align="center">{{ $row['posisi'] }}</td>
+
+        @foreach ($data_cabang as $cab)
+
+        @php
+        $cab = FieldsToObject($cab);
+        $bcode = $cab->branch_code;
+        @endphp
+
+        <td align="right">{{ format_uang($row['branch'][$bcode]['opening'] ?? 0,2) }}</td>
+        <td align="right">{{ format_uang($row['branch'][$bcode]['debet'] ?? 0,2) }}</td>
+        <td align="right">{{ format_uang($row['branch'][$bcode]['credit'] ?? 0,2) }}</td>
+        <td align="right">{{ format_uang($row['branch'][$bcode]['balance'] ?? 0,2) }}</td>
+
+        @endforeach
+
+        </tr>
+
         @endforeach
 
         <tr>
