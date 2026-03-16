@@ -16,7 +16,7 @@ class DaftarJurnal extends BaseController
         $data_tipe_jurnal = Modules::data_tipe_jurnal();
         $cmb_tipe_jurnal = $data_tipe_jurnal->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sJtid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
-        $data_cabang = Modules::data_cabang();
+        $data_cabang = Modules::data_cabang_all();
         $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sBid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
         $data_posted = Modules::data_posted();
