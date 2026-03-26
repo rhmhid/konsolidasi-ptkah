@@ -13,11 +13,14 @@ class NeracaSaldoMdl extends DB
     {
         // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
+        $bid = $data['bid'];
         $month = $data['month'];
         $year = $data['year'];
         $paid = $data['paid'];
         $pbegin = $data['pbegin'];
         $pend = $data['pend'];
+        $status_cabang = $data['status_cabang'];
+        $status_coa = $data['status_coa'];
         $record = [];
 
         $opbal = 'a.openingbal';
@@ -38,8 +41,7 @@ class NeracaSaldoMdl extends DB
                     openingbal    NUMERIC(18,2) DEFAULT 0,
                     debet         NUMERIC(18,2) DEFAULT 0,
                     credit        NUMERIC(18,2) DEFAULT 0,
-                    closingbal    NUMERIC(18,2) DEFAULT 0,
-                    mycoa         TEXT
+                    closingbal    NUMERIC(18,2) DEFAULT 0
                 ) ON COMMIT PRESERVE ROWS";
         DB::Execute($sqli);
         /* E: Create Temp Table */

@@ -1160,15 +1160,36 @@ class Modules
         return $rs->fields;
     } /*}}}*/
 
-    public static function data_cabang_all ($is_aktif = '') /*{{{*/
+    public static function data_cabang_all ($is_aktif = '', $opsi_all = 't') /*{{{*/
     {
         // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
 
-        $addsql = "";
+        $addsql = $sql_opsi = "";
 
         if ($is_aktif) $addsql .= " AND is_aktif = '$is_aktif'";
 
-        $sql = "SELECT branch_name, bid AS id, branch_code FROM branch WHERE 1 = 1 $is_aktif ORDER BY is_primary DESC, branch_name";
+        if ($opsi_all == 'f') $sql_opsi .= " AND aa.idx = 4";
+
+        $sql = "SELECT aa.branch_name, aa.id, aa.branch_code, aa.is_primary, aa.idx
+                FROM (
+                    SELECT branch_name, bid AS id, branch_code, is_primary, 4 AS idx
+                    FROM branch
+                    WHERE 1 = 1 $addsql
+
+                    UNION ALL
+
+                    SELECT 'All Summary ( RSJK, PT. KAH, PT. JKK)' AS branch_name, -1 AS id, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx
+
+                    UNION ALL
+
+                    SELECT 'All Summary ( PT. KAH )' AS branch_name, -2 AS id, 'ALL_KAH' AS branch_code, 't' AS is_primary, 2 AS idx
+
+                    UNION ALL
+
+                    SELECT 'All Summary ( PT. JKK )' AS branch_name, -3 AS id, 'ALL_JKK' AS branch_code, 't' AS is_primary, 3 AS idx
+                ) aa
+                WHERE 1 = 1 $sql_opsi
+                ORDER BY aa.idx, aa.is_primary DESC, aa.branch_name";
         $rs = self::$db->Execute($sql);
 
         return $rs;

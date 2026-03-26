@@ -150,8 +150,11 @@
         const $form = $('#form-tb')
 
         return {
+            bid: $form.find('[id="s-Bid"]').val(),
             month: $form.find('[id="s-Month"]').val(),
             year: $form.find('[id="s-Year"]').val(),
+            status_cabang: $form.find('input[name="status_cabang"]:checked').val(),
+            status_coa: $form.find('input[name="status_coa"]:checked').val()
         }
     }
 
