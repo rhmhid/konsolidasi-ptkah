@@ -23,6 +23,49 @@
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
                         <div class="row g-0 gx-4 mb-5">
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
+                                {!! $cmb_cabang !!}
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status Cabang</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status C.O.A</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_coa" id="status_coa_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_coa" id="status_coa_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_coa" id="status_coa_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-0 gx-4 mb-5">
                             <div class="col-lg-3">
                                 <label class="text-dark fw-bold fs-7 pb-2">Jenis Laporan</label>
                                 <select class="form-select form-select-sm rounded-1 w-100" id="s-Tipe" data-control="select2" required="">
@@ -79,9 +122,12 @@
         e.preventDefault() // batalkan aksi form submit
 
         const $form = $('#form-bs')
+        const $sBid = $form.find('[id="s-Bid"]').val()
         const $sTipe = $form.find('[id="s-Tipe"] option:selected').val()
         const $sMonth = $form.find('[id="s-Month"]').val()
         const $sYear = $form.find('[id="s-Year"]').val()
+        const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
+        const $statusCoa = $form.find('input[name="status_coa"]:checked').val()
 
         if ($sTipe == '')
         {
@@ -104,8 +150,11 @@
             return false
         }
 
-        let $param = 'month=' + $sMonth
+        var $param = 'bid=' + $sBid
+            $param += '&month=' + $sMonth
             $param += '&year=' + $sYear
+            $param += '&status_cabang=' + $statusCabang
+            $param += '&status_coa=' + $statusCoa
 
         let $link = "{{ route('akuntansi_report.neraca.cetak', ['mytipe' => ':mytipe']) }}"
             $link = $link.replace(':mytipe', $sTipe)
@@ -119,8 +168,11 @@
         const $form = $('#form-bs')
 
         return {
+            bid: $form.find('[id="s-Bid"]').val(),
             month: $form.find('[id="s-Month"]').val(),
             year: $form.find('[id="s-Year"]').val(),
+            status_cabang: $form.find('input[name="status_cabang"]:checked').val(),
+            status_coa: $form.find('input[name="status_coa"]:checked').val()
         }
     }
 

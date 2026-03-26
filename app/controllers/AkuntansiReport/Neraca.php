@@ -13,18 +13,36 @@ class Neraca extends BaseController
 
     public function list () /*{{{*/
     {
-        return view('akuntansi_report.neraca.list');
+        $data_cabang = Modules::data_cabang_all();
+        $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Cabang..."');
+
+        return view('akuntansi_report.neraca.list', compact(
+            'cmb_cabang'
+        ));
     } /*}}}*/
 
     public function cetak ($mytipe) /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
         );
 
-        if ($mytipe == 'bs-new') return self::cetak_baru($data);
-        elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
+        // if ($mytipe == 'bs-new') return self::cetak_baru($data);
+        // elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         $data_db = $data_bs = [];
         $empty_asset = $empty_libility = $empty_equity = true;
@@ -42,6 +60,7 @@ class Neraca extends BaseController
             while (!$rs->EOF)
             {
                 $tmpdata = array();
+                $tmpdata['branch_code']     = $rs->fields['branch_code'];
                 $tmpdata['coacode']         = $rs->fields['coacode'];
                 $tmpdata['coaname']         = $rs->fields['coaname'];
                 $tmpdata['default_debet']   = $rs->fields['default_debet'];
@@ -59,6 +78,7 @@ class Neraca extends BaseController
             while (!$rss->EOF)
             {
                 $tmpdata = array();
+                $tmpdata['branch_code']     = $rss->fields['branch_code'];
                 $tmpdata['coacode']         = $rss->fields['coacode'];
                 $tmpdata['coaname']         = $rss->fields['coaname'];
                 $tmpdata['default_debet']   = $rss->fields['default_debet'];
@@ -120,6 +140,7 @@ class Neraca extends BaseController
         else $report_month = $data['month'].'-'.$data['year'];
 
         return view('akuntansi_report.neraca.cetak', compact(
+            'data_cabang',
             'data',
             'period',
             'report_month',

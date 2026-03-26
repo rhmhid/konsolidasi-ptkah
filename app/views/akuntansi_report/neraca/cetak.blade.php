@@ -46,131 +46,64 @@
     <span style="text-transform: uppercase;">Report Month : {{ $report_month }}</span>
 </h2>
 
-<div id="ftr" class="tp2">
-    <div class="wpr">
-        <table width="99%" class="bdr2 pad">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Coacode</th>
-                    <th>Coaname</th>
-                    <th>Dr / Cr Position</th>
-                    <th>Openning Balance</th>
-                    <th>Closing Balance</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="5"><b>ASSET</b></td>
-                </tr>
+@php
+    $jml_bid = 1;
+@endphp
 
-                @if (!$empty_asset)
-                    @foreach ($data_bs[1] as $row)
-                        @php
-                            $row = FieldsToObject($row);
-                        @endphp
+<table width="100%" class="bdr2 pad">
+    <thead>
+        <tr>
+            <th rowspan="2">No</th>
+            <th rowspan="2">Coacode</th>
+            <th rowspan="2">Coaname</th>
+            <th rowspan="2">Dr / Cr Position</th>
 
-                        <tr>
-                            <td align="center">{{ $row->nomor }}</td>
-                            <td align="center">{{ $row->coacode }}</td>
-                            <td>{{ $row->coaname }}</td>
-                            <td align="center">{{ $row->posisi }}</td>
-                            <td align="right">{{ format_uang($row->opbal, 2) }}</td>
-                            <td align="right">{{ format_uang($row->closbal, 2) }}</td>
-                        </tr>
-                    @endforeach
-                @endif
+            @foreach ($data_cabang as $head)
+                @php
+                    $head = FieldsToObject($head);
+                    $jml_bid++;
+                @endphp
 
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4"><b>TOTAL ASSET</b></td>
-                    <td align="right"><b>{{ format_uang($tot_asset, 2) }}</b></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                <th colspan="2">{{ $head->branch_name }}</th>
+            @endforeach
 
-    <div class="wpr">
-        <table width="99%" class="bdr2 pad">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Coacode</th>
-                    <th>Coaname</th>
-                    <th>Dr / Cr Position</th>
-                    <th>Openning Balance</th>
-                    <th>Closing Balance</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="5"><b>LIABILITY</b></td>
-                </tr>
+            <th colspan="2">Total</th>
+        </tr>
+        <tr>
+            @for ($idx = 1; $idx <= $jml_bid; $idx++)
+                <th>Openning Balance</th>
+                <th>Closing Balance</th>
+            @endfor
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>&nbsp;</td>
+            <td colspan="5"><b>ASSET</b></td>
+        </tr>
 
-                @if (!$empty_libility)
-                    @foreach ($data_bs[2] as $row)
-                        @php
-                            $row = FieldsToObject($row);
-                        @endphp
-
-                        <tr>
-                            <td align="center">{{ $row->nomor }}</td>
-                            <td align="center">{{ $row->coacode }}</td>
-                            <td>{{ $row->coaname }}</td>
-                            <td align="center">{{ $row->posisi }}</td>
-                            <td align="right">{{ format_uang($row->opbal, 2) }}</td>
-                            <td align="right">{{ format_uang($row->closbal, 2) }}</td>
-                        </tr>
-                    @endforeach
-                @endif
+        @if (!$empty_asset)
+            @foreach ($data_bs[1] as $row)
+                @php
+                    $row = FieldsToObject($row);
+                @endphp
 
                 <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4"><b>TOTAL LIABILITY</b></td>
-                    <td align="right"><b>{{ format_uang($tot_libility, 2) }}</b></td>
+                    <td align="center">{{ $row->nomor }}</td>
+                    <td align="center">{{ $row->coacode }}</td>
+                    <td>{{ $row->coaname }}</td>
+                    <td align="center">{{ $row->posisi }}</td>
+                    <td align="right">{{ format_uang($row->opbal, 2) }}</td>
+                    <td align="right">{{ format_uang($row->closbal, 2) }}</td>
                 </tr>
-                <tr>
-                    <td colspan="6">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="5"><b>EQUITY</b></td>
-                </tr>
-                
-                @if (!$empty_equity)
-                    @foreach ($data_bs[3] as $row)
-                        @php
-                            $row = FieldsToObject($row);
-                        @endphp
+            @endforeach
+        @endif
 
-                        <tr>
-                            <td align="center">{{ $row->nomor }}</td>
-                            <td align="center">{{ $row->coacode }}</td>
-                            <td>{{ $row->coaname }}</td>
-                            <td align="center">{{ $row->posisi }}</td>
-                            <td align="right">{{ format_uang($row->opbal, 2) }}</td>
-                            <td align="right">{{ format_uang($row->closbal, 2) }}</td>
-                        </tr>
-                    @endforeach
-                @endif
-
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4"><b>TOTAL EQUITY</b></td>
-                    <td align="right"><b>{{ format_uang($tot_equity, 2) }}</b></td>
-                </tr>
-                <tr>
-                    <td colspan="6">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td colspan="4"><b>TOTAL LIABILITY + EQUITY</b></td>
-                    <td align="right"><b>{{ format_uang($tot_libility_equity, 2) }}</b></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+        <tr>
+            <td>&nbsp;</td>
+            <td colspan="4"><b>TOTAL ASSET</b></td>
+            <td align="right"><b>{{ format_uang($tot_asset, 2) }}</b></td>
+        </tr>
+    </tbody>
+</table>
 @endsection
