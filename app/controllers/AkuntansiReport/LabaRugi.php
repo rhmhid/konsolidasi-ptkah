@@ -40,7 +40,7 @@ class LabaRugi extends BaseController
         // elseif ($mytipe == 'pl-new-detail') return self::cetak_baru_detail($mytipe, $data);
         // elseif ($mytipe == 'pl-new-detail-daily') return self::cetak_baru_detail_daily($mytipe, $data);
 
-        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], 'f');
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
         $data_cabang = [];
         while (!$rs_cabang->EOF)
