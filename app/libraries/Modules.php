@@ -504,7 +504,7 @@ class Modules
                 ) lb ON a.coaid = lb.coaid
                 WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")
                 ORDER BY a.coatid, a.coacode";
-        $rs = self::$db2->Execute($sql);
+        $rs = DB2::Execute($sql);
 
         while (!$rs->EOF)
         {
@@ -555,7 +555,7 @@ class Modules
                 ) lb ON a.coaid = lb.coaid
                 WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")
                 ORDER BY a.coatid, a.coacode";
-        $rs = self::$db3->Execute($sql);
+        $rs = DB3::Execute($sql);
 
         while (!$rs->EOF)
         {
@@ -584,17 +584,17 @@ class Modules
             foreach ($record as $idx => $row)
             {
                 $data = array(
-                    'branch_code'   => $rs->fields['branch_code'],
-                    'coatid'        => $rs->fields['coatid'],
-                    'coatype'       => $rs->fields['coatype'],
-                    'coaid'         => $rs->fields['coaid'],
-                    'coacode'       => $rs->fields['coacode'],
-                    'coaname'       => $rs->fields['coaname'],
-                    'default_debet' => $rs->fields['default_debet'],
-                    'mycoa'         => $rs->fields['mycoa'],
-                    'pnid'          => $rs->fields['pnid'],
-                    'openingbal'    => floatval($rs->fields['openingbal']),
-                    'closingbal'    => floatval($rs->fields['closingbal']),
+                    'branch_code'   => $row['branch_code'],
+                    'coatid'        => $row['coatid'],
+                    'coatype'       => $row['coatype'],
+                    'coaid'         => $row['coaid'],
+                    'coacode'       => $row['coacode'],
+                    'coaname'       => $row['coaname'],
+                    'default_debet' => $row['default_debet'],
+                    'mycoa'         => $row['mycoa'],
+                    'pnid'          => $row['pnid'],
+                    'openingbal'    => floatval($row['openingbal']),
+                    'closingbal'    => floatval($row['closingbal']),
                 );
 
                 $sqli = "SELECT * FROM temp_laba_rugi WHERE 1 = 2";
@@ -606,7 +606,7 @@ class Modules
         /* E: Insert To Temp Table */
 
         $sql = "SELECT b.*, tmp.branch_code, tmp.openingbal, tmp.closingbal
-                FROM temp_neraca_saldo tmp
+                FROM temp_laba_rugi tmp
                 INNER JOIN (
                     SELECT br.bid, br.branch_code, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname, mc.default_debet
                         , (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to, mc.pnid
