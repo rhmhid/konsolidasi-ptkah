@@ -86,7 +86,7 @@ class NeracaMdl extends DB
         /* E: Get Data PT. JKK */
 
         /* B: Get Data PT. KAH */
-        $sql = "SELECT e.branch_code, c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
+        $sql = "SELECT c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
                     , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
                         0
                     ELSE
@@ -97,13 +97,12 @@ class NeracaMdl extends DB
                 INNER JOIN m_coa b ON b.coaid = a.coaid
                 INNER JOIN m_coatype c ON c.coatid = b.coatid
                 INNER JOIN periode_akunting d ON d.paid = a.paid
-                INNER JOIN branch e ON e.bid = a.bid
                 LEFT JOIN pos_neraca f ON b.pnid = f.pnid
                 WHERE d.pend = (SELECT MAX(d.pend)
                         FROM ledger_summary e, periode_akunting d
                         WHERE d.paid = e.paid AND e.coaid = a.coaid AND d.pend <= DATE('{$pend}'))
                     AND b.coatid <= 3";
-        $rs = DB2::Execute($sql);
+        $rs = DB3::Execute($sql);
 
         while (!$rs->EOF)
         {
@@ -150,6 +149,8 @@ class NeracaMdl extends DB
             }
         }
         /* E: Insert To Temp Table */
+
+        if ($bid) $addsql .= " AND br.bid = ".$bid;
 
         if ($status_cabang) $addsql .= " AND br.is_aktif = '$status_cabang'";
 

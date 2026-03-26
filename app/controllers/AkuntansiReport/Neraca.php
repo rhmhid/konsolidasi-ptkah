@@ -34,7 +34,7 @@ class Neraca extends BaseController
         // if ($mytipe == 'bs-new') return self::cetak_baru($data);
         // elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
 
-        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], 'f');
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
         $data_cabang = [];
         while (!$rs_cabang->EOF)
@@ -59,16 +59,25 @@ class Neraca extends BaseController
 
             while (!$rs->EOF)
             {
-                $tmpdata = array();
-                $tmpdata['branch_code']     = $rs->fields['branch_code'];
-                $tmpdata['coacode']         = $rs->fields['coacode'];
-                $tmpdata['coaname']         = $rs->fields['coaname'];
-                $tmpdata['default_debet']   = $rs->fields['default_debet'];
-                $tmpdata['openingbal']      = floatval($rs->fields['openingbal']);
-                $tmpdata['closingbal']      = floatval($rs->fields['closingbal']);
+                $coatid      = $rs->fields['coatid'];
+                $coaid       = $rs->fields['coaid'];
+                $branch_code = $rs->fields['branch_code'];
 
-                $data_db[$rs->fields['coatid']]['coatype']                      = $rs->fields['coatype'];
-                $data_db[$rs->fields['coatid']]['data'][$rs->fields['coaid']]   = $tmpdata;
+                $data_db[$coatid]['coatype'] = $rs->fields['coatype'];
+
+                if (!isset($data_db[$coatid]['data'][$coaid]))
+                {
+                    $data_db[$coatid]['data'][$coaid] = [
+                        'coacode'       => $rs->fields['coacode'],
+                        'coaname'       => $rs->fields['coaname'],
+                        'default_debet' => $rs->fields['default_debet']
+                    ];
+                }
+
+                $data_db[$coatid]['data'][$coaid]['branch'][$branch_code] = [
+                    'openingbal' => floatval($rs->fields['openingbal']),
+                    'closingbal' => floatval($rs->fields['closingbal'])
+                ];
 
                 $rs->MoveNext();
             }
@@ -77,56 +86,86 @@ class Neraca extends BaseController
 
             while (!$rss->EOF)
             {
-                $tmpdata = array();
-                $tmpdata['branch_code']     = $rss->fields['branch_code'];
-                $tmpdata['coacode']         = $rss->fields['coacode'];
-                $tmpdata['coaname']         = $rss->fields['coaname'];
-                $tmpdata['default_debet']   = $rss->fields['default_debet'];
-                $tmpdata['openingbal']      = $data_db[3]['data'][$rss->fields['coaid']]['openingbal'] + floatval($rss->fields['openingbal']);
-                $tmpdata['closingbal']      = $data_db[3]['data'][$rss->fields['coaid']]['closingbal'] + floatval($rss->fields['closingbal']);
+                $coatid      = $rss->fields['coatid'];
+                $coaid       = $rss->fields['coaid'];
+                $branch_code = $rss->fields['branch_code'];
 
-                $data_db[$rss->fields['coatid']]['coatype']                     = $rss->fields['coatype'];
-                $data_db[$rss->fields['coatid']]['data'][$rss->fields['coaid']] = $tmpdata;
+                $data_db[$coatid]['coatype'] = $rss->fields['coatype'];
+
+                if (!isset($data_db[$coatid]['data'][$coaid]))
+                {
+                    $data_db[$coatid]['data'][$coaid] = [
+                        'coacode'       => $rss->fields['coacode'],
+                        'coaname'       => $rss->fields['coaname'],
+                        'default_debet' => $rss->fields['default_debet']
+                    ];
+                }
+
+                $data_db[$coatid]['data'][$coaid]['branch'][$branch_code] = [
+                    'openingbal' => $data_db[3]['data'][$rss->fields['coaid']]['branch'][$branch_code]['openingbal'] + floatval($rss->fields['openingbal']),
+                    'closingbal' => $data_db[3]['data'][$rss->fields['coaid']]['branch'][$branch_code]['closingbal'] + floatval($rss->fields['closingbal'])
+                ];
 
                 $rss->MoveNext();
             }
 
             if (!empty($data_db))
             {
+                $tot_asset = $tot_libility = $tot_equity = [];
+
+                foreach ($data_cabang as $bc => $info)
+                {
+                    $tot_asset[$bc] = 0;
+                    $tot_libility[$bc] = 0;
+                    $tot_equity[$bc] = 0;
+                }
+
                 foreach ($data_db as $coatid => $tmp)
                 {
                     $nomor = 1;
 
                     foreach ($tmp['data'] as $k => $val)
                     {
-                        $data_bs[$coatid][] = array(
+                        $coacode = $val['coacode'];
+
+                        $data_bs[$coatid][$coacode] = array(
                             'nomor'     => $nomor++,
                             'coacode'   => $val['coacode'],
                             'coaname'   => $val['coaname'],
                             'posisi'    => $val['default_debet'] == 't' ? 'Dr' : 'Cr',
-                            'opbal'     => $val['openingbal'],
-                            'closbal'   => $val['closingbal'],
+                            'branch'    => array()
                         );
 
-                        if ($coatid == 1)
+                        foreach ($data_cabang as $branch_code => $cabang_info)
                         {
-                            $empty_asset = false;
+                            $opbal   = isset($val['branch'][$branch_code]) ? floatval($val['branch'][$branch_code]['openingbal']) : 0;
+                            $closbal = isset($val['branch'][$branch_code]) ? floatval($val['branch'][$branch_code]['closingbal']) : 0;
 
-                            // special untuk acc. akumulasi penyusutan, asset tapi default credet
-                            if ($val['default_debet'] == 'f') $tot_asset -= $val['closingbal'];
-                            else $tot_asset += $val['closingbal'];
-                        }
+                            $data_bs[$coatid][$coacode]['branch'][$branch_code] = array(
+                                'opbal'   => $opbal,
+                                'closbal' => $closbal
+                            );
 
-                        if ($coatid == 2)
-                        {
-                            $empty_libility = false;
-                            $tot_libility += $val['closingbal'];
-                        }
+                            if ($coatid == 1)
+                            {
+                                $empty_asset = false;
 
-                        if ($coatid == 3)
-                        {
-                            $empty_equity = false;
-                            $tot_equity += $val['closingbal'];
+                                // special untuk acc. akumulasi penyusutan, asset tapi default credet
+                                if ($val['default_debet'] == 'f') $tot_asset[$branch_code] -= $closbal;
+                                else $tot_asset[$branch_code] += $closbal;
+                            }
+
+                            if ($coatid == 2)
+                            {
+                                $empty_libility = false;
+                                $tot_libility[$branch_code] += $closbal;
+                            }
+
+                            if ($coatid == 3)
+                            {
+                                $empty_equity = false;
+                                $tot_equity[$branch_code] += $closbal;
+                            }
                         }
                     }
                 }
@@ -134,7 +173,16 @@ class Neraca extends BaseController
         }
 
         $period = $rs->UserDate($data['pbegin'], 'M Y') .' - '.$rs->UserDate($data['pend'], 'M Y');
-        $tot_libility_equity = $tot_libility + $tot_equity;
+        
+        $tot_libility_equity = [];
+
+        foreach ($data_cabang as $branch_code => $cabang_info)
+        {
+            $lib = isset($tot_libility[$branch_code]) ? $tot_libility[$branch_code] : 0;
+            $eq  = isset($tot_equity[$branch_code]) ? $tot_equity[$branch_code] : 0;
+
+            $tot_libility_equity[$branch_code] = $lib + $eq;
+        }
 
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
         else $report_month = $data['month'].'-'.$data['year'];
