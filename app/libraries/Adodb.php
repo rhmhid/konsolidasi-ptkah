@@ -30,7 +30,6 @@ class Adodb
 
 	public function init ($group = 'default')
 	{
-
 	    $prefix = $group === 'default' ? 'DB_' : strtoupper($group).'_';
 	    $hostname = env($prefix . 'HOSTNAME');
 	    $username = env($prefix . 'USERNAME');
