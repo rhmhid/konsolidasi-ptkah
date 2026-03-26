@@ -434,7 +434,7 @@ class Modules
 
     public static function laba_rugi ($data) /*{{{*/
     {
-        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+        // if (Auth::user()->pid == SUPER_USER) DB2::Debug(true);
 
         $month = $data['month'];
         $year = $data['year'];
@@ -499,11 +499,11 @@ class Modules
                     INNER JOIN m_coa b ON b.coaid = a.coaid
                     INNER JOIN periode_akunting c ON c.paid = a.paid
                     INNER JOIN branch d ON d.bid = a.bid
-                    WHERE b.period_reset = 't' AND b.coatid > 3 AND a.paid = $paid
+                    WHERE b.period_reset = 't' AND b.coatid > 3 -- AND a.paid = $paid
+                        AND a.paid = (SELECT MAX(a.paid) FROM periode_akunting a WHERE '$year-$month-01' BETWEEN a.pbegin AND a.pend)
                     GROUP BY d.branch_code
                 ) lb ON a.coaid = lb.coaid
-                WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")
-                ORDER BY a.coatid, a.coacode";
+                WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")";
         $rs = DB2::Execute($sql);
 
         while (!$rs->EOF)
@@ -541,20 +541,22 @@ class Modules
                     SELECT ".self::$laba_periode_lalu." AS coaid
                         , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN a.closingbal * -1 ELSE a.closingbal END) AS openingbal
                         , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN a.closingbal * -1 ELSE a.closingbal END) AS closingbal
-                    FROM ledger_summary a, m_coa b, periode_akunting c
-                    WHERE b.coaid = a.coaid AND c.paid = a.paid AND b.period_reset = 't'
-                        AND b.coatid > 3 AND c.pend < DATE('$pend')
+                    FROM ledger_summary a
+                    INNER JOIN m_coa b ON b.coaid = a.coaid
+                    INNER JOIN periode_akunting c ON c.paid = a.paid
+                    WHERE b.period_reset = 't' AND b.coatid > 3 AND c.pend < DATE('$pend')
                 ) ll ON a.coaid = ll.coaid
                 LEFT JOIN (
                     SELECT ".self::$laba_periode_berjalan." AS coaid
                         , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN ($opbal) * -1 ELSE ($opbal) END) AS openingbal
                         , SUM(CASE WHEN b.coatid = 5 AND b.default_debet = 't' THEN ({$opbal} + a.amount{$month}) * -1 ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
-                    FROM ledger_summary a, m_coa b, periode_akunting c
-                    WHERE b.coaid = a.coaid AND c.paid = a.paid AND b.period_reset = 't'
-                        AND b.coatid > 3 AND a.paid = $paid
+                    FROM ledger_summary a
+                    INNER JOIN m_coa b ON b.coaid = a.coaid
+                    INNER JOIN periode_akunting c ON c.paid = a.paid
+                    WHERE b.period_reset = 't' AND b.coatid > 3 -- AND a.paid = $paid
+                        AND a.paid = (SELECT MAX(a.paid) FROM periode_akunting a WHERE '$year-$month-01' BETWEEN a.pbegin AND a.pend)
                 ) lb ON a.coaid = lb.coaid
-                WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")
-                ORDER BY a.coatid, a.coacode";
+                WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")";
         $rs = DB3::Execute($sql);
 
         while (!$rs->EOF)
@@ -615,7 +617,8 @@ class Modules
                     LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
                     LEFT JOIN branch br ON mcb.bid = br.bid
                     WHERE mc.allow_post = 't'
-                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to";
+                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
+                ORDER BY b.coatid, b.coacode";
         $rs = DB::Execute($sql);
         /* E: Showing Data From Temp Table */
 
@@ -1160,15 +1163,17 @@ class Modules
         return $rs->fields;
     } /*}}}*/
 
-    public static function data_cabang_all ($is_aktif = '', $opsi_all = 't') /*{{{*/
+    public static function data_cabang_all ($is_aktif = '', $bid = '',  $opsi_all = 't') /*{{{*/
     {
         // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
 
-        $addsql = $sql_opsi = "";
+        $addsql = $addsql2 = "";
 
         if ($is_aktif) $addsql .= " AND is_aktif = '$is_aktif'";
 
-        if ($opsi_all == 'f') $sql_opsi .= " AND aa.idx = 4";
+        if ($bid) $addsql2 .= " AND aa.id = ".$bid;
+
+        if ($opsi_all == 'f') $addsql2 .= " AND aa.idx = 4";
 
         $sql = "SELECT aa.branch_name, aa.id, aa.branch_code, aa.is_primary, aa.idx
                 FROM (
@@ -1188,7 +1193,7 @@ class Modules
 
                     SELECT 'All Summary ( PT. JKK )' AS branch_name, -3 AS id, 'ALL_JKK' AS branch_code, 't' AS is_primary, 3 AS idx
                 ) aa
-                WHERE 1 = 1 $sql_opsi
+                WHERE 1 = 1 $addsql2
                 ORDER BY aa.idx, aa.is_primary DESC, aa.branch_name";
         $rs = self::$db->Execute($sql);
 
