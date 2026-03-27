@@ -47,6 +47,8 @@ class NeracaMdl extends DB
         /* E: Create Temp Table */
 
         /* B: Get Data PT. JKK */
+        $paid = DB2::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
+
         $sql = "SELECT e.branch_code, c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
                     , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
                         0
@@ -62,7 +64,7 @@ class NeracaMdl extends DB
                 LEFT JOIN pos_neraca f ON b.pnid = f.pnid
                 WHERE d.pend = (SELECT MAX(d.pend)
                         FROM ledger_summary e, periode_akunting d
-                        WHERE d.paid = e.paid AND e.coaid = a.coaid AND d.pend <= DATE('{$pend}'))
+                        WHERE d.paid = e.paid AND e.coaid = a.coaid AND e.bid = a.bid AND d.pend <= DATE('{$pend}'))
                     AND b.coatid <= 3";
         $rs = DB2::Execute($sql);
 
@@ -86,6 +88,8 @@ class NeracaMdl extends DB
         /* E: Get Data PT. JKK */
 
         /* B: Get Data PT. KAH */
+        $paid = DB3::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
+
         $sql = "SELECT c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
                     , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
                         0
@@ -150,8 +154,6 @@ class NeracaMdl extends DB
         }
         /* E: Insert To Temp Table */
 
-        if ($bid) $addsql .= " AND br.bid = ".$bid;
-
         if ($status_cabang) $addsql .= " AND br.is_aktif = '$status_cabang'";
 
         if ($status_coa) $addsql .= " AND mc.is_valid = '$status_coa'";
@@ -160,8 +162,9 @@ class NeracaMdl extends DB
         $sql = "SELECT b.*, tmp.branch_code, tmp.openingbal, tmp.closingbal
                 FROM temp_balance_sheet tmp
                 INNER JOIN (
-                    SELECT br.bid, br.branch_code, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname, mc.default_debet
-                        , (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to
+                    SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode
+                        , mc.coaname, mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa
+                        , mcb.coacode_from, mcb.coacode_to
                     FROM m_coa mc
                     INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
                     LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
