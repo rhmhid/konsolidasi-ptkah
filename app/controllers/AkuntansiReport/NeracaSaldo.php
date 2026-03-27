@@ -4,11 +4,15 @@ require_once APPPATH . '/libraries/BaseController.php';
 
 class NeracaSaldo extends BaseController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/NeracaSaldoMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -31,7 +35,7 @@ class NeracaSaldo extends BaseController
             'status_coa'    => get_var('status_coa'),
         );
 
-        $rs_cabang = Modules::data_cabang_all($data['status_cabang']);
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
         $data_cabang = [];
         while (!$rs_cabang->EOF)
@@ -60,6 +64,7 @@ class NeracaSaldo extends BaseController
             while (!$rs->EOF)
             {
                 $coacode = $rs->fields['coacode'];
+                $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
 
                 if (!isset($data_db[$coacode]))
                 {
@@ -70,7 +75,7 @@ class NeracaSaldo extends BaseController
                     );
                 }
 
-                $data_db[$coacode]['branch'][$rs->fields['branch_code']] = [
+                $data_db[$coacode]['branch'][$branch_code] = [
                     'openingbal'    => floatval($rs->fields['openingbal']),
                     'debet'         => floatval($rs->fields['debet']),
                     'credit'        => floatval($rs->fields['credit']),
@@ -86,6 +91,7 @@ class NeracaSaldo extends BaseController
             while (!$rss->EOF)
             {
                 $coacode = $rss->fields['coacode'];
+                $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
 
                 if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
                 {
@@ -98,7 +104,7 @@ class NeracaSaldo extends BaseController
                         );
                     }
 
-                    $data_db[$coacode]['branch'][$rss->fields['branch_code']] = [
+                    $data_db[$coacode]['branch'][$branch_code] = [
                         'openingbal'    => floatval($rss->fields['openingbal']),
                         'debet'         => 0,
                         'credit'        => 0,
@@ -149,10 +155,13 @@ class NeracaSaldo extends BaseController
             }
         }
 
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
+
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
         else $report_month = $data['month'].'-'.$data['year'];
 
         return view('akuntansi_report.neraca_saldo.cetak', compact(
+            'cabang',
             'data',
             'report_month',
             'data_cabang',

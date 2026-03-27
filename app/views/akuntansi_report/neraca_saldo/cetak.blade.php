@@ -61,6 +61,7 @@
 @section('content')
 <h2 class="bdr">
     Trial Balance
+    <span style="text-transform: uppercase;">Cabang : {{ $cabang }}</span>
     <span style="text-transform: uppercase;">Periode : {{ $report_month }}</span>
 </h2>
 
