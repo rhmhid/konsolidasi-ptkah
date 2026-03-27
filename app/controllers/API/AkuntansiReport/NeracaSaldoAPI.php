@@ -17,64 +17,116 @@ class NeracaSaldoAPI extends BaseAPIController
     public function excel_get () /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
         );
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
         $style_col = [
-            'font' => ['bold' => true], // Set font nya jadi bold
+            'font' => ['bold' => true],
             'alignment' => [
-                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
             ],
             'borders'   => [
-                'top'       => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
-                'right'     => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
-                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
-                'left'      => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
+                'top'       => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'right'     => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'left'      => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
             ]
         ];
 
-        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
         $style_row = [
             'alignment' => [
-                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
             ],
             'borders'   => [
-                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
+                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
             ]
         ];
 
+        $num_cabang = count($data_cabang);
+        $has_total = $num_cabang > 1;
+
+        $total_cols = 4 + ($num_cabang * 4) + ($has_total ? 4 : 0);
+        $last_col_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($total_cols);
+
         $sheet->setCellValue('A1', "Trial Balance");
-        $sheet->mergeCells('A1:E1');
+        $sheet->mergeCells('A1:'.$last_col_letter.'1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
 
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
         else $report_month = $data['month'].'-'.$data['year'];
 
-        $sheet->setCellValue('A2', "Periode");
-        $sheet->setCellValue('B2', ": ".$report_month);
-        $sheet->mergeCells('B2:E2');
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
 
-        $sheet->getStyle('A2:E3')->getFont()->setBold(true)->setSize(12);
+        $sheet->setCellValue('A2', "Cabang");
+        $sheet->setCellValue('B2', ": ".$cabang);
+        $sheet->mergeCells('B2:'.$last_col_letter.'2');
 
-        // Buat header tabel nya
-        $sheet->setCellValue('A4', "No.");
-        $sheet->setCellValue('B4', "Coacode");
-        $sheet->setCellValue('C4', "Coaname");
-        $sheet->setCellValue('D4', "Dr / Cr Position");
-        $sheet->setCellValue('E4', "Beginning Balance");
-        $sheet->setCellValue('F4', "Debet");
-        $sheet->setCellValue('G4', "Credit");
-        $sheet->setCellValue('H4', "Ending Balance");
+        $sheet->setCellValue('A3', "Periode");
+        $sheet->setCellValue('B3', ": ".$report_month);
+        $sheet->mergeCells('B3:'.$last_col_letter.'3');
 
-        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A4:H4')->applyFromArray($style_col);
-        $sheet->getColumnDimension('A:H')->setAutoSize(true);
+        $sheet->getStyle('A2:'.$last_col_letter.'4')->getFont()->setBold(true)->setSize(12);
+
+        $c = 1;
+        $base_headers = ["No.", "Coacode", "Coaname", "Dr / Cr Position"];
+        foreach ($base_headers as $h)
+        {
+            $let = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+            $sheet->setCellValue($let.'5', $h);
+            $sheet->mergeCells($let.'5:'.$let.'6');
+            $sheet->getStyle($let.'5:'.$let.'6')->applyFromArray($style_col);
+            $sheet->getColumnDimension($let)->setAutoSize(true);
+            $c++;
+        }
+
+        $draw_group_header = function ($col_start, $title) use ($sheet, $style_col)
+        {
+            $l1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start);
+            $l2 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+1);
+            $l3 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+2);
+            $l4 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+3);
+
+            $sheet->setCellValue($l1.'5', $title);
+            $sheet->mergeCells($l1.'5:'.$l4.'5');
+            $sheet->getStyle($l1.'5:'.$l4.'5')->applyFromArray($style_col);
+
+            $sheet->setCellValue($l1.'6', "Beginning Balance");
+            $sheet->setCellValue($l2.'6', "Debet");
+            $sheet->setCellValue($l3.'6', "Credit");
+            $sheet->setCellValue($l4.'6', "Ending Balance");
+
+            $sheet->getStyle($l1.'6:'.$l4.'6')->applyFromArray($style_col);
+            $sheet->getColumnDimension($l1)->setAutoSize(true);
+            $sheet->getColumnDimension($l2)->setAutoSize(true);
+            $sheet->getColumnDimension($l3)->setAutoSize(true);
+            $sheet->getColumnDimension($l4)->setAutoSize(true);
+        };
+
+        foreach ($data_cabang as $bc => $cabang)
+        {
+            $draw_group_header($c, $cabang['branch_name']);
+            $c += 4;
+        }
+
+        if ($has_total) $draw_group_header($c, "Total All Branch");
 
         $empty_tb = true;
         $data_tb = [];
@@ -94,15 +146,35 @@ class NeracaSaldoAPI extends BaseAPIController
             $data_db = array();
             while (!$rs->EOF)
             {
-                $data_db[$rs->fields['coacode']] = array(
-                    'coaid'         => $rs->fields['coaid'],
-                    'coaname'       => $rs->fields['coaname'],
-                    'default_debet' => $rs->fields['default_debet'],
-                    'openingbal'    => floatval($rs->fields['openingbal']),
-                    'debet'         => floatval($rs->fields['debet']),
-                    'credit'        => floatval($rs->fields['credit']),
-                    'closingbal'    => floatval($rs->fields['closingbal']),
-                );
+                $coacode = $rs->fields['coacode'];
+                $bc = $rs->fields['branch_code'] ?? '';
+
+                if (!isset($data_db[$coacode]))
+                {
+                    $data_db[$coacode] = [
+                        'coaid'         => $rs->fields['coaid'],
+                        'coaname'       => $rs->fields['coaname'],
+                        'default_debet' => $rs->fields['default_debet'],
+                        'branches'      => [],
+                        'total'         => [
+                            'openingbal'    => 0,
+                            'debet'         => 0,
+                            'credit'        => 0
+                        ]
+                    ];
+                }
+
+                $op = floatval($rs->fields['openingbal']);
+                $db = floatval($rs->fields['debet']);
+                $cr = floatval($rs->fields['credit']);
+
+                $data_db[$coacode]['branches'][$bc]['openingbal'] = ($data_db[$coacode]['branches'][$bc]['openingbal'] ?? 0) + $op;
+                $data_db[$coacode]['branches'][$bc]['debet'] = ($data_db[$coacode]['branches'][$bc]['debet'] ?? 0) + $db;
+                $data_db[$coacode]['branches'][$bc]['credit'] = ($data_db[$coacode]['branches'][$bc]['credit'] ?? 0) + $cr;
+
+                $data_db[$coacode]['total']['openingbal'] += $op;
+                $data_db[$coacode]['total']['debet'] += $db;
+                $data_db[$coacode]['total']['credit'] += $cr;
 
                 $rs->MoveNext();
             }
@@ -114,82 +186,130 @@ class NeracaSaldoAPI extends BaseAPIController
             {
                 if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
                 {
-                    $data_db[$rss->fields['coacode']] = array(
-                        'coaid'         => $rss->fields['coaid'],
-                        'coaname'       => $rss->fields['coaname'],
-                        'default_debet' => $rss->fields['default_debet'],
-                        'openingbal'    => floatval($rss->fields['closingbal']),
-                        'debet'         => 0,
-                        'credit'        => 0,
-                        'closingbal'    => 0,
-                    );
+                    $coacode = $rss->fields['coacode'];
+                    $bc = $rss->fields['branch_code'] ?? '';
+
+                    if (!isset($data_db[$coacode]))
+                    {
+                        $data_db[$coacode] = [
+                            'coaid'         => $rss->fields['coaid'],
+                            'coaname'       => $rss->fields['coaname'],
+                            'default_debet' => $rss->fields['default_debet'],
+                            'branches'      => [],
+                            'total'         => [
+                                'openingbal'    => 0,
+                                'debet'         => 0,
+                                'credit'        => 0
+                            ]
+                        ];
+                    }
+
+                    $op = floatval($rss->fields['closingbal']);
+
+                    $data_db[$coacode]['branches'][$bc]['openingbal'] = ($data_db[$coacode]['branches'][$bc]['openingbal'] ?? 0) + $op;
+                    $data_db[$coacode]['total']['openingbal'] += $op;
                 }
 
                 $rss->MoveNext();
             }
 
-            // ORDER BY lagi
             ksort($data_db);
+
+            $subtotals = ['branches' => [], 'total' => ['debet' => 0, 'credit' => 0]];
 
             if (!empty($data_db))
             {
                 $no = 1;
                 $empty_tb = false;
-                $row_idx = 5;
+                $row_idx = 6;
+
                 foreach ($data_db as $coacode => $tmp)
                 {
-                    $balance = $tmp['default_debet'] == 't' ? ($tmp['debet'] - $tmp['credit']) : ($tmp['credit'] - $tmp['debet']);
-                    $balance += $tmp['openingbal'];
+                    $c = 1;
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $no);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $coacode);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $tmp['coaname']);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $tmp['default_debet'] == 't' ? 'Dr' : 'Cr');
 
-                    $sheet->setCellValue('A'.$row_idx, $no);
-                    $sheet->setCellValue('B'.$row_idx, $coacode);
-                    $sheet->setCellValue('C'.$row_idx, $tmp['coaname']);
-                    $sheet->setCellValue('D'.$row_idx, $tmp['default_debet'] == 't' ? 'Dr' : 'Cr');
-                    $sheet->setCellValue('E'.$row_idx, floatval($tmp['openingbal']));
-                    $sheet->setCellValue('F'.$row_idx, floatval($tmp['debet']));
-                    $sheet->setCellValue('G'.$row_idx, floatval($tmp['credit']));
-                    $sheet->setCellValue('H'.$row_idx, floatval($balance));
+                    foreach ($data_cabang as $bc => $cabang)
+                    {
+                        $op = floatval($tmp['branches'][$bc]['openingbal'] ?? 0);
+                        $db = floatval($tmp['branches'][$bc]['debet'] ?? 0);
+                        $cr = floatval($tmp['branches'][$bc]['credit'] ?? 0);
 
-                    // Apply style row yang telah kita buat tadi ke masing-masing baris (isi tabel)
-                    $sheet->getStyle('A'.$row_idx.':H'.$row_idx)->applyFromArray($style_row);
+                        $balance = $tmp['default_debet'] == 't' ? ($db - $cr) : ($cr - $db);
+                        $balance += $op;
 
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $op);
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $db);
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $cr);
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $balance);
+
+                        $subtotals['branches'][$bc]['debet'] = ($subtotals['branches'][$bc]['debet'] ?? 0) + $db;
+                        $subtotals['branches'][$bc]['credit'] = ($subtotals['branches'][$bc]['credit'] ?? 0) + $cr;
+                    }
+
+                    if ($has_total)
+                    {
+                        $op = floatval($tmp['total']['openingbal'] ?? 0);
+                        $db = floatval($tmp['total']['debet'] ?? 0);
+                        $cr = floatval($tmp['total']['credit'] ?? 0);
+
+                        $balance = $tmp['default_debet'] == 't' ? ($db - $cr) : ($cr - $db);
+                        $balance += $op;
+
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $op);
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $db);
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $cr);
+                        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $balance);
+
+                        $subtotals['total']['debet'] += $db;
+                        $subtotals['total']['credit'] += $cr;
+                    }
+
+                    $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->applyFromArray($style_row);
                     $no++;
                     $row_idx++;
-                    $tot_deb += $tmp['debet'];
-                    $tot_cre += $tmp['credit'];
                 }
+
+                $sheet->setCellValue('A'.$row_idx, 'SUBTOTAL');
+                $sheet->mergeCells('A'.$row_idx.':D'.$row_idx);
+
+                $c = 5;
+                foreach ($data_cabang as $bc => $cabang)
+                {
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, '');
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals['branches'][$bc]['debet'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals['branches'][$bc]['credit'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, '');
+                }
+
+                if ($has_total)
+                {
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, '');
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals['total']['debet'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals['total']['credit'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, '');
+                }
+
+                $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->applyFromArray($style_row)->getAlignment()->setHorizontal('right');
+                $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->getFont()->setBold(true);
             }
         }
 
-        $sheet->setCellValue('A'.$row_idx, 'SUBTOTAL');
-        $sheet->mergeCells('A'.$row_idx.':D'.$row_idx);
-
-        $sheet->setCellValue('E'.$row_idx, '');
-        $sheet->setCellValue('F'.$row_idx, floatval($tot_deb));
-        $sheet->setCellValue('G'.$row_idx, floatval($tot_cre));
-        $sheet->setCellValue('H'.$row_idx, '');
-
-        // Apply style row yang telah kita buat tadi ke masing-masing baris (isi tabel)
-        $sheet->getStyle('A'.$row_idx.':H'.$row_idx)->applyFromArray($style_row)->getAlignment()->setHorizontal('right');
-
-        $sheet->getStyle('A'.$row_idx.':H'.$row_idx)->getFont()->setBold(true);
-        
-        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
 
-        // Set orientasi kertas jadi LANDSCAPE
         $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
 
-        // Set judul file excel nya
         $sheet->setTitle("Neraca Saldo");
 
-        // Proses file excel
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Neraca Saldo.xlsx"'); // Set nama file excel nya
+        header('Content-Disposition: attachment; filename="Neraca Saldo.xlsx"');
         header('Cache-Control: max-age=0');
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
+        exit;
     } /*}}}*/
 }
 ?>
