@@ -499,8 +499,12 @@ class Modules
                     INNER JOIN m_coa b ON b.coaid = a.coaid
                     INNER JOIN periode_akunting c ON c.paid = a.paid
                     INNER JOIN branch d ON d.bid = a.bid
-                    WHERE b.period_reset = 't' AND b.coatid > 3 -- AND a.paid = $paid
-                        AND a.paid = (SELECT MAX(a.paid) FROM periode_akunting a WHERE '$year-$month-01' BETWEEN a.pbegin AND a.pend)
+                    WHERE b.period_reset = 't' AND b.coatid > 3
+                        AND c.pend = (
+                            SELECT MAX(d.pend)
+                            FROM ledger_summary e, periode_akunting d
+                            WHERE d.paid = e.paid AND e.coaid = a.coaid AND e.bid = a.bid AND d.pend <= DATE('$pend')
+                        )
                     GROUP BY d.branch_code
                 ) lb ON a.coaid = lb.coaid
                 WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")";
@@ -553,8 +557,12 @@ class Modules
                     FROM ledger_summary a
                     INNER JOIN m_coa b ON b.coaid = a.coaid
                     INNER JOIN periode_akunting c ON c.paid = a.paid
-                    WHERE b.period_reset = 't' AND b.coatid > 3 -- AND a.paid = $paid
-                        AND a.paid = (SELECT MAX(a.paid) FROM periode_akunting a WHERE '$year-$month-01' BETWEEN a.pbegin AND a.pend)
+                    WHERE b.period_reset = 't' AND b.coatid > 3
+                        AND c.pend = (
+                            SELECT MAX(d.pend)
+                            FROM ledger_summary e, periode_akunting d
+                            WHERE d.paid = e.paid AND e.coaid = a.coaid AND d.pend <= DATE('$pend')
+                        )
                 ) lb ON a.coaid = lb.coaid
                 WHERE a.coaid IN (".self::$laba_periode_lalu.", ".self::$laba_periode_berjalan.")";
         $rs = DB3::Execute($sql);
@@ -610,7 +618,7 @@ class Modules
         $sql = "SELECT b.*, tmp.branch_code, tmp.openingbal, tmp.closingbal
                 FROM temp_laba_rugi tmp
                 INNER JOIN (
-                    SELECT br.bid, br.branch_code, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname, mc.default_debet
+                    SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname, mc.default_debet
                         , (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to, mc.pnid
                     FROM m_coa mc
                     INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
@@ -1171,27 +1179,34 @@ class Modules
 
         if ($is_aktif) $addsql .= " AND is_aktif = '$is_aktif'";
 
-        if ($bid) $addsql2 .= " AND aa.id = ".$bid;
+        if ($bid == -3) $addsql2 .= " AND aa.kdbid = 2"; // Hardcode ID Koneksi DB PT. JKK
+        elseif ($bid == -2) $addsql2 .= " AND aa.kdbid IN (1, 3)"; // Hardcode ID Koneksi DB PT. KAH & RSJK
+        elseif ($bid == -1)
+        {
+            $ho_jkk = dataConfigs('default_kode_branch_jkk');
+            $addsql2 .= " AND (aa.kdbid IN (1, 3) OR aa.branch_code = '$ho_jkk')"; // Hardcode ID Koneksi DB PT. JKK ( Summary ), PT. KAH & RSJK
+        }
+        elseif ($bid) $addsql2 .= " AND aa.id = ".$bid;
 
         if ($opsi_all == 'f') $addsql2 .= " AND aa.idx = 4";
 
-        $sql = "SELECT aa.branch_name, aa.id, aa.branch_code, aa.is_primary, aa.idx
+        $sql = "SELECT aa.branch_name, aa.id, aa.branch_code, aa.is_primary, aa.idx, aa.kdbid
                 FROM (
-                    SELECT branch_name, bid AS id, branch_code, is_primary, 4 AS idx
+                    SELECT branch_name, bid AS id, branch_code, is_primary, 4 AS idx, kdbid
                     FROM branch
                     WHERE 1 = 1 $addsql
 
                     UNION ALL
 
-                    SELECT 'All Summary ( RSJK, PT. KAH, PT. JKK)' AS branch_name, -1 AS id, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx
+                    SELECT 'All Summary ( RSJK, PT. KAH, PT. JKK)' AS branch_name, -1 AS id, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx, NULL AS kdbid
 
                     UNION ALL
 
-                    SELECT 'All Summary ( PT. KAH )' AS branch_name, -2 AS id, 'ALL_KAH' AS branch_code, 't' AS is_primary, 2 AS idx
+                    SELECT 'All Summary ( PT. KAH )' AS branch_name, -2 AS id, 'ALL_KAH' AS branch_code, 't' AS is_primary, 2 AS idx, NULL AS kdbid
 
                     UNION ALL
 
-                    SELECT 'All Summary ( PT. JKK )' AS branch_name, -3 AS id, 'ALL_JKK' AS branch_code, 't' AS is_primary, 3 AS idx
+                    SELECT 'All Summary ( PT. JKK )' AS branch_name, -3 AS id, 'ALL_JKK' AS branch_code, 't' AS is_primary, 3 AS idx, NULL AS kdbid
                 ) aa
                 WHERE 1 = 1 $addsql2
                 ORDER BY aa.idx, aa.is_primary DESC, aa.branch_name";
