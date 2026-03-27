@@ -4,11 +4,15 @@ require_once APPPATH . '/libraries/BaseController.php';
 
 class Neraca extends BaseController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/NeracaMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -31,8 +35,8 @@ class Neraca extends BaseController
             'status_coa'    => get_var('status_coa'),
         );
 
-        // if ($mytipe == 'bs-new') return self::cetak_baru($data);
-        // elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
+        if ($mytipe == 'bs-new') return self::cetak_baru($data);
+        elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
 
         $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
@@ -61,7 +65,7 @@ class Neraca extends BaseController
             {
                 $coatid      = $rs->fields['coatid'];
                 $coaid       = $rs->fields['coaid'];
-                $branch_code = $rs->fields['branch_code'];
+                $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
 
                 $data_db[$coatid]['coatype'] = $rs->fields['coatype'];
 
@@ -75,8 +79,8 @@ class Neraca extends BaseController
                 }
 
                 $data_db[$coatid]['data'][$coaid]['branch'][$branch_code] = [
-                    'openingbal' => floatval($rs->fields['openingbal']),
-                    'closingbal' => floatval($rs->fields['closingbal'])
+                    'openingbal' => $data_db[$coatid]['data'][$coaid]['branch'][$branch_code]['openingbal'] + floatval($rs->fields['openingbal']),
+                    'closingbal' => $data_db[$coatid]['data'][$coaid]['branch'][$branch_code]['closingbal'] + floatval($rs->fields['closingbal'])
                 ];
 
                 $rs->MoveNext();
@@ -88,7 +92,7 @@ class Neraca extends BaseController
             {
                 $coatid      = $rss->fields['coatid'];
                 $coaid       = $rss->fields['coaid'];
-                $branch_code = $rss->fields['branch_code'];
+                $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
 
                 $data_db[$coatid]['coatype'] = $rss->fields['coatype'];
 
@@ -102,8 +106,8 @@ class Neraca extends BaseController
                 }
 
                 $data_db[$coatid]['data'][$coaid]['branch'][$branch_code] = [
-                    'openingbal' => $data_db[3]['data'][$rss->fields['coaid']]['branch'][$branch_code]['openingbal'] + floatval($rss->fields['openingbal']),
-                    'closingbal' => $data_db[3]['data'][$rss->fields['coaid']]['branch'][$branch_code]['closingbal'] + floatval($rss->fields['closingbal'])
+                    'openingbal' => $data_db[3]['data'][$coaid]['branch'][$branch_code]['openingbal'] + floatval($rss->fields['openingbal']),
+                    'closingbal' => $data_db[3]['data'][$coaid]['branch'][$branch_code]['closingbal'] + floatval($rss->fields['closingbal'])
                 ];
 
                 $rss->MoveNext();
@@ -172,6 +176,8 @@ class Neraca extends BaseController
             }
         }
 
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
+
         $period = $rs->UserDate($data['pbegin'], 'M Y') .' - '.$rs->UserDate($data['pend'], 'M Y');
         
         $tot_libility_equity = [];
@@ -189,6 +195,7 @@ class Neraca extends BaseController
 
         return view('akuntansi_report.neraca.cetak', compact(
             'data_cabang',
+            'cabang',
             'data',
             'period',
             'report_month',
@@ -207,9 +214,22 @@ class Neraca extends BaseController
     public function cetak_baru ($data) /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
         );
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         $tgl_cetak = date('Y-m-d');
 
@@ -236,7 +256,7 @@ class Neraca extends BaseController
             $data['prev_year'] = date("Y", strtotime($sdate));
         }
 
-        $rs_pos = $data_pos = [];
+        $rs_pos = $data_pos = $data_db = [];
         $empty_aktiva = $empty_pasiva = $without_mapping = true;
 
         $rs_period = Modules::get_period_akunting($data);
@@ -251,7 +271,8 @@ class Neraca extends BaseController
 
             while (!$rs->EOF)
             {
-                // special untuk acc. akumulasi penyusutan, asset tapi default credet
+                $bc = $rs->fields['branch_code'] ?? '';
+
                 if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
                 {
                     $openingbal = $rs->fields['openingbal'] * -1;
@@ -263,8 +284,13 @@ class Neraca extends BaseController
                     $closingbal = $rs->fields['closingbal'];
                 }
 
-                $data_db[$rs->fields['pnid']]['openingbal'] += $openingbal;
-                $data_db[$rs->fields['pnid']]['closingbal'] += $closingbal;
+                $pnid = $rs->fields['pnid'];
+
+                $data_db[$pnid]['branches'][$bc]['openingbal'] = ($data_db[$pnid]['branches'][$bc]['openingbal'] ?? 0) + $openingbal;
+                $data_db[$pnid]['branches'][$bc]['closingbal'] = ($data_db[$pnid]['branches'][$bc]['closingbal'] ?? 0) + $closingbal;
+
+                $data_db[$pnid]['total']['openingbal'] = ($data_db[$pnid]['total']['openingbal'] ?? 0) + $openingbal;
+                $data_db[$pnid]['total']['closingbal'] = ($data_db[$pnid]['total']['closingbal'] ?? 0) + $closingbal;
 
                 $rs->MoveNext();
             }
@@ -273,8 +299,14 @@ class Neraca extends BaseController
 
             while (!$rss->EOF)
             {
-                $data_db[$rss->fields['pnid']]['openingbal'] += $rss->fields['openingbal'];
-                $data_db[$rss->fields['pnid']]['closingbal'] += $rss->fields['closingbal'];
+                $bc = $rss->fields['branch_code'] ?? '';
+                $pnid = $rss->fields['pnid'];
+
+                $data_db[$pnid]['branches'][$bc]['openingbal'] = ($data_db[$pnid]['branches'][$bc]['openingbal'] ?? 0) + $rss->fields['openingbal'];
+                $data_db[$pnid]['branches'][$bc]['closingbal'] = ($data_db[$pnid]['branches'][$bc]['closingbal'] ?? 0) + $rss->fields['closingbal'];
+
+                $data_db[$pnid]['total']['openingbal'] = ($data_db[$pnid]['total']['openingbal'] ?? 0) + $rss->fields['openingbal'];
+                $data_db[$pnid]['total']['closingbal'] = ($data_db[$pnid]['total']['closingbal'] ?? 0) + $rss->fields['closingbal'];
 
                 $rss->MoveNext();
             }
@@ -283,7 +315,8 @@ class Neraca extends BaseController
 
             while (!$rs_pos->EOF)
             {
-                $row = $data_db[$rs_pos->fields['pnid']];
+                $pnid = $rs_pos->fields['pnid'];
+                $row = $data_db[$pnid] ?? [];
 
                 $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
                 $is_header = $rs_pos->fields['parent_pnid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
@@ -291,39 +324,82 @@ class Neraca extends BaseController
                 $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
 
                 if (trim($nama) == '') $nama = '&nbsp;';
-
                 if ($is_header == 't') $nama = '<b>'.$nama.'</b>';
 
-                $amount_prev = format_uang($row['openingbal'], 2);
-                $amount = format_uang($row['closingbal'], 2);
+                $tmp_amounts = [];
+                $tot_op = $row['total']['openingbal'] ?? 0;
+                $tot_cl = $row['total']['closingbal'] ?? 0;
+
+                foreach ($data_cabang as $bc => $cabang)
+                {
+                    $op = $row['branches'][$bc]['openingbal'] ?? 0;
+                    $cl = $row['branches'][$bc]['closingbal'] ?? 0;
+
+                    $amt_prev = format_uang($op, 2);
+                    $amt = format_uang($cl, 2);
+
+                    if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                    {
+                        $amt_prev = '';
+                        $amt = '';
+                    }
+
+                    if ($rs_pos->fields['sum_total'] == 't')
+                    {
+                        $amt_prev = '<b><u>'.$amt_prev.'</u></b>';
+                        $amt = '<b><u>'.$amt.'</u></b>';
+                    }
+
+                    $tmp_amounts['branches'][$bc] = [
+                        'amount_prev'   => $amt_prev,
+                        'amount'        => $amt
+                    ];
+                }
+
+                $amt_tot_prev = format_uang($tot_op, 2);
+                $amt_tot = format_uang($tot_cl, 2);
 
                 if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
                 {
-                    $amount_prev = '';
-                    $amount = '';
+                    $amt_tot_prev = '';
+                    $amt_tot = '';
                 }
 
                 if ($rs_pos->fields['sum_total'] == 't')
                 {
-                    $amount_prev = '<b><u>'.$amount_prev.'</u></b>';
-                    $amount = '<b><u>'.$amount.'</u></b>';
+                    $amt_tot_prev = '<b><u>'.$amt_tot_prev.'</u></b>';
+                    $amt_tot = '<b><u>'.$amt_tot.'</u></b>';
                 }
 
-                $tmpdata = array();
-                $tmpdata['nama_pos']    = $space.$nama;
-                $tmpdata['amount_prev'] = $amount_prev;
-                $tmpdata['amount']      = $amount;
+                $tmp_amounts['total'] = [
+                    'amount_prev'   => $amt_tot_prev,
+                    'amount'        => $amt_tot
+                ];
 
-                $data_pos[$rs_pos->fields['jenis_pos']][$rs_pos->fields['pnid']] = $tmpdata;
+                $tmpdata = array();
+                $tmpdata['nama_pos'] = $space.$nama;
+                $tmpdata['amounts']  = $tmp_amounts;
+
+                $data_pos[$rs_pos->fields['jenis_pos']][$pnid] = $tmpdata;
 
                 if ($rs_pos->fields['jenis_pos'] == 1) $empty_aktiva = false;
                 elseif ($rs_pos->fields['jenis_pos'] == 2) $empty_pasiva = false;
 
-                // Subtotal Per Header
                 if ($rs_pos->fields['parent_pnid'] != '')
                 {
-                    $data_db[$rs_pos->fields['parent_pnid']]['openingbal'] += $row['openingbal'];
-                    $data_db[$rs_pos->fields['parent_pnid']]['closingbal'] += $row['closingbal'];
+                    $parent_id = $rs_pos->fields['parent_pnid'];
+
+                    foreach ($data_cabang as $bc => $cabang)
+                    {
+                        $op = $row['branches'][$bc]['openingbal'] ?? 0;
+                        $cl = $row['branches'][$bc]['closingbal'] ?? 0;
+
+                        $data_db[$parent_id]['branches'][$bc]['openingbal'] = ($data_db[$parent_id]['branches'][$bc]['openingbal'] ?? 0) + $op;
+                        $data_db[$parent_id]['branches'][$bc]['closingbal'] = ($data_db[$parent_id]['branches'][$bc]['closingbal'] ?? 0) + $cl;
+                    }
+
+                    $data_db[$parent_id]['total']['openingbal'] = ($data_db[$parent_id]['total']['openingbal'] ?? 0) + $tot_op;
+                    $data_db[$parent_id]['total']['closingbal'] = ($data_db[$parent_id]['total']['closingbal'] ?? 0) + $tot_cl;
                 }
 
                 $rs_pos->MoveNext();
@@ -346,12 +422,19 @@ class Neraca extends BaseController
         else
             $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
 
-        if ($data_db[0]['closingbal'] <> 0)
+        $pos_lainnya = [];
+        if (isset($data_db[0]['total']['closingbal']) && $data_db[0]['total']['closingbal'] <> 0)
         {
             $without_mapping = false;
 
-            $pos_amount_prev = format_uang($data_db[0]['openingbal'], 2);
-            $pos_amount = format_uang($data_db[0]['closingbal'], 2);
+            foreach ($data_cabang as $bc => $cabang)
+            {
+                $pos_lainnya['branches'][$bc]['amount_prev']    = format_uang($data_db[0]['branches'][$bc]['openingbal'] ?? 0, 2);
+                $pos_lainnya['branches'][$bc]['amount']         = format_uang($data_db[0]['branches'][$bc]['closingbal'] ?? 0, 2);
+            }
+
+            $pos_lainnya['total']['amount_prev'] = format_uang($data_db[0]['total']['openingbal'] ?? 0, 2);
+            $pos_lainnya['total']['amount'] = format_uang($data_db[0]['total']['closingbal'] ?? 0, 2);
         }
 
         return view('akuntansi_report.neraca.cetak_baru', compact(
@@ -366,17 +449,30 @@ class Neraca extends BaseController
             'empty_aktiva',
             'empty_pasiva',
             'without_mapping',
-            'pos_amount_prev',
-            'pos_amount'
+            'pos_lainnya',
+            'data_cabang'
         ));
     } /*}}}*/
 
     public function cetak_baru_detail ($data) /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
         );
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         $tgl_cetak = date('Y-m-d');
 

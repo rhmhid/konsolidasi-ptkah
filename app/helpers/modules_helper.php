@@ -3045,4 +3045,49 @@
 
         return $ret;
     } /*}}}*/
+
+    function FilterCabang ($bid = '') /*{{{*/
+    {
+        $ret = [
+            'conn_kah'  => TRUE,
+            'conn_rsjk' => TRUE,
+            'conn_jkk'  => TRUE,
+            'query'     => '',
+        ];
+
+        if ($bid == -3) // Hardcode ID Koneksi DB PT. JKK
+            $ret = [
+                'conn_kah'  => FALSE,
+                'conn_rsjk' => FALSE,
+                'conn_jkk'  => TRUE,
+                'query'     => " AND br.kdbid = 2",
+            ];
+        elseif ($bid == -2) // Hardcode ID Koneksi DB PT. KAH & RSJK
+            $ret = [
+                'conn_kah'  => TRUE,
+                'conn_rsjk' => TRUE,
+                'conn_jkk'  => FALSE,
+                'query'     => " AND br.kdbid IN (1, 3)",
+            ];
+        elseif ($bid == -1) // Hardcode ID Koneksi DB PT. JKK ( Summary ), PT. KAH & RSJK
+        {
+            $ho_jkk = dataConfigs('default_kode_branch_jkk');
+
+            $ret = [
+                'conn_kah'  => TRUE,
+                'conn_rsjk' => TRUE,
+                'conn_jkk'  => TRUE,
+                'query'     => " AND (br.kdbid IN (1, 3) OR br.branch_code = '$ho_jkk')",
+            ];
+        }
+        elseif ($bid)
+            $ret = [
+                'conn_kah'  => TRUE,
+                'conn_rsjk' => TRUE,
+                'conn_jkk'  => TRUE,
+                'query'     => " AND br.bid = ".$bid,
+            ];
+
+        return $ret;
+    } /*}}}*/
 ?>
