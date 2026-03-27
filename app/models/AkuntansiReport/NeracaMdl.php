@@ -23,6 +23,7 @@ class NeracaMdl extends DB
         $status_coa = $data['status_coa'];
         $record = [];
         $addsql = "";
+        $optionsCabang = FilterCabang($bid);
 
         $opbal = 'a.openingbal';
         for ($i = 1; $i < $month; $i++)
@@ -47,85 +48,97 @@ class NeracaMdl extends DB
         /* E: Create Temp Table */
 
         /* B: Get Data PT. JKK */
-        $paid = DB2::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
-
-        $sql = "SELECT e.branch_code, c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
-                    , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
-                        0
-                    ELSE
-                        COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
-                    END) AS openingbal
-                    , (CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
-                FROM ledger_summary a
-                INNER JOIN m_coa b ON b.coaid = a.coaid
-                INNER JOIN m_coatype c ON c.coatid = b.coatid
-                INNER JOIN periode_akunting d ON d.paid = a.paid
-                INNER JOIN branch e ON e.bid = a.bid
-                LEFT JOIN pos_neraca f ON b.pnid = f.pnid
-                WHERE d.pend = (SELECT MAX(d.pend)
-                        FROM ledger_summary e, periode_akunting d
-                        WHERE d.paid = e.paid AND e.coaid = a.coaid AND e.bid = a.bid AND d.pend <= DATE('{$pend}'))
-                    AND b.coatid <= 3";
-        $rs = DB2::Execute($sql);
-
-        while (!$rs->EOF)
+        if ($optionsCabang['conn_jkk'])
         {
-            $record[] = array(
-                'branch_code'   => $rs->fields['branch_code'],
-                'coaid'         => $rs->fields['coaid'],
-                'coatype'       => $rs->fields['coatype'],
-                'coatid'        => $rs->fields['coatid'],
-                'coacode'       => $rs->fields['coacode'],
-                'coaname'       => $rs->fields['coaname'],
-                'default_debet' => $rs->fields['default_debet'],
-                'openingbal'    => floatval($rs->fields['openingbal']),
-                'closingbal'    => floatval($rs->fields['closingbal']),
-                'pnid'          => $rs->fields['pnid']
-            );
+            $paid = DB2::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
 
-            $rs->MoveNext();
+            $sql = "SELECT e.branch_code, c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
+                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
+                            0
+                        ELSE
+                            COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
+                        END) AS openingbal
+                        , (CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
+                    FROM ledger_summary a
+                    INNER JOIN m_coa b ON b.coaid = a.coaid
+                    INNER JOIN m_coatype c ON c.coatid = b.coatid
+                    INNER JOIN periode_akunting d ON d.paid = a.paid
+                    INNER JOIN branch e ON e.bid = a.bid
+                    LEFT JOIN pos_neraca f ON b.pnid = f.pnid
+                    WHERE d.pend = (SELECT MAX(d.pend)
+                            FROM ledger_summary e, periode_akunting d
+                            WHERE d.paid = e.paid AND e.coaid = a.coaid AND e.bid = a.bid AND d.pend <= DATE('{$pend}'))
+                        AND b.coatid <= 3";
+            $rs = DB2::Execute($sql);
+
+            while (!$rs->EOF)
+            {
+                $record[] = array(
+                    'branch_code'   => $rs->fields['branch_code'],
+                    'coaid'         => $rs->fields['coaid'],
+                    'coatype'       => $rs->fields['coatype'],
+                    'coatid'        => $rs->fields['coatid'],
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'default_debet' => $rs->fields['default_debet'],
+                    'openingbal'    => floatval($rs->fields['openingbal']),
+                    'closingbal'    => floatval($rs->fields['closingbal']),
+                    'pnid'          => $rs->fields['pnid']
+                );
+
+                $rs->MoveNext();
+            }
         }
         /* E: Get Data PT. JKK */
 
         /* B: Get Data PT. KAH */
-        $paid = DB3::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
-
-        $sql = "SELECT c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
-                    , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
-                        0
-                    ELSE
-                        COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
-                    END) AS openingbal
-                    , (CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
-                FROM ledger_summary a
-                INNER JOIN m_coa b ON b.coaid = a.coaid
-                INNER JOIN m_coatype c ON c.coatid = b.coatid
-                INNER JOIN periode_akunting d ON d.paid = a.paid
-                LEFT JOIN pos_neraca f ON b.pnid = f.pnid
-                WHERE d.pend = (SELECT MAX(d.pend)
-                        FROM ledger_summary e, periode_akunting d
-                        WHERE d.paid = e.paid AND e.coaid = a.coaid AND d.pend <= DATE('{$pend}'))
-                    AND b.coatid <= 3";
-        $rs = DB3::Execute($sql);
-
-        while (!$rs->EOF)
+        if ($optionsCabang['conn_kah'])
         {
-            $record[] = array(
-                'branch_code'   => dataConfigs('default_kode_branch_kah'),
-                'coaid'         => $rs->fields['coaid'],
-                'coatype'       => $rs->fields['coatype'],
-                'coatid'        => $rs->fields['coatid'],
-                'coacode'       => $rs->fields['coacode'],
-                'coaname'       => $rs->fields['coaname'],
-                'default_debet' => $rs->fields['default_debet'],
-                'openingbal'    => floatval($rs->fields['openingbal']),
-                'closingbal'    => floatval($rs->fields['closingbal']),
-                'pnid'          => $rs->fields['pnid']
-            );
+            $paid = DB3::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
 
-            $rs->MoveNext();
+            $sql = "SELECT c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
+                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
+                            0
+                        ELSE
+                            COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
+                        END) AS openingbal
+                        , (CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
+                    FROM ledger_summary a
+                    INNER JOIN m_coa b ON b.coaid = a.coaid
+                    INNER JOIN m_coatype c ON c.coatid = b.coatid
+                    INNER JOIN periode_akunting d ON d.paid = a.paid
+                    LEFT JOIN pos_neraca f ON b.pnid = f.pnid
+                    WHERE d.pend = (SELECT MAX(d.pend)
+                            FROM ledger_summary e, periode_akunting d
+                            WHERE d.paid = e.paid AND e.coaid = a.coaid AND d.pend <= DATE('{$pend}'))
+                        AND b.coatid <= 3";
+            $rs = DB3::Execute($sql);
+
+            while (!$rs->EOF)
+            {
+                $record[] = array(
+                    'branch_code'   => dataConfigs('default_kode_branch_kah'),
+                    'coaid'         => $rs->fields['coaid'],
+                    'coatype'       => $rs->fields['coatype'],
+                    'coatid'        => $rs->fields['coatid'],
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'default_debet' => $rs->fields['default_debet'],
+                    'openingbal'    => floatval($rs->fields['openingbal']),
+                    'closingbal'    => floatval($rs->fields['closingbal']),
+                    'pnid'          => $rs->fields['pnid']
+                );
+
+                $rs->MoveNext();
+            }
         }
         /* E: Get Data PT. KAH */
+
+        /* B: Get Data RSJK */
+        if ($optionsCabang['conn_rsjk'])
+        {
+        }
+        /* E: Get Data RSJK */
 
         /* B: Insert To Temp Table */
         $ok = true;
@@ -158,12 +171,14 @@ class NeracaMdl extends DB
 
         if ($status_coa) $addsql .= " AND mc.is_valid = '$status_coa'";
 
+        $addsql .= $optionsCabang['query'];
+
         /* B: Showing Data From Temp Table */
         $sql = "SELECT b.*, tmp.branch_code, tmp.openingbal, tmp.closingbal
                 FROM temp_balance_sheet tmp
                 INNER JOIN (
                     SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode
-                        , mc.coaname, mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa
+                        , mc.coaname, mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa, mc.pnid
                         , mcb.coacode_from, mcb.coacode_to
                     FROM m_coa mc
                     INNER JOIN m_coatype mct ON mct.coatid = mc.coatid

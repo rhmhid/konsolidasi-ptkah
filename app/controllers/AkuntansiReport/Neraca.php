@@ -4,11 +4,15 @@ require_once APPPATH . '/libraries/BaseController.php';
 
 class Neraca extends BaseController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/NeracaMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -31,10 +35,8 @@ class Neraca extends BaseController
             'status_coa'    => get_var('status_coa'),
         );
 
-        $ho_jkk = dataConfigs('default_kode_branch_jkk');
-
-        // if ($mytipe == 'bs-new') return self::cetak_baru($data);
-        // elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
+        if ($mytipe == 'bs-new') return self::cetak_baru($data);
+        elseif ($mytipe == 'bs-new-detail') return self::cetak_baru_detail($data);
 
         $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
@@ -63,7 +65,7 @@ class Neraca extends BaseController
             {
                 $coatid      = $rs->fields['coatid'];
                 $coaid       = $rs->fields['coaid'];
-                $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? $ho_jkk : $rs->fields['branch_code'];
+                $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
 
                 $data_db[$coatid]['coatype'] = $rs->fields['coatype'];
 
@@ -90,7 +92,7 @@ class Neraca extends BaseController
             {
                 $coatid      = $rss->fields['coatid'];
                 $coaid       = $rss->fields['coaid'];
-                $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? $ho_jkk : $rss->fields['branch_code'];
+                $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
 
                 $data_db[$coatid]['coatype'] = $rss->fields['coatype'];
 
@@ -174,9 +176,7 @@ class Neraca extends BaseController
             }
         }
 
-        // myprint_r($data_db);
-        // myprint_r($data_bs);
-        // die();
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
 
         $period = $rs->UserDate($data['pbegin'], 'M Y') .' - '.$rs->UserDate($data['pend'], 'M Y');
         
@@ -195,6 +195,7 @@ class Neraca extends BaseController
 
         return view('akuntansi_report.neraca.cetak', compact(
             'data_cabang',
+            'cabang',
             'data',
             'period',
             'report_month',
@@ -210,371 +211,460 @@ class Neraca extends BaseController
         ));
     } /*}}}*/
 
-    // public function cetak_baru ($data) /*{{{*/
-    // {
-    //     $data = array(
-    //         'month' => intval(get_var('month')),
-    //         'year'  => get_var('year'),
-    //     );
-
-    //     $tgl_cetak = date('Y-m-d');
-
-    //     if ($data['month'] > 12)
-    //     {
-    //         $data['prev_month'] = $data['month'] - 1;
-    //         $data['prev_year'] = $data['year'];
-
-    //         $edate = '31'.'-'.$data['month'].'-'.$data['year'];
-    //         $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
+    public function cetak_baru ($data) /*{{{*/
+    {
+        $data = array(
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
+        );
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
-    //         if ($data['prev_month'] == 12)
-    //             $sdate = date("Y-m-t", strtotime($sdate));
-    //     }
-    //     else
-    //     {
-    //         $edate = $data['year'].'-'.$data['month'].'-01';
-    //         $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
-
-    //         $edate = date("Y-m-t", strtotime($edate));
-    //         $sdate = date("Y-m-t", strtotime($sdate));
-
-    //         $data['prev_month'] = date("n", strtotime($sdate));
-    //         $data['prev_year'] = date("Y", strtotime($sdate));
-    //     }
-
-    //     $rs_pos = $data_pos = [];
-    //     $empty_aktiva = $empty_pasiva = $without_mapping = true;
-
-    //     $rs_period = Modules::get_period_akunting($data);
-
-    //     if (!$rs_period->EOF)
-    //     {
-    //         $data['paid']   = $rs_period->fields['paid'];
-    //         $data['pbegin'] = $rs_period->fields['pbegin'];
-    //         $data['pend']   = $rs_period->fields['pend'];
-
-    //         $rs = NeracaMdl::list($data);
-
-    //         while (!$rs->EOF)
-    //         {
-    //             // special untuk acc. akumulasi penyusutan, asset tapi default credet
-    //             if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
-    //             {
-    //                 $openingbal = $rs->fields['openingbal'] * -1;
-    //                 $closingbal = $rs->fields['closingbal'] * -1;
-    //             }
-    //             else
-    //             {
-    //                 $openingbal = $rs->fields['openingbal'];
-    //                 $closingbal = $rs->fields['closingbal'];
-    //             }
-
-    //             $data_db[$rs->fields['pnid']]['openingbal'] += $openingbal;
-    //             $data_db[$rs->fields['pnid']]['closingbal'] += $closingbal;
-
-    //             $rs->MoveNext();
-    //         }
-
-    //         $rss = Modules::laba_rugi($data);
-
-    //         while (!$rss->EOF)
-    //         {
-    //             $data_db[$rss->fields['pnid']]['openingbal'] += $rss->fields['openingbal'];
-    //             $data_db[$rss->fields['pnid']]['closingbal'] += $rss->fields['closingbal'];
-
-    //             $rss->MoveNext();
-    //         }
-
-    //         $rs_pos = NeracaMdl::list_pos();
-
-    //         while (!$rs_pos->EOF)
-    //         {
-    //             $row = $data_db[$rs_pos->fields['pnid']];
-
-    //             $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
-    //             $is_header = $rs_pos->fields['parent_pnid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
-
-    //             $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
-
-    //             if (trim($nama) == '') $nama = '&nbsp;';
-
-    //             if ($is_header == 't') $nama = '<b>'.$nama.'</b>';
-
-    //             $amount_prev = format_uang($row['openingbal'], 2);
-    //             $amount = format_uang($row['closingbal'], 2);
-
-    //             if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-    //             {
-    //                 $amount_prev = '';
-    //                 $amount = '';
-    //             }
-
-    //             if ($rs_pos->fields['sum_total'] == 't')
-    //             {
-    //                 $amount_prev = '<b><u>'.$amount_prev.'</u></b>';
-    //                 $amount = '<b><u>'.$amount.'</u></b>';
-    //             }
-
-    //             $tmpdata = array();
-    //             $tmpdata['nama_pos']    = $space.$nama;
-    //             $tmpdata['amount_prev'] = $amount_prev;
-    //             $tmpdata['amount']      = $amount;
-
-    //             $data_pos[$rs_pos->fields['jenis_pos']][$rs_pos->fields['pnid']] = $tmpdata;
-
-    //             if ($rs_pos->fields['jenis_pos'] == 1) $empty_aktiva = false;
-    //             elseif ($rs_pos->fields['jenis_pos'] == 2) $empty_pasiva = false;
-
-    //             // Subtotal Per Header
-    //             if ($rs_pos->fields['parent_pnid'] != '')
-    //             {
-    //                 $data_db[$rs_pos->fields['parent_pnid']]['openingbal'] += $row['openingbal'];
-    //                 $data_db[$rs_pos->fields['parent_pnid']]['closingbal'] += $row['closingbal'];
-    //             }
-
-    //             $rs_pos->MoveNext();
-    //         }
-    //     }
-
-    //     if ($data['month'] <= 12)
-    //     {
-    //         $edate = strtoupper(dbtstamp2stringina($edate));
-    //         $bln = monthnamelong($data['month']).' '.$data['year'];
-    //     }
-    //     else
-    //         $bln = $data['month'].'-'.$data['year'];
-
-    //     if ($data['prev_month'] <= 12)
-    //     {
-    //         $sdate = strtoupper(dbtstamp2stringina($sdate));
-    //         $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
-    //     }
-    //     else
-    //         $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
-
-    //     if ($data_db[0]['closingbal'] <> 0)
-    //     {
-    //         $without_mapping = false;
-
-    //         $pos_amount_prev = format_uang($data_db[0]['openingbal'], 2);
-    //         $pos_amount = format_uang($data_db[0]['closingbal'], 2);
-    //     }
-
-    //     return view('akuntansi_report.neraca.cetak_baru', compact(
-    //         'sdate',
-    //         'edate',
-    //         'tgl_cetak',
-    //         'data',
-    //         'bln_prev',
-    //         'bln',
-    //         'rs_pos',
-    //         'data_pos',
-    //         'empty_aktiva',
-    //         'empty_pasiva',
-    //         'without_mapping',
-    //         'pos_amount_prev',
-    //         'pos_amount'
-    //     ));
-    // } /*}}}*/
-
-    // public function cetak_baru_detail ($data) /*{{{*/
-    // {
-    //     $data = array(
-    //         'month' => intval(get_var('month')),
-    //         'year'  => get_var('year'),
-    //     );
-
-    //     $tgl_cetak = date('Y-m-d');
-
-    //     if ($data['month'] > 12)
-    //     {
-    //         $data['prev_month'] = $data['month'] - 1;
-    //         $data['prev_year'] = $data['year'];
-
-    //         $edate = '31'.'-'.$data['month'].'-'.$data['year'];
-    //         $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
-
-    //         if ($data['prev_month'] == 12)
-    //             $sdate = date("Y-m-t", strtotime($sdate));
-    //     }
-    //     else
-    //     {
-    //         $edate = $data['year'].'-'.$data['month'].'-01';
-    //         $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
-
-    //         $edate = date("Y-m-t", strtotime($edate));
-    //         $sdate = date("Y-m-t", strtotime($sdate));
-
-    //         $data['prev_month'] = date("n", strtotime($sdate));
-    //         $data['prev_year'] = date("Y", strtotime($sdate));
-    //     }
-
-    //     $rs_pos = $data_pos = [];
-    //     $empty_aktiva = $empty_pasiva = $without_mapping = true;
-
-    //     $rs_period = Modules::get_period_akunting($data);
-
-    //     if (!$rs_period->EOF)
-    //     {
-    //         $data['paid']   = $rs_period->fields['paid'];
-    //         $data['pbegin'] = $rs_period->fields['pbegin'];
-    //         $data['pend']   = $rs_period->fields['pend'];
-
-    //         $rs = NeracaMdl::list($data);
-
-    //         while (!$rs->EOF)
-    //         {
-    //             // special untuk acc. akumulasi penyusutan, asset tapi default credet
-    //             if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
-    //             {
-    //                 $openingbal = $rs->fields['openingbal'] * -1;
-    //                 $closingbal = $rs->fields['closingbal'] * -1;
-    //             }
-    //             else
-    //             {
-    //                 $openingbal = $rs->fields['openingbal'];
-    //                 $closingbal = $rs->fields['closingbal'];
-    //             }
-
-    //             $data_db[$rs->fields['pnid']]['openingbal'] += $openingbal;
-    //             $data_db[$rs->fields['pnid']]['closingbal'] += $closingbal;
-
-    //             $tmpdata = array();
-    //             $tmpdata['coaid']       = $rs->fields['coaid'];
-    //             $tmpdata['coa']         = $rs->fields['coacode'].' '.$rs->fields['coaname'];
-    //             $tmpdata['amount_prev'] = $openingbal;
-    //             $tmpdata['amount']      = $closingbal;
-
-    //             $data_db[$rs->fields['pnid']]['data'][$rs->fields['coaid']] = $tmpdata;
-
-    //             $rs->MoveNext();
-    //         }
-
-    //         $rss = Modules::laba_rugi($data);
-
-    //         while (!$rss->EOF)
-    //         {
-    //             $data_db[$rss->fields['pnid']]['openingbal'] += $rss->fields['openingbal'];
-    //             $data_db[$rss->fields['pnid']]['closingbal'] += $rss->fields['closingbal'];
-
-    //             $tmpdata = array();
-    //             $tmpdata['coaid']       = $rss->fields['coaid'];
-    //             $tmpdata['coa']         = $rss->fields['coacode'].' '.$rss->fields['coaname'];
-    //             $tmpdata['amount_prev'] = $data_db[$rss->fields['pnid']]['data'][$rss->fields['coaid']]['amount_prev'] + $rss->fields['openingbal'];
-    //             $tmpdata['amount']      = $data_db[$rss->fields['pnid']]['data'][$rss->fields['coaid']]['amount'] + $rss->fields['closingbal'];
-
-    //             $data_db[$rss->fields['pnid']]['data'][$rss->fields['coaid']] = $tmpdata;
-
-    //             $rss->MoveNext();
-    //         }
-
-    //         $rs_pos = NeracaMdl::list_pos();
-
-    //         while (!$rs_pos->EOF)
-    //         {
-    //             $row = $data_db[$rs_pos->fields['pnid']];
-    //             $colrow = "";
-
-    //             $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
-    //             $is_header = $rs_pos->fields['parent_pnid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
-
-    //             $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
-
-    //             if (trim($nama) == '') $nama = '&nbsp;';
-
-    //             $amount_prev = format_uang($row['openingbal'], 2);
-    //             $amount = format_uang($row['closingbal'], 2);
-
-    //             if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-    //             {
-    //                 $amount_prev = '';
-    //                 $amount = '';
-    //             }
-
-    //             if ($rs_pos->fields['sum_total'] == 't')
-    //             {
-    //                 $amount_prev = '<b><u>'.$amount_prev.'</u></b>';
-    //                 $amount = '<b><u>'.$amount.'</u></b>';
-    //                 $colrow = '#F2ECEC';
-    //             }
-
-    //             $tmpdata = array();
-    //             $tmpdata['nama_pos']    = $space.'<b>'.$nama.'</b>';
-    //             $tmpdata['amount_prev'] = '<b>'.$amount_prev.'</b>';
-    //             $tmpdata['amount']      = '<b>'.$amount.'</b>';
-    //             $tmpdata['color']       = $colrow;
-
-    //             $data_pos[$rs_pos->fields['jenis_pos']][$rs_pos->fields['pnid']][$rs_pos->fields['pnid']] = $tmpdata;
-
-    //             if (isset($row['data']))
-    //             {
-    //                 foreach ($row['data'] as $coaid => $val)
-    //                 {
-    //                     $space2 = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", ($rs_pos->fields['level'] + 1));
-
-    //                     $tmpdata = array();
-    //                     $tmpdata['nama_pos']    = $space2.$val['coa'];
-    //                     $tmpdata['amount_prev'] = format_uang($val['amount_prev'], 2);
-    //                     $tmpdata['amount']      = format_uang($val['amount'], 2);
-    //                     $tmpdata['color']       = '';
-
-    //                     $data_pos[$rs_pos->fields['jenis_pos']][$rs_pos->fields['pnid']][$val['coaid']] = $tmpdata;
-    //                 }
-    //             }
-
-    //             if ($rs_pos->fields['jenis_pos'] == 1) $empty_aktiva = false;
-    //             elseif ($rs_pos->fields['jenis_pos'] == 2) $empty_pasiva = false;
-
-    //             // Subtotal Per Header
-    //             if ($rs_pos->fields['parent_pnid'] != '')
-    //             {
-    //                 $data_db[$rs_pos->fields['parent_pnid']]['openingbal'] += $row['openingbal'];
-    //                 $data_db[$rs_pos->fields['parent_pnid']]['closingbal'] += $row['closingbal'];
-    //             }
-
-    //             $rs_pos->MoveNext();
-    //         }
-    //     }
-
-    //     if ($data['month'] <= 12)
-    //     {
-    //         $edate = strtoupper(dbtstamp2stringina($edate));
-    //         $bln = monthnamelong($data['month']).' '.$data['year'];
-    //     }
-    //     else
-    //         $bln = $data['month'].'-'.$data['year'];
-
-    //     if ($data['prev_month'] <= 12)
-    //     {
-    //         $sdate = strtoupper(dbtstamp2stringina($sdate));
-    //         $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
-    //     }
-    //     else
-    //         $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
-
-    //     if ($data_db[0]['closingbal'] <> 0)
-    //     {
-    //         $without_mapping = false;
-
-    //         $pos_amount_prev = format_uang($data_db[0]['openingbal'], 2);
-    //         $pos_amount = format_uang($data_db[0]['closingbal'], 2);
-    //     }
-
-    //     return view('akuntansi_report.neraca.cetak_baru_detail', compact(
-    //         'sdate',
-    //         'edate',
-    //         'tgl_cetak',
-    //         'data',
-    //         'bln_prev',
-    //         'bln',
-    //         'rs_pos',
-    //         'data_pos',
-    //         'empty_aktiva',
-    //         'empty_pasiva',
-    //         'without_mapping',
-    //         'pos_amount_prev',
-    //         'pos_amount'
-    //     ));
-    // } /*}}}*/
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
+
+        $tgl_cetak = date('Y-m-d');
+
+        if ($data['month'] > 12)
+        {
+            $data['prev_month'] = $data['month'] - 1;
+            $data['prev_year'] = $data['year'];
+
+            $edate = '31'.'-'.$data['month'].'-'.$data['year'];
+            $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
+
+            if ($data['prev_month'] == 12)
+                $sdate = date("Y-m-t", strtotime($sdate));
+        }
+        else
+        {
+            $edate = $data['year'].'-'.$data['month'].'-01';
+            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+
+            $edate = date("Y-m-t", strtotime($edate));
+            $sdate = date("Y-m-t", strtotime($sdate));
+
+            $data['prev_month'] = date("n", strtotime($sdate));
+            $data['prev_year'] = date("Y", strtotime($sdate));
+        }
+
+        $rs_pos = $data_pos = $data_db = [];
+        $empty_aktiva = $empty_pasiva = $without_mapping = true;
+
+        $rs_period = Modules::get_period_akunting($data);
+
+        if (!$rs_period->EOF)
+        {
+            $data['paid']   = $rs_period->fields['paid'];
+            $data['pbegin'] = $rs_period->fields['pbegin'];
+            $data['pend']   = $rs_period->fields['pend'];
+
+            $rs = NeracaMdl::list($data);
+
+            while (!$rs->EOF)
+            {
+                $bc = $rs->fields['branch_code'] ?? '';
+
+                if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
+                {
+                    $openingbal = $rs->fields['openingbal'] * -1;
+                    $closingbal = $rs->fields['closingbal'] * -1;
+                }
+                else
+                {
+                    $openingbal = $rs->fields['openingbal'];
+                    $closingbal = $rs->fields['closingbal'];
+                }
+
+                $pnid = $rs->fields['pnid'];
+
+                $data_db[$pnid]['branches'][$bc]['openingbal'] = ($data_db[$pnid]['branches'][$bc]['openingbal'] ?? 0) + $openingbal;
+                $data_db[$pnid]['branches'][$bc]['closingbal'] = ($data_db[$pnid]['branches'][$bc]['closingbal'] ?? 0) + $closingbal;
+
+                $data_db[$pnid]['total']['openingbal'] = ($data_db[$pnid]['total']['openingbal'] ?? 0) + $openingbal;
+                $data_db[$pnid]['total']['closingbal'] = ($data_db[$pnid]['total']['closingbal'] ?? 0) + $closingbal;
+
+                $rs->MoveNext();
+            }
+
+            $rss = Modules::laba_rugi($data);
+
+            while (!$rss->EOF)
+            {
+                $bc = $rss->fields['branch_code'] ?? '';
+                $pnid = $rss->fields['pnid'];
+
+                $data_db[$pnid]['branches'][$bc]['openingbal'] = ($data_db[$pnid]['branches'][$bc]['openingbal'] ?? 0) + $rss->fields['openingbal'];
+                $data_db[$pnid]['branches'][$bc]['closingbal'] = ($data_db[$pnid]['branches'][$bc]['closingbal'] ?? 0) + $rss->fields['closingbal'];
+
+                $data_db[$pnid]['total']['openingbal'] = ($data_db[$pnid]['total']['openingbal'] ?? 0) + $rss->fields['openingbal'];
+                $data_db[$pnid]['total']['closingbal'] = ($data_db[$pnid]['total']['closingbal'] ?? 0) + $rss->fields['closingbal'];
+
+                $rss->MoveNext();
+            }
+
+            $rs_pos = NeracaMdl::list_pos();
+
+            while (!$rs_pos->EOF)
+            {
+                $pnid = $rs_pos->fields['pnid'];
+                $row = $data_db[$pnid] ?? [];
+
+                $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
+                $is_header = $rs_pos->fields['parent_pnid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
+
+                $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
+
+                if (trim($nama) == '') $nama = '&nbsp;';
+                if ($is_header == 't') $nama = '<b>'.$nama.'</b>';
+
+                $tmp_amounts = [];
+                $tot_op = $row['total']['openingbal'] ?? 0;
+                $tot_cl = $row['total']['closingbal'] ?? 0;
+
+                foreach ($data_cabang as $bc => $cabang)
+                {
+                    $op = $row['branches'][$bc]['openingbal'] ?? 0;
+                    $cl = $row['branches'][$bc]['closingbal'] ?? 0;
+
+                    $amt_prev = format_uang($op, 2);
+                    $amt = format_uang($cl, 2);
+
+                    if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                    {
+                        $amt_prev = '';
+                        $amt = '';
+                    }
+
+                    if ($rs_pos->fields['sum_total'] == 't')
+                    {
+                        $amt_prev = '<b><u>'.$amt_prev.'</u></b>';
+                        $amt = '<b><u>'.$amt.'</u></b>';
+                    }
+
+                    $tmp_amounts['branches'][$bc] = [
+                        'amount_prev'   => $amt_prev,
+                        'amount'        => $amt
+                    ];
+                }
+
+                $amt_tot_prev = format_uang($tot_op, 2);
+                $amt_tot = format_uang($tot_cl, 2);
+
+                if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                {
+                    $amt_tot_prev = '';
+                    $amt_tot = '';
+                }
+
+                if ($rs_pos->fields['sum_total'] == 't')
+                {
+                    $amt_tot_prev = '<b><u>'.$amt_tot_prev.'</u></b>';
+                    $amt_tot = '<b><u>'.$amt_tot.'</u></b>';
+                }
+
+                $tmp_amounts['total'] = [
+                    'amount_prev'   => $amt_tot_prev,
+                    'amount'        => $amt_tot
+                ];
+
+                $tmpdata = array();
+                $tmpdata['nama_pos'] = $space.$nama;
+                $tmpdata['amounts']  = $tmp_amounts;
+
+                $data_pos[$rs_pos->fields['jenis_pos']][$pnid] = $tmpdata;
+
+                if ($rs_pos->fields['jenis_pos'] == 1) $empty_aktiva = false;
+                elseif ($rs_pos->fields['jenis_pos'] == 2) $empty_pasiva = false;
+
+                if ($rs_pos->fields['parent_pnid'] != '')
+                {
+                    $parent_id = $rs_pos->fields['parent_pnid'];
+
+                    foreach ($data_cabang as $bc => $cabang)
+                    {
+                        $op = $row['branches'][$bc]['openingbal'] ?? 0;
+                        $cl = $row['branches'][$bc]['closingbal'] ?? 0;
+
+                        $data_db[$parent_id]['branches'][$bc]['openingbal'] = ($data_db[$parent_id]['branches'][$bc]['openingbal'] ?? 0) + $op;
+                        $data_db[$parent_id]['branches'][$bc]['closingbal'] = ($data_db[$parent_id]['branches'][$bc]['closingbal'] ?? 0) + $cl;
+                    }
+
+                    $data_db[$parent_id]['total']['openingbal'] = ($data_db[$parent_id]['total']['openingbal'] ?? 0) + $tot_op;
+                    $data_db[$parent_id]['total']['closingbal'] = ($data_db[$parent_id]['total']['closingbal'] ?? 0) + $tot_cl;
+                }
+
+                $rs_pos->MoveNext();
+            }
+        }
+
+        if ($data['month'] <= 12)
+        {
+            $edate = strtoupper(dbtstamp2stringina($edate));
+            $bln = monthnamelong($data['month']).' '.$data['year'];
+        }
+        else
+            $bln = $data['month'].'-'.$data['year'];
+
+        if ($data['prev_month'] <= 12)
+        {
+            $sdate = strtoupper(dbtstamp2stringina($sdate));
+            $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
+        }
+        else
+            $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
+
+        $pos_lainnya = [];
+        if (isset($data_db[0]['total']['closingbal']) && $data_db[0]['total']['closingbal'] <> 0)
+        {
+            $without_mapping = false;
+
+            foreach ($data_cabang as $bc => $cabang)
+            {
+                $pos_lainnya['branches'][$bc]['amount_prev']    = format_uang($data_db[0]['branches'][$bc]['openingbal'] ?? 0, 2);
+                $pos_lainnya['branches'][$bc]['amount']         = format_uang($data_db[0]['branches'][$bc]['closingbal'] ?? 0, 2);
+            }
+
+            $pos_lainnya['total']['amount_prev'] = format_uang($data_db[0]['total']['openingbal'] ?? 0, 2);
+            $pos_lainnya['total']['amount'] = format_uang($data_db[0]['total']['closingbal'] ?? 0, 2);
+        }
+
+        return view('akuntansi_report.neraca.cetak_baru', compact(
+            'sdate',
+            'edate',
+            'tgl_cetak',
+            'data',
+            'bln_prev',
+            'bln',
+            'rs_pos',
+            'data_pos',
+            'empty_aktiva',
+            'empty_pasiva',
+            'without_mapping',
+            'pos_lainnya',
+            'data_cabang'
+        ));
+    } /*}}}*/
+
+    public function cetak_baru_detail ($data) /*{{{*/
+    {
+        $data = array(
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
+        );
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
+
+        $tgl_cetak = date('Y-m-d');
+
+        if ($data['month'] > 12)
+        {
+            $data['prev_month'] = $data['month'] - 1;
+            $data['prev_year'] = $data['year'];
+
+            $edate = '31'.'-'.$data['month'].'-'.$data['year'];
+            $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
+
+            if ($data['prev_month'] == 12)
+                $sdate = date("Y-m-t", strtotime($sdate));
+        }
+        else
+        {
+            $edate = $data['year'].'-'.$data['month'].'-01';
+            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+
+            $edate = date("Y-m-t", strtotime($edate));
+            $sdate = date("Y-m-t", strtotime($sdate));
+
+            $data['prev_month'] = date("n", strtotime($sdate));
+            $data['prev_year'] = date("Y", strtotime($sdate));
+        }
+
+        $rs_pos = $data_pos = [];
+        $empty_aktiva = $empty_pasiva = $without_mapping = true;
+
+        $rs_period = Modules::get_period_akunting($data);
+
+        if (!$rs_period->EOF)
+        {
+            $data['paid']   = $rs_period->fields['paid'];
+            $data['pbegin'] = $rs_period->fields['pbegin'];
+            $data['pend']   = $rs_period->fields['pend'];
+
+            $rs = NeracaMdl::list($data);
+
+            while (!$rs->EOF)
+            {
+                // special untuk acc. akumulasi penyusutan, asset tapi default credet
+                if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
+                {
+                    $openingbal = $rs->fields['openingbal'] * -1;
+                    $closingbal = $rs->fields['closingbal'] * -1;
+                }
+                else
+                {
+                    $openingbal = $rs->fields['openingbal'];
+                    $closingbal = $rs->fields['closingbal'];
+                }
+
+                $data_db[$rs->fields['pnid']]['openingbal'] += $openingbal;
+                $data_db[$rs->fields['pnid']]['closingbal'] += $closingbal;
+
+                $tmpdata = array();
+                $tmpdata['coaid']       = $rs->fields['coaid'];
+                $tmpdata['coa']         = $rs->fields['coacode'].' '.$rs->fields['coaname'];
+                $tmpdata['amount_prev'] = $openingbal;
+                $tmpdata['amount']      = $closingbal;
+
+                $data_db[$rs->fields['pnid']]['data'][$rs->fields['coaid']] = $tmpdata;
+
+                $rs->MoveNext();
+            }
+
+            $rss = Modules::laba_rugi($data);
+
+            while (!$rss->EOF)
+            {
+                $data_db[$rss->fields['pnid']]['openingbal'] += $rss->fields['openingbal'];
+                $data_db[$rss->fields['pnid']]['closingbal'] += $rss->fields['closingbal'];
+
+                $tmpdata = array();
+                $tmpdata['coaid']       = $rss->fields['coaid'];
+                $tmpdata['coa']         = $rss->fields['coacode'].' '.$rss->fields['coaname'];
+                $tmpdata['amount_prev'] = $data_db[$rss->fields['pnid']]['data'][$rss->fields['coaid']]['amount_prev'] + $rss->fields['openingbal'];
+                $tmpdata['amount']      = $data_db[$rss->fields['pnid']]['data'][$rss->fields['coaid']]['amount'] + $rss->fields['closingbal'];
+
+                $data_db[$rss->fields['pnid']]['data'][$rss->fields['coaid']] = $tmpdata;
+
+                $rss->MoveNext();
+            }
+
+            $rs_pos = NeracaMdl::list_pos();
+
+            while (!$rs_pos->EOF)
+            {
+                $row = $data_db[$rs_pos->fields['pnid']];
+                $colrow = "";
+
+                $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
+                $is_header = $rs_pos->fields['parent_pnid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
+
+                $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
+
+                if (trim($nama) == '') $nama = '&nbsp;';
+
+                $amount_prev = format_uang($row['openingbal'], 2);
+                $amount = format_uang($row['closingbal'], 2);
+
+                if ($rs_pos->fields['parent_pnid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                {
+                    $amount_prev = '';
+                    $amount = '';
+                }
+
+                if ($rs_pos->fields['sum_total'] == 't')
+                {
+                    $amount_prev = '<b><u>'.$amount_prev.'</u></b>';
+                    $amount = '<b><u>'.$amount.'</u></b>';
+                    $colrow = '#F2ECEC';
+                }
+
+                $tmpdata = array();
+                $tmpdata['nama_pos']    = $space.'<b>'.$nama.'</b>';
+                $tmpdata['amount_prev'] = '<b>'.$amount_prev.'</b>';
+                $tmpdata['amount']      = '<b>'.$amount.'</b>';
+                $tmpdata['color']       = $colrow;
+
+                $data_pos[$rs_pos->fields['jenis_pos']][$rs_pos->fields['pnid']][$rs_pos->fields['pnid']] = $tmpdata;
+
+                if (isset($row['data']))
+                {
+                    foreach ($row['data'] as $coaid => $val)
+                    {
+                        $space2 = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", ($rs_pos->fields['level'] + 1));
+
+                        $tmpdata = array();
+                        $tmpdata['nama_pos']    = $space2.$val['coa'];
+                        $tmpdata['amount_prev'] = format_uang($val['amount_prev'], 2);
+                        $tmpdata['amount']      = format_uang($val['amount'], 2);
+                        $tmpdata['color']       = '';
+
+                        $data_pos[$rs_pos->fields['jenis_pos']][$rs_pos->fields['pnid']][$val['coaid']] = $tmpdata;
+                    }
+                }
+
+                if ($rs_pos->fields['jenis_pos'] == 1) $empty_aktiva = false;
+                elseif ($rs_pos->fields['jenis_pos'] == 2) $empty_pasiva = false;
+
+                // Subtotal Per Header
+                if ($rs_pos->fields['parent_pnid'] != '')
+                {
+                    $data_db[$rs_pos->fields['parent_pnid']]['openingbal'] += $row['openingbal'];
+                    $data_db[$rs_pos->fields['parent_pnid']]['closingbal'] += $row['closingbal'];
+                }
+
+                $rs_pos->MoveNext();
+            }
+        }
+
+        if ($data['month'] <= 12)
+        {
+            $edate = strtoupper(dbtstamp2stringina($edate));
+            $bln = monthnamelong($data['month']).' '.$data['year'];
+        }
+        else
+            $bln = $data['month'].'-'.$data['year'];
+
+        if ($data['prev_month'] <= 12)
+        {
+            $sdate = strtoupper(dbtstamp2stringina($sdate));
+            $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
+        }
+        else
+            $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
+
+        if ($data_db[0]['closingbal'] <> 0)
+        {
+            $without_mapping = false;
+
+            $pos_amount_prev = format_uang($data_db[0]['openingbal'], 2);
+            $pos_amount = format_uang($data_db[0]['closingbal'], 2);
+        }
+
+        return view('akuntansi_report.neraca.cetak_baru_detail', compact(
+            'sdate',
+            'edate',
+            'tgl_cetak',
+            'data',
+            'bln_prev',
+            'bln',
+            'rs_pos',
+            'data_pos',
+            'empty_aktiva',
+            'empty_pasiva',
+            'without_mapping',
+            'pos_amount_prev',
+            'pos_amount'
+        ));
+    } /*}}}*/
 }
 ?>
