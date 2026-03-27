@@ -470,6 +470,7 @@ class Neraca extends BaseController
         while (!$rs_cabang->EOF)
         {
             $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
             $rs_cabang->MoveNext();
         }
 
