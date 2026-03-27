@@ -36,14 +36,31 @@
     <span style="text-transform: uppercase;">Tgl cetak : {{ strtoupper(dbtstamp2stringina($tgl_cetak)) }}</span>
 </h2>
 
-<div id="ftr" class="tp2">
-    <div class="wpr">
-        <table width="99%" class="pad">
+<div style="display: flex; align-items: flex-start; gap: 20px; width: 100%;">
+    <div style="flex: 1; width: 50%; overflow-x: auto;">
+        <table width="100%" class="pad">
             <thead>
                 <tr>
-                    <th>Keterangan</th>
-                    <th>{{ $bln }}</th>
-                    <th>{{ $bln_prev }}</th>
+                    <th rowspan="2">Keterangan</th>
+                    
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <th colspan="2">{{ $cabang['branch_name'] }}</th>
+                    @endforeach
+                    
+                    @if(count($data_cabang) > 1)
+                        <th colspan="2">Total All Branch</th>
+                    @endif
+                </tr>
+                <tr>
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <th>{{ $bln }}</th>
+                        <th>{{ $bln_prev }}</th>
+                    @endforeach
+                    
+                    @if(count($data_cabang) > 1)
+                        <th>{{ $bln }}</th>
+                        <th>{{ $bln_prev }}</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -52,12 +69,21 @@
                         @foreach ($row as $rec)
                             @php
                                 $rec = FieldsToObject($rec);
+                                $amounts = json_decode(json_encode($rec->amounts), true);
                             @endphp
 
                             <tr style="background: {{ $rec->color }};">
                                 <td>{!! $rec->nama_pos !!}</td>
-                                <td align="right">{!! $rec->amount !!}</td>
-                                <td align="right">{!! $rec->amount_prev !!}</td>
+                                
+                                @foreach ($data_cabang as $bc => $cabang)
+                                    <td align="right">{!! $amounts['branches'][$bc]['amount'] ?? '' !!}</td>
+                                    <td align="right">{!! $amounts['branches'][$bc]['amount_prev'] ?? '' !!}</td>
+                                @endforeach
+                                
+                                @if(count($data_cabang) > 1)
+                                    <td align="right">{!! $amounts['total']['amount'] !!}</td>
+                                    <td align="right">{!! $amounts['total']['amount_prev'] !!}</td>
+                                @endif
                             </tr>
                         @endforeach
                     @endforeach
@@ -65,39 +91,76 @@
 
                 @if (!$without_mapping)
                 <tr>
-                    <td colspan="3">&nbsp;</td>
+                    @php
+                        $colspan_kosong = 1 + (count($data_cabang) * 2) + (count($data_cabang) > 1 ? 2 : 0);
+                    @endphp
+                    <td colspan="{{ $colspan_kosong }}">&nbsp;</td>
                 </tr>
                 <tr style="background: #F2ECEC">
                     <td><b>POS NERACA LAINNYA</b></td>
-                    <td align="right"><b><u>{!! $pos_amount !!}</u></b></td>
-                    <td align="right"><b><u>{!! $pos_amount_prev !!}</u></b></td>
+                    
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['amount'] ?? '' !!}</u></b></td>
+                        <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['amount_prev'] ?? '' !!}</u></b></td>
+                    @endforeach
+                    
+                    @if(count($data_cabang) > 1)
+                        <td align="right"><b><u>{!! $pos_lainnya['total']['amount'] !!}</u></b></td>
+                        <td align="right"><b><u>{!! $pos_lainnya['total']['amount_prev'] !!}</u></b></td>
+                    @endif
                 </tr>
                 @endif
             </tbody>
         </table>
     </div>
 
-    <div class="wpr">
-        <table width="99%" class="pad">
+    <div style="flex: 1; width: 50%; overflow-x: auto;">
+        <table width="100%" class="pad">
             <thead>
                 <tr>
-                    <th>Keterangan</th>
-                    <th>{{ $bln }}</th>
-                    <th>{{ $bln_prev }}</th>
+                    <th rowspan="2">Keterangan</th>
+                    
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <th colspan="2">{{ $cabang['branch_name'] }}</th>
+                    @endforeach
+                    
+                    @if(count($data_cabang) > 1)
+                        <th colspan="2">Total All Branch</th>
+                    @endif
+                </tr>
+                <tr>
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <th>{{ $bln }}</th>
+                        <th>{{ $bln_prev }}</th>
+                    @endforeach
+                    
+                    @if(count($data_cabang) > 1)
+                        <th>{{ $bln }}</th>
+                        <th>{{ $bln_prev }}</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
-                @if (!$empty_pasive)
+                @if (!$empty_pasiva)
                     @foreach ($data_pos[2] as $row)
                         @foreach ($row as $rec)
                             @php
                                 $rec = FieldsToObject($rec);
+                                $amounts = json_decode(json_encode($rec->amounts), true);
                             @endphp
 
                             <tr style="background: {{ $rec->color }};">
                                 <td>{!! $rec->nama_pos !!}</td>
-                                <td align="right">{!! $rec->amount !!}</td>
-                                <td align="right">{!! $rec->amount_prev !!}</td>
+                                
+                                @foreach ($data_cabang as $bc => $cabang)
+                                    <td align="right">{!! $amounts['branches'][$bc]['amount'] ?? '' !!}</td>
+                                    <td align="right">{!! $amounts['branches'][$bc]['amount_prev'] ?? '' !!}</td>
+                                @endforeach
+                                
+                                @if(count($data_cabang) > 1)
+                                    <td align="right">{!! $amounts['total']['amount'] !!}</td>
+                                    <td align="right">{!! $amounts['total']['amount_prev'] !!}</td>
+                                @endif
                             </tr>
                         @endforeach
                     @endforeach
