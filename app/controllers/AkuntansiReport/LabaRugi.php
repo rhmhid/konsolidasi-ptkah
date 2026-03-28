@@ -4,11 +4,15 @@ require_once APPPATH . '/libraries/BaseController.php';
 
 class LabaRugi extends BaseController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/LabaRugiMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -35,7 +39,7 @@ class LabaRugi extends BaseController
             'status_coa'    => get_var('status_coa'),
         );
 
-        // if ($mytipe == 'pl-new') return self::cetak_baru($mytipe, $data);
+        if ($mytipe == 'pl-new') return self::cetak_baru($mytipe, $data);
         // elseif ($mytipe == 'pl-new-daily') return self::cetak_baru_daily($mytipe, $data);
         // elseif ($mytipe == 'pl-new-detail') return self::cetak_baru_detail($mytipe, $data);
         // elseif ($mytipe == 'pl-new-detail-daily') return self::cetak_baru_detail_daily($mytipe, $data);
@@ -49,8 +53,6 @@ class LabaRugi extends BaseController
 
             $rs_cabang->MoveNext();
         }
-
-        $coacode_last = $subtot_header = [];
 
         if ($data['month'] > 12)
         {
@@ -75,7 +77,11 @@ class LabaRugi extends BaseController
             $data['prev_year'] = date("Y", strtotime($sdate));
         }
 
-        $data_pl = $coacode_last = [];
+        $data_pl = $subtotals = [];
+        $grand_totals = [
+            'income' => ['branches' => [], 'total' => ['amount_bln_prev' => 0, 'amount_bln' => 0, 'closingbal' => 0]],
+            'cost'   => ['branches' => [], 'total' => ['amount_bln_prev' => 0, 'amount_bln' => 0, 'closingbal' => 0]]
+        ];
 
         $rs_period = Modules::get_period_akunting($data);
 
@@ -89,33 +95,79 @@ class LabaRugi extends BaseController
 
             while (!$rs->EOF)
             {
-                $coacode = $rs->fields['coacode'];
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                $coatid = $rs->fields['coatid'];
+                $coaid = $rs->fields['coaid'];
 
-                if (!isset($data_db[$coacode]))
+                if (!isset($data_pl[$coatid]))
                 {
-                    $data_pl[$coacode] = array(
-                        'coaid'         => $rs->fields['coaid'],
-                        'coacode'       => $rs->fields['coacode'],
-                        'coaname'       => $rs->fields['coaname'],
-                        'coatid'        => $rs->fields['coatid'],
-                        'default_debet' => $rs->fields['default_debet'],
-                        'posisi'        => $rs->fields['default_debet'] == 't' ? 'Dr' : 'Cr',
-                    );
+                    $data_pl[$coatid] = [
+                        'headname'  => $coatid == 4 ? 'INCOME' : 'COST',
+                        'data'      => []
+                    ];
                 }
 
-                $data_pl[$coacode]['branch'][$rs->fields['branch_code']] = [
-                    'amount_bln_prev'   => floatval($rs->fields['amount_bln_prev']),
-                    'amount_bln'        => floatval($rs->fields['amount_bln']),
-                    'closingbal'        => floatval($rs->fields['closingbal']),
-                ];
+                if (!isset($data_pl[$coatid]['data'][$coaid]))
+                {
+                    $data_pl[$coatid]['data'][$coaid] = [
+                        'coacode' => $rs->fields['coacode'],
+                        'coaname' => $rs->fields['coaname'],
+                        'posisi'  => $rs->fields['default_debet'] == 't' ? 'Dr' : 'Cr',
+                        'branches'=> [],
+                        'total'   => [
+                            'amount_bln_prev'   => 0,
+                            'amount_bln'        => 0,
+                            'closingbal'        => 0
+                        ]
+                    ];
+                }
 
-                $coacode_last[$rs->fields['coatid']] = $coacode;
+                $amt_prev = floatval($rs->fields['amount_bln_prev']);
+                $amt_bln  = floatval($rs->fields['amount_bln']);
+                $closing  = floatval($rs->fields['closingbal']);
+
+                $data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln_prev'] = ($data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amt_prev;
+                $data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln'] = ($data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln'] ?? 0) + $amt_bln;
+                $data_pl[$coatid]['data'][$coaid]['branches'][$bc]['closingbal'] = ($data_pl[$coatid]['data'][$coaid]['branches'][$bc]['closingbal'] ?? 0) + $closing;
+
+                $data_pl[$coatid]['data'][$coaid]['total']['amount_bln_prev'] += $amt_prev;
+                $data_pl[$coatid]['data'][$coaid]['total']['amount_bln'] += $amt_bln;
+                $data_pl[$coatid]['data'][$coaid]['total']['closingbal'] += $closing;
+
+                $subtotals[$coatid]['branches'][$bc]['amount_bln_prev'] = ($subtotals[$coatid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amt_prev;
+                $subtotals[$coatid]['branches'][$bc]['amount_bln'] = ($subtotals[$coatid]['branches'][$bc]['amount_bln'] ?? 0) + $amt_bln;
+                $subtotals[$coatid]['branches'][$bc]['closingbal'] = ($subtotals[$coatid]['branches'][$bc]['closingbal'] ?? 0) + $closing;
+
+                $subtotals[$coatid]['total']['amount_bln_prev'] = ($subtotals[$coatid]['total']['amount_bln_prev'] ?? 0) + $amt_prev;
+                $subtotals[$coatid]['total']['amount_bln'] = ($subtotals[$coatid]['total']['amount_bln'] ?? 0) + $amt_bln;
+                $subtotals[$coatid]['total']['closingbal'] = ($subtotals[$coatid]['total']['closingbal'] ?? 0) + $closing;
+
+                $type = $coatid == 4 ? 'income' : 'cost';
+                $grand_totals[$type]['branches'][$bc]['amount_bln_prev'] = ($grand_totals[$type]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amt_prev;
+                $grand_totals[$type]['branches'][$bc]['amount_bln'] = ($grand_totals[$type]['branches'][$bc]['amount_bln'] ?? 0) + $amt_bln;
+                $grand_totals[$type]['branches'][$bc]['closingbal'] = ($grand_totals[$type]['branches'][$bc]['closingbal'] ?? 0) + $closing;
+
+                $grand_totals[$type]['total']['amount_bln_prev'] += $amt_prev;
+                $grand_totals[$type]['total']['amount_bln'] += $amt_bln;
+                $grand_totals[$type]['total']['closingbal'] += $closing;
 
                 $rs->MoveNext();
             }
         }
 
-        $nomor = 1;
+        $laba_rugi = ['branches' => [], 'total' => ['amount_bln_prev' => 0, 'amount_bln' => 0, 'closingbal' => 0]];
+        foreach ($data_cabang as $bc => $cabang)
+        {
+            $laba_rugi['branches'][$bc]['amount_bln_prev'] = ($grand_totals['income']['branches'][$bc]['amount_bln_prev'] ?? 0) - ($grand_totals['cost']['branches'][$bc]['amount_bln_prev'] ?? 0);
+            $laba_rugi['branches'][$bc]['amount_bln'] = ($grand_totals['income']['branches'][$bc]['amount_bln'] ?? 0) - ($grand_totals['cost']['branches'][$bc]['amount_bln'] ?? 0);
+            $laba_rugi['branches'][$bc]['closingbal'] = ($grand_totals['income']['branches'][$bc]['closingbal'] ?? 0) - ($grand_totals['cost']['branches'][$bc]['closingbal'] ?? 0);
+        }
+
+        $laba_rugi['total']['amount_bln_prev'] = $grand_totals['income']['total']['amount_bln_prev'] - $grand_totals['cost']['total']['amount_bln_prev'];
+        $laba_rugi['total']['amount_bln'] = $grand_totals['income']['total']['amount_bln'] - $grand_totals['cost']['total']['amount_bln'];
+        $laba_rugi['total']['closingbal'] = $grand_totals['income']['total']['closingbal'] - $grand_totals['cost']['total']['closingbal'];
+
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
 
         if ($data['month'] <= 12)
         {
@@ -137,181 +189,257 @@ class LabaRugi extends BaseController
         else $report_month = $data['month'].'-'.$data['year'];
 
         return view('akuntansi_report.laba_rugi.cetak', compact(
-            'nomor',
+            'cabang',
             'sdate',
             'edate',
             'report_month',
             'bln_prev',
             'bln',
-            'data_cabang',
             'data',
             'data_pl',
-            'coacode_last'
+            'data_cabang',
+            'subtotals',
+            'laba_rugi'
         ));
     } /*}}}*/
 
-    // public function cetak_baru ($mytipe, $data) /*{{{*/
-    // {
-    //     $data = array(
-    //         'month' => intval(get_var('month')),
-    //         'year'  => get_var('year'),
-    //     );
+    public function cetak_baru ($mytipe, $data) /*{{{*/
+    {
+        $data = array(
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
+        );
 
-    //     $tgl_cetak = date('Y-m-d');
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
-    //     if ($data['month'] > 12)
-    //     {
-    //         $data['prev_month'] = $data['month'] - 1;
-    //         $data['prev_year'] = $data['year'];
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
 
-    //         $edate = '31'.'-'.$data['month'].'-'.$data['year'];
-    //         $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
+            $rs_cabang->MoveNext();
+        }
 
-    //         if ($data['prev_month'] == 12)
-    //             $sdate = date("Y-m-t", strtotime($sdate));
-    //     }
-    //     else
-    //     {
-    //         $edate = $data['year'].'-'.$data['month'].'-01';
-    //         $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+        $tgl_cetak = date('Y-m-d');
 
-    //         $edate = date("Y-m-t", strtotime($edate));
-    //         $sdate = date("Y-m-t", strtotime($sdate));
+        if ($data['month'] > 12)
+        {
+            $data['prev_month'] = $data['month'] - 1;
+            $data['prev_year'] = $data['year'];
 
-    //         $data['prev_month'] = date("n", strtotime($sdate));
-    //         $data['prev_year'] = date("Y", strtotime($sdate));
-    //     }
+            $edate = '31'.'-'.$data['month'].'-'.$data['year'];
+            $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
 
-    //     $rs_pos = $data_pos = [];
-    //     $empty_pos = $without_mapping = true;
+            if ($data['prev_month'] == 12)
+                $sdate = date("Y-m-t", strtotime($sdate));
+        }
+        else
+        {
+            $edate = $data['year'].'-'.$data['month'].'-01';
+            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
 
-    //     $rs_period = Modules::get_period_akunting($data);
+            $edate = date("Y-m-t", strtotime($edate));
+            $sdate = date("Y-m-t", strtotime($sdate));
 
-    //     if (!$rs_period->EOF)
-    //     {
-    //         $data['paid']   = $rs_period->fields['paid'];
-    //         $data['pbegin'] = $rs_period->fields['pbegin'];
-    //         $data['pend']   = $rs_period->fields['pend'];
+            $data['prev_month'] = date("n", strtotime($sdate));
+            $data['prev_year'] = date("Y", strtotime($sdate));
+        }
 
-    //         $rs = LabaRugiMdl::list($data);
+        $rs_pos = $data_pos = $data_db = [];
+        $empty_pos = $without_mapping = true;
 
-    //         while (!$rs->EOF)
-    //         {
-    //             if ($rs->fields['coatid'] == 5)
-    //             {
-    //                 $amount_bln_prev = $rs->fields['amount_bln_prev'] * -1;
-    //                 $amount_bln = $rs->fields['amount_bln'] * -1;
-    //                 $closingbal = $rs->fields['closingbal'] * -1;
-    //             }
-    //             else
-    //             {
-    //                 $amount_bln_prev = $rs->fields['amount_bln_prev'];
-    //                 $amount_bln = $rs->fields['amount_bln'];
-    //                 $closingbal = $rs->fields['closingbal'];
-    //             }
+        $rs_period = Modules::get_period_akunting($data);
 
-    //             $data_db[$rs->fields['pplrid']]['amount_bln_prev'] += $amount_bln_prev;
-    //             $data_db[$rs->fields['pplrid']]['amount_bln'] += $amount_bln;
-    //             $data_db[$rs->fields['pplrid']]['closingbal'] += $closingbal;
+        if (!$rs_period->EOF)
+        {
+            $data['paid']   = $rs_period->fields['paid'];
+            $data['pbegin'] = $rs_period->fields['pbegin'];
+            $data['pend']   = $rs_period->fields['pend'];
 
-    //             $rs->MoveNext();
-    //         }
+            $rs = LabaRugiMdl::list($data);
 
-    //         $rs_pos = LabaRugiMdl::list_pos_rekap();
+            while (!$rs->EOF)
+            {
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                $pplrid = $rs->fields['pplrid'];
 
-    //         while (!$rs_pos->EOF)
-    //         {
-    //             $row = $data_db[$rs_pos->fields['pplrid']];
+                if ($rs->fields['coatid'] == 5)
+                {
+                    $amount_bln_prev = $rs->fields['amount_bln_prev'] * -1;
+                    $amount_bln = $rs->fields['amount_bln'] * -1;
+                    $closingbal = $rs->fields['closingbal'] * -1;
+                }
+                else
+                {
+                    $amount_bln_prev = $rs->fields['amount_bln_prev'];
+                    $amount_bln = $rs->fields['amount_bln'];
+                    $closingbal = $rs->fields['closingbal'];
+                }
 
-    //             $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
-    //             $is_header = $rs_pos->fields['parent_pplrid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
+                $data_db[$pplrid]['branches'][$bc]['amount_bln_prev'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amount_bln_prev;
+                $data_db[$pplrid]['branches'][$bc]['amount_bln'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln'] ?? 0) + $amount_bln;
+                $data_db[$pplrid]['branches'][$bc]['closingbal'] = ($data_db[$pplrid]['branches'][$bc]['closingbal'] ?? 0) + $closingbal;
 
-    //             $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
+                $data_db[$pplrid]['total']['amount_bln_prev'] = ($data_db[$pplrid]['total']['amount_bln_prev'] ?? 0) + $amount_bln_prev;
+                $data_db[$pplrid]['total']['amount_bln'] = ($data_db[$pplrid]['total']['amount_bln'] ?? 0) + $amount_bln;
+                $data_db[$pplrid]['total']['closingbal'] = ($data_db[$pplrid]['total']['closingbal'] ?? 0) + $closingbal;
 
-    //             if (trim($nama) == '') $nama = '&nbsp;';
+                $rs->MoveNext();
+            }
 
-    //             if ($is_header == 't') $nama = '<b>'.$nama.'</b>';
+            $rs_pos = LabaRugiMdl::list_pos_rekap();
 
-    //             $amount_bln_prev = format_uang($row['amount_bln_prev'], 2);
-    //             $amount_bln = format_uang($row['amount_bln'], 2);
-    //             $closingbal = format_uang($row['closingbal'], 2);
+            while (!$rs_pos->EOF)
+            {
+                $pplrid = $rs_pos->fields['pplrid'];
+                $row = $data_db[$pplrid] ?? [];
 
-    //             if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-    //             {
-    //                 $amount_bln_prev = '';
-    //                 $amount_bln = '';
-    //                 $closingbal = '';
-    //             }
+                $space = str_repeat("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", $rs_pos->fields['level']);
+                $is_header = $rs_pos->fields['parent_pplrid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
 
-    //             if ($rs_pos->fields['sum_total'] == 't')
-    //             {
-    //                 $amount_bln_prev = '<b><u>'.$amount_bln_prev.'</u></b>';
-    //                 $amount_bln = '<b><u>'.$amount_bln.'</u></b>';
-    //                 $closingbal = '<b><u>'.$closingbal.'</u></b>';
-    //             }
+                $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
 
-    //             $tmpdata = array();
-    //             $tmpdata['nama_pos']        = $space.$nama;
-    //             $tmpdata['amount_bln_prev'] = $amount_bln_prev;
-    //             $tmpdata['amount_bln']      = $amount_bln;
-    //             $tmpdata['closingbal']      = $closingbal;
+                if (trim($nama) == '') $nama = '&nbsp;';
+                if ($is_header == 't') $nama = '<b>'.$nama.'</b>';
 
-    //             $data_pos[$rs_pos->fields['pplrid']] = $tmpdata;
-    //             $empty_pos = false;
+                $tmp_amounts = [];
+                $tot_prev = $row['total']['amount_bln_prev'] ?? 0;
+                $tot_bln  = $row['total']['amount_bln'] ?? 0;
+                $tot_cls  = $row['total']['closingbal'] ?? 0;
 
-    //             // Subtotal Per Header
-    //             if ($rs_pos->fields['parent_pplrid'] != '')
-    //             {
-    //                 $data_db[$rs_pos->fields['parent_pplrid']]['amount_bln_prev'] += $row['amount_bln_prev'];
-    //                 $data_db[$rs_pos->fields['parent_pplrid']]['amount_bln'] += $row['amount_bln'];
-    //                 $data_db[$rs_pos->fields['parent_pplrid']]['closingbal'] += $row['closingbal'];
-    //             }
+                foreach ($data_cabang as $bc => $cabang)
+                {
+                    $amt_prev = format_uang($row['branches'][$bc]['amount_bln_prev'] ?? 0, 2);
+                    $amt_bln  = format_uang($row['branches'][$bc]['amount_bln'] ?? 0, 2);
+                    $amt_cls  = format_uang($row['branches'][$bc]['closingbal'] ?? 0, 2);
 
-    //             $rs_pos->MoveNext();
-    //         }
-    //     }
+                    if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                    {
+                        $amt_prev = '';
+                        $amt_bln = '';
+                        $amt_cls = '';
+                    }
 
-    //     if ($data['month'] <= 12)
-    //     {
-    //         $edate = strtoupper(dbtstamp2stringina($edate));
-    //         $bln = monthnamelong($data['month']).' '.$data['year'];
-    //     }
-    //     else
-    //         $bln = $data['month'].'-'.$data['year'];
+                    if ($rs_pos->fields['sum_total'] == 't')
+                    {
+                        $amt_prev = '<b><u>'.$amt_prev.'</u></b>'; 
+                        $amt_bln = '<b><u>'.$amt_bln.'</u></b>'; 
+                        $amt_cls = '<b><u>'.$amt_cls.'</u></b>';
+                    }
 
-    //     if ($data['prev_month'] <= 12)
-    //     {
-    //         $sdate = strtoupper(dbtstamp2stringina($sdate));
-    //         $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
-    //     }
-    //     else
-    //         $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
+                    $tmp_amounts['branches'][$bc] = [
+                        'amount_bln_prev'   => $amt_prev, 
+                        'amount_bln'        => $amt_bln, 
+                        'closingbal'        => $amt_cls
+                    ];
+                }
 
-    //     if ($data_db[0]['closingbal'] <> 0)
-    //     {
-    //         $without_mapping = false;
+                $amt_tot_prev = format_uang($tot_prev, 2);
+                $amt_tot_bln  = format_uang($tot_bln, 2);
+                $amt_tot_cls  = format_uang($tot_cls, 2);
 
-    //         $pos_amount_prev = format_uang($data_db[0]['amount_bln_prev'], 2);
-    //         $pos_amount = format_uang($data_db[0]['amount_bln'], 2);
-    //         $pos_closingbal = format_uang($data_db[0]['closingbal'], 2);
-    //     }
+                if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                {
+                    $amt_tot_prev = '';
+                    $amt_tot_bln = '';
+                    $amt_tot_cls = '';
+                }
 
-    //     return view('akuntansi_report.laba_rugi.cetak_baru', compact(
-    //         'sdate',
-    //         'edate',
-    //         'tgl_cetak',
-    //         'data',
-    //         'bln_prev',
-    //         'bln',
-    //         'rs_pos',
-    //         'data_pos',
-    //         'empty_pos',
-    //         'without_mapping',
-    //         'pos_amount_prev',
-    //         'pos_amount',
-    //         'pos_closingbal'
-    //     ));
-    // } /*}}}*/
+                if ($rs_pos->fields['sum_total'] == 't')
+                {
+                    $amt_tot_prev = '<b><u>'.$amt_tot_prev.'</u></b>'; 
+                    $amt_tot_bln = '<b><u>'.$amt_tot_bln.'</u></b>'; 
+                    $amt_tot_cls = '<b><u>'.$amt_tot_cls.'</u></b>';
+                }
+
+                $tmp_amounts['total'] = [
+                    'amount_bln_prev'   => $amt_tot_prev, 
+                    'amount_bln'        => $amt_tot_bln, 
+                    'closingbal'        => $amt_tot_cls
+                ];
+
+                $tmpdata = array();
+                $tmpdata['nama_pos'] = $space.$nama;
+                $tmpdata['amounts']  = $tmp_amounts;
+
+                $data_pos[$pplrid] = $tmpdata;
+                $empty_pos = false;
+
+                if ($rs_pos->fields['parent_pplrid'] != '')
+                {
+                    $parent_id = $rs_pos->fields['parent_pplrid'];
+
+                    foreach ($data_cabang as $bc => $cabang)
+                    {
+                        $p = $row['branches'][$bc]['amount_bln_prev'] ?? 0;
+                        $b = $row['branches'][$bc]['amount_bln'] ?? 0;
+                        $c = $row['branches'][$bc]['closingbal'] ?? 0;
+
+                        $data_db[$parent_id]['branches'][$bc]['amount_bln_prev'] = ($data_db[$parent_id]['branches'][$bc]['amount_bln_prev'] ?? 0) + $p;
+                        $data_db[$parent_id]['branches'][$bc]['amount_bln'] = ($data_db[$parent_id]['branches'][$bc]['amount_bln'] ?? 0) + $b;
+                        $data_db[$parent_id]['branches'][$bc]['closingbal'] = ($data_db[$parent_id]['branches'][$bc]['closingbal'] ?? 0) + $c;
+                    }
+
+                    $data_db[$parent_id]['total']['amount_bln_prev'] = ($data_db[$parent_id]['total']['amount_bln_prev'] ?? 0) + $tot_prev;
+                    $data_db[$parent_id]['total']['amount_bln'] = ($data_db[$parent_id]['total']['amount_bln'] ?? 0) + $tot_bln;
+                    $data_db[$parent_id]['total']['closingbal'] = ($data_db[$parent_id]['total']['closingbal'] ?? 0) + $tot_cls;
+                }
+
+                $rs_pos->MoveNext();
+            }
+        }
+
+        if ($data['month'] <= 12)
+        {
+            $edate = strtoupper(dbtstamp2stringina($edate));
+            $bln = monthnamelong($data['month']).' '.$data['year'];
+        }
+        else
+            $bln = $data['month'].'-'.$data['year'];
+
+        if ($data['prev_month'] <= 12)
+        {
+            $sdate = strtoupper(dbtstamp2stringina($sdate));
+            $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
+        }
+        else
+            $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
+
+        $pos_lainnya = [];
+        if (isset($data_db[0]['total']['closingbal']) && $data_db[0]['total']['closingbal'] <> 0)
+        {
+            $without_mapping = false;
+
+            foreach ($data_cabang as $bc => $cabang)
+            {
+                $pos_lainnya['branches'][$bc]['amount_bln'] = format_uang($data_db[0]['branches'][$bc]['amount_bln'] ?? 0, 2);
+                $pos_lainnya['branches'][$bc]['amount_bln_prev'] = format_uang($data_db[0]['branches'][$bc]['amount_bln_prev'] ?? 0, 2);
+                $pos_lainnya['branches'][$bc]['closingbal'] = format_uang($data_db[0]['branches'][$bc]['closingbal'] ?? 0, 2);
+            }
+
+            $pos_lainnya['total']['amount_bln'] = format_uang($data_db[0]['total']['amount_bln'] ?? 0, 2);
+            $pos_lainnya['total']['amount_bln_prev'] = format_uang($data_db[0]['total']['amount_bln_prev'] ?? 0, 2);
+            $pos_lainnya['total']['closingbal'] = format_uang($data_db[0]['total']['closingbal'] ?? 0, 2);
+        }
+
+        return view('akuntansi_report.laba_rugi.cetak_baru', compact(
+            'sdate',
+            'edate',
+            'tgl_cetak',
+            'data',
+            'bln_prev',
+            'bln',
+            'rs_pos',
+            'data_pos',
+            'empty_pos',
+            'without_mapping',
+            'pos_lainnya',
+            'data_cabang'
+        ));
+    } /*}}}*/
 
     // public function cetak_baru_detail ($mytipe, $data) /*{{{*/
     // {
