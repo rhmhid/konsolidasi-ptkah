@@ -7,26 +7,41 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class LabaRugiAPI extends BaseAPIController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/LabaRugiMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function excel_get ($mytipe) /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
         );
 
         if ($mytipe == 'pl-new') return self::excel_baru($data);
-        elseif ($mytipe == 'pl-new-daily') return self::excel_baru_daily($data);
-        elseif ($mytipe == 'pl-new-detail') return self::excel_baru_detail($data);
-        elseif ($mytipe == 'pl-new-detail-daily') return self::excel_baru_detail_daily($data);
+        // elseif ($mytipe == 'pl-new-daily') return self::excel_baru_daily($data);
+        // elseif ($mytipe == 'pl-new-detail') return self::excel_baru_detail($data);
+        // elseif ($mytipe == 'pl-new-detail-daily') return self::excel_baru_detail_daily($data);
 
-        $coacode_last = $subtot_header = [];
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         if ($data['month'] > 12)
         {
@@ -70,56 +85,14 @@ class LabaRugiAPI extends BaseAPIController
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
         else $report_month = $data['month'].'-'.$data['year'];
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
-        $style_col = [
-            'font' => ['bold' => true], // Set font nya jadi bold
-            'alignment' => [
-                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-            'borders'   => [
-                'top'       => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border top dengan garis tipis
-                'right'     => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],  // Set border right dengan garis tipis
-                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
-                'left'      => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN] // Set border left dengan garis tipis
-            ]
+        $data_pl = $subtotals = [];
+        $grand_totals = [
+            'income' => ['branches' => [], 'total' => ['amount_bln_prev' => 0, 'amount_bln' => 0, 'closingbal' => 0]],
+            'cost'   => ['branches' => [], 'total' => ['amount_bln_prev' => 0, 'amount_bln' => 0, 'closingbal' => 0]]
         ];
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
-        $style_row = [
-            'alignment' => [
-                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-            'borders'   => [
-                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN], // Set border bottom dengan garis tipis
-            ]
-        ];
-
-        $sheet->setCellValue('A1', "Profit And Loss");
-        $sheet->mergeCells('A1:E1');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-
-        $sheet->setCellValue('A2', "Periode");
-        $sheet->setCellValue('B2', ": ".$report_month);
-        $sheet->mergeCells('B2:E2');
-
-        $sheet->getStyle('A2:E3')->getFont()->setBold(true)->setSize(12);
-
-        // Buat header tabel nya
-        $sheet->setCellValue('A4', "No.");
-        $sheet->setCellValue('B4', "Coacode");
-        $sheet->setCellValue('C4', "Coaname");
-        $sheet->setCellValue('D4', "Dr / Cr Position");
-        $sheet->setCellValue('E4', $bln);
-        $sheet->setCellValue('F4', $bln_prev);
-        $sheet->setCellValue('G4', "Until ".$bln);
-
-        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A4:G4')->applyFromArray($style_col);
-        $sheet->getColumnDimension('A:G')->setAutoSize(true);
 
         $rs_period = Modules::get_period_akunting($data);
 
@@ -133,117 +106,278 @@ class LabaRugiAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $coacode_last[$rs->fields['coatid']] = $rs->fields['coacode'];
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                $coatid = $rs->fields['coatid'];
+                $coaid = $rs->fields['coaid'];
 
-                $subtot_header[$rs->fields['coatid']]['headname']           = $rs->fields['coatid'] == 4 ? 'INCOME' : 'COST';
-                $subtot_header[$rs->fields['coatid']]['amount_bln_prev']    += $rs->fields['amount_bln_prev'];
-                $subtot_header[$rs->fields['coatid']]['amount_bln']         += $rs->fields['amount_bln'];
-                $subtot_header[$rs->fields['coatid']]['closingbal']         += $rs->fields['closingbal'];
-
-                $rs->MoveNext();
-            }
-
-            $rs->MoveFirst();
-
-            $no = 1;
-            $row_idx = 5;
-            while (!$rs->EOF)
-            {
-                $sheet->setCellValue('A'.$row_idx, $no);
-                $sheet->setCellValue('B'.$row_idx, $rs->fields['coacode']);
-                $sheet->setCellValue('C'.$row_idx, $rs->fields['coaname']);
-                $sheet->setCellValue('D'.$row_idx, $rs->fields['default_debet'] == 't' ? 'Dr' : 'Cr');
-                $sheet->setCellValue('E'.$row_idx, floatval($rs->fields['amount_bln']));
-                $sheet->setCellValue('F'.$row_idx, floatval($rs->fields['amount_bln_prev']));
-                $sheet->setCellValue('G'.$row_idx, floatval($rs->fields['closingbal']));
-
-                // Apply style row yang telah kita buat tadi ke masing-masing baris (isi tabel)
-                $sheet->getStyle('A'.$row_idx.':G'.$row_idx)->applyFromArray($style_row);
-
-                $row_idx++;
-
-                if ($coacode_last[$rs->fields['coatid']] == $rs->fields['coacode'])
+                if (!isset($data_pl[$coatid]))
                 {
-                    $no = 1;
-
-                    $sheet->setCellValue('A'.$row_idx, 'SUBTOTAL '.$subtot_header[$rs->fields['coatid']]['headname']);
-                    $sheet->setCellValue('E'.$row_idx, floatval($subtot_header[$rs->fields['coatid']]['amount_bln']));
-                    $sheet->setCellValue('F'.$row_idx, floatval($subtot_header[$rs->fields['coatid']]['amount_bln_prev']));
-                    $sheet->setCellValue('G'.$row_idx, floatval($subtot_header[$rs->fields['coatid']]['closingbal']));
-
-                    $sheet->mergeCells('A'.$row_idx.':D'.$row_idx);
-                    // Apply style row yang telah kita buat tadi ke masing-masing baris (isi tabel)
-                    $sheet->getStyle('A'.$row_idx.':G'.$row_idx)->applyFromArray($style_row)->getAlignment()->setHorizontal('right');
-
-                    $sheet->getStyle('A'.$row_idx.':G'.$row_idx)->getFont()->setBold(true);
-
-                    $row_idx++;
-
-                    $sheet->mergeCells('A'.$row_idx.':G'.$row_idx);
-
-                    $row_idx++;
-                }
-                else
-                    $no++;
-
-                if ($rs->fields['coatid'] == 4)
-                {
-                    $balance_income_prev += $rs->fields['amount_bln_prev'];
-                    $balance_income_bln += $rs->fields['amount_bln'];
-                    $balance_income += $rs->fields['closingbal'];
+                    $data_pl[$coatid] = [
+                        'headname'  => $coatid == 4 ? 'INCOME' : 'COST',
+                        'data'      => []
+                    ];
                 }
 
-                if ($rs->fields['coatid'] != 4)
+                if (!isset($data_pl[$coatid]['data'][$coaid]))
                 {
-                    $balance_cost_prev += $rs->fields['amount_bln_prev'];
-                    $balance_cost_bln += $rs->fields['amount_bln'];
-                    $balance_cost += $rs->fields['closingbal'];
+                    $data_pl[$coatid]['data'][$coaid] = [
+                        'coacode' => $rs->fields['coacode'],
+                        'coaname' => $rs->fields['coaname'],
+                        'posisi'  => $rs->fields['default_debet'] == 't' ? 'Dr' : 'Cr',
+                        'branches'=> [],
+                        'total'   => [
+                            'amount_bln_prev'   => 0,
+                            'amount_bln'        => 0,
+                            'closingbal'        => 0
+                        ]
+                    ];
                 }
+
+                $amt_prev = floatval($rs->fields['amount_bln_prev']);
+                $amt_bln  = floatval($rs->fields['amount_bln']);
+                $closing  = floatval($rs->fields['closingbal']);
+
+                $data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln_prev'] = ($data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amt_prev;
+                $data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln'] = ($data_pl[$coatid]['data'][$coaid]['branches'][$bc]['amount_bln'] ?? 0) + $amt_bln;
+                $data_pl[$coatid]['data'][$coaid]['branches'][$bc]['closingbal'] = ($data_pl[$coatid]['data'][$coaid]['branches'][$bc]['closingbal'] ?? 0) + $closing;
+
+                $data_pl[$coatid]['data'][$coaid]['total']['amount_bln_prev'] += $amt_prev;
+                $data_pl[$coatid]['data'][$coaid]['total']['amount_bln'] += $amt_bln;
+                $data_pl[$coatid]['data'][$coaid]['total']['closingbal'] += $closing;
+
+                $subtotals[$coatid]['branches'][$bc]['amount_bln_prev'] = ($subtotals[$coatid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amt_prev;
+                $subtotals[$coatid]['branches'][$bc]['amount_bln'] = ($subtotals[$coatid]['branches'][$bc]['amount_bln'] ?? 0) + $amt_bln;
+                $subtotals[$coatid]['branches'][$bc]['closingbal'] = ($subtotals[$coatid]['branches'][$bc]['closingbal'] ?? 0) + $closing;
+
+                $subtotals[$coatid]['total']['amount_bln_prev'] = ($subtotals[$coatid]['total']['amount_bln_prev'] ?? 0) + $amt_prev;
+                $subtotals[$coatid]['total']['amount_bln'] = ($subtotals[$coatid]['total']['amount_bln'] ?? 0) + $amt_bln;
+                $subtotals[$coatid]['total']['closingbal'] = ($subtotals[$coatid]['total']['closingbal'] ?? 0) + $closing;
+
+                $type = $coatid == 4 ? 'income' : 'cost';
+                $grand_totals[$type]['branches'][$bc]['amount_bln_prev'] = ($grand_totals[$type]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amt_prev;
+                $grand_totals[$type]['branches'][$bc]['amount_bln'] = ($grand_totals[$type]['branches'][$bc]['amount_bln'] ?? 0) + $amt_bln;
+                $grand_totals[$type]['branches'][$bc]['closingbal'] = ($grand_totals[$type]['branches'][$bc]['closingbal'] ?? 0) + $closing;
+
+                $grand_totals[$type]['total']['amount_bln_prev'] += $amt_prev;
+                $grand_totals[$type]['total']['amount_bln'] += $amt_bln;
+                $grand_totals[$type]['total']['closingbal'] += $closing;
 
                 $rs->MoveNext();
             }
         }
 
-        $tot_pnl_bln_prev = $balance_income_prev - $balance_cost_prev;
-        $tot_pnl_bln = $balance_income_bln - $balance_cost_bln;
-        $tot_pnl_thn = $balance_income - $balance_cost;
+        $laba_rugi = ['branches' => [], 'total' => ['amount_bln_prev' => 0, 'amount_bln' => 0, 'closingbal' => 0]];
+        foreach ($data_cabang as $bc => $cabang)
+        {
+            $laba_rugi['branches'][$bc]['amount_bln_prev'] = ($grand_totals['income']['branches'][$bc]['amount_bln_prev'] ?? 0) - ($grand_totals['cost']['branches'][$bc]['amount_bln_prev'] ?? 0);
+            $laba_rugi['branches'][$bc]['amount_bln'] = ($grand_totals['income']['branches'][$bc]['amount_bln'] ?? 0) - ($grand_totals['cost']['branches'][$bc]['amount_bln'] ?? 0);
+            $laba_rugi['branches'][$bc]['closingbal'] = ($grand_totals['income']['branches'][$bc]['closingbal'] ?? 0) - ($grand_totals['cost']['branches'][$bc]['closingbal'] ?? 0);
+        }
 
+        $laba_rugi['total']['amount_bln_prev'] = $grand_totals['income']['total']['amount_bln_prev'] - $grand_totals['cost']['total']['amount_bln_prev'];
+        $laba_rugi['total']['amount_bln'] = $grand_totals['income']['total']['amount_bln'] - $grand_totals['cost']['total']['amount_bln'];
+        $laba_rugi['total']['closingbal'] = $grand_totals['income']['total']['closingbal'] - $grand_totals['cost']['total']['closingbal'];
+
+        $style_col = [
+            'font' => ['bold' => true],
+            'alignment' => [
+                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+            ],
+            'borders'   => [
+                'top'       => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'right'     => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'left'      => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
+        ];
+
+        $style_row = [
+            'alignment' => [
+                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+            ],
+            'borders'   => [
+                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+            ]
+        ];
+
+        $num_cabang = count($data_cabang);
+        $has_total = $num_cabang > 1;
+
+        $total_cols = 4 + ($num_cabang * 3) + ($has_total ? 3 : 0);
+        $last_col_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($total_cols);
+
+        $sheet->setCellValue('A1', "Profit And Loss");
+        $sheet->mergeCells('A1:'.$last_col_letter.'1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+
+        $cabang_text = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
+
+        $sheet->setCellValue('A2', "Cabang");
+        $sheet->setCellValue('B2', ": ".$cabang_text);
+        $sheet->mergeCells('B2:'.$last_col_letter.'2');
+
+        $sheet->setCellValue('A3', "Periode");
+        $sheet->setCellValue('B3', ": ".$report_month);
+        $sheet->mergeCells('B3:'.$last_col_letter.'3');
+
+        $sheet->getStyle('A2:'.$last_col_letter.'4')->getFont()->setBold(true)->setSize(12);
+
+        $c = 1;
+        $base_headers = ["No.", "Coacode", "Coaname", "Dr / Cr Position"];
+        foreach ($base_headers as $h)
+        {
+            $let = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+            $sheet->setCellValue($let.'5', $h);
+            $sheet->mergeCells($let.'5:'.$let.'6');
+            $sheet->getStyle($let.'5:'.$let.'6')->applyFromArray($style_col);
+            $sheet->getColumnDimension($let)->setAutoSize(true);
+            $c++;
+        }
+
+        $draw_group_header = function ($col_start, $title) use ($sheet, $bln, $bln_prev, $style_col)
+        {
+            $l1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start);
+            $l2 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+1);
+            $l3 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+2);
+
+            $sheet->setCellValue($l1.'5', $title);
+            $sheet->mergeCells($l1.'5:'.$l3.'5');
+            $sheet->getStyle($l1.'5:'.$l3.'5')->applyFromArray($style_col);
+
+            $sheet->setCellValue($l1.'6', $bln);
+            $sheet->setCellValue($l2.'6', $bln_prev);
+            $sheet->setCellValue($l3.'6', "Until ".$bln);
+
+            $sheet->getStyle($l1.'6:'.$l3.'6')->applyFromArray($style_col);
+            $sheet->getColumnDimension($l1)->setAutoSize(true);
+            $sheet->getColumnDimension($l2)->setAutoSize(true);
+            $sheet->getColumnDimension($l3)->setAutoSize(true);
+        };
+
+        foreach ($data_cabang as $bc => $cbg)
+        {
+            $draw_group_header($c, $cbg['branch_name']);
+            $c += 3;
+        }
+
+        if ($has_total)
+            $draw_group_header($c, "Total All Branch");
+
+        $row_idx = 7;
+        foreach ($data_pl as $coatid => $group)
+        {
+            $nomor = 1;
+
+            foreach ($group['data'] as $coaid => $row)
+            {
+                $c = 1;
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $nomor++);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $row['coacode']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $row['coaname']);
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, $row['posisi']);
+
+                foreach ($data_cabang as $bc => $cbg)
+                {
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($row['branches'][$bc]['amount_bln'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($row['branches'][$bc]['amount_bln_prev'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($row['branches'][$bc]['closingbal'] ?? 0));
+                }
+
+                if ($has_total)
+                {
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($row['total']['amount_bln'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($row['total']['amount_bln_prev'] ?? 0));
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($row['total']['closingbal'] ?? 0));
+                }
+
+                $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->applyFromArray($style_row);
+                $row_idx++;
+            }
+
+            $c = 5;
+            $sheet->setCellValue('A'.$row_idx, 'SUBTOTAL '.$group['headname']);
+            $sheet->mergeCells('A'.$row_idx.':D'.$row_idx);
+
+            foreach ($data_cabang as $bc => $cbg)
+            {
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals[$coatid]['branches'][$bc]['amount_bln'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals[$coatid]['branches'][$bc]['amount_bln_prev'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals[$coatid]['branches'][$bc]['closingbal'] ?? 0));
+            }
+
+            if ($has_total)
+            {
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals[$coatid]['total']['amount_bln'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals[$coatid]['total']['amount_bln_prev'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($subtotals[$coatid]['total']['closingbal'] ?? 0));
+            }
+
+            $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->applyFromArray($style_row)->getAlignment()->setHorizontal('right');
+            $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->getFont()->setBold(true);
+
+            $row_idx++;
+
+            $sheet->mergeCells('A'.$row_idx.':'.$last_col_letter.$row_idx);
+
+            $row_idx++;
+        }
+
+        $c = 5;
         $sheet->setCellValue('A'.$row_idx, 'TOTAL LABA / RUGI');
         $sheet->mergeCells('A'.$row_idx.':D'.$row_idx);
 
-        $sheet->setCellValue('E'.$row_idx, floatval($tot_pnl_bln));
-        $sheet->setCellValue('F'.$row_idx, floatval($tot_pnl_bln_prev));
-        $sheet->setCellValue('G'.$row_idx, floatval($tot_pnl_thn));
+        foreach ($data_cabang as $bc => $cbg)
+        {
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($laba_rugi['branches'][$bc]['amount_bln'] ?? 0));
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($laba_rugi['branches'][$bc]['amount_bln_prev'] ?? 0));
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($laba_rugi['branches'][$bc]['closingbal'] ?? 0));
+        }
 
-        // Apply style row yang telah kita buat tadi ke masing-masing baris (isi tabel)
-        $sheet->getStyle('A'.$row_idx.':G'.$row_idx)->applyFromArray($style_row)->getAlignment()->setHorizontal('right');
+        if ($has_total)
+        {
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($laba_rugi['total']['amount_bln'] ?? 0));
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($laba_rugi['total']['amount_bln_prev'] ?? 0));
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_idx, floatval($laba_rugi['total']['closingbal'] ?? 0));
+        }
 
-        $sheet->getStyle('A'.$row_idx.':G'.$row_idx)->getFont()->setBold(true);
-        
-        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+        $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->applyFromArray($style_row)->getAlignment()->setHorizontal('right');
+        $sheet->getStyle('A'.$row_idx.':'.$last_col_letter.$row_idx)->getFont()->setBold(true);
+
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
 
-        // Set orientasi kertas jadi LANDSCAPE
         $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
 
-        // Set judul file excel nya
         $sheet->setTitle("Profit And Loss");
 
-        // Proses file excel
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Profit And Loss.xlsx"'); // Set nama file excel nya
+        header('Content-Disposition: attachment; filename="Profit And Loss.xlsx"');
         header('Cache-Control: max-age=0');
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
+        exit;
     } /*}}}*/
 
     public function excel_baru ($data) /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
         );
+
+        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
+
+        $data_cabang = [];
+        while (!$rs_cabang->EOF)
+        {
+            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
+
+            $rs_cabang->MoveNext();
+        }
 
         $tgl_cetak = date('Y-m-d');
         
@@ -286,55 +420,91 @@ class LabaRugiAPI extends BaseAPIController
         else
             $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
 
-        $rs_pos = $data_pos = [];
+        $rs_pos = $data_pos = $data_db = [];
         $empty_pos = $without_mapping = true;
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
         $style_col = [
-            'font' => ['bold' => true], // Set font nya jadi bold
+            'font' => ['bold' => true],
             'alignment' => [
-                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
             ],
+            'borders'   => [
+                'top'       => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'right'     => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'bottom'    => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+                'left'      => ['borderStyle'  => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]
+            ]
         ];
 
-        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
         $style_row = [
             'alignment' => [
-                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
             ],
         ];
 
+        $num_cabang = count($data_cabang);
+        $has_total = $num_cabang > 1;
+
+        $total_cols = 1 + ($num_cabang * 3) + ($has_total ? 3 : 0);
+        $last_col_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($total_cols);
+
         $sheet->setCellValue('A1', dataConfigs('company_name'));
-        $sheet->mergeCells('A1:D1');
+        $sheet->mergeCells('A1:'.$last_col_letter.'1');
 
         $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA');
-        $sheet->mergeCells('A2:D2');
+        $sheet->mergeCells('A2:'.$last_col_letter.'2');
 
         $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
-        $sheet->mergeCells('A3:D3');
+        $sheet->mergeCells('A3:'.$last_col_letter.'3');
 
-        $sheet->getStyle('A1:D3')->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A1:'.$last_col_letter.'3')->getFont()->setBold(true)->setSize(16);
 
         $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
-        $sheet->mergeCells('A4:D4');
+        $sheet->mergeCells('A4:'.$last_col_letter.'4');
 
-        $sheet->getStyle('A4:D4')->getFont()->setSize(12);
+        $sheet->getStyle('A4:'.$last_col_letter.'4')->getFont()->setSize(12);
+        $sheet->getStyle('A1:'.$last_col_letter.'4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
-        $sheet->getStyle('A1:D4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $c = 1;
+        $let = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+        $sheet->setCellValue($let.'6', "Keterangan");
+        $sheet->mergeCells($let.'6:'.$let.'7');
+        $sheet->getStyle($let.'6:'.$let.'7')->applyFromArray($style_col);
+        $sheet->getColumnDimension($let)->setAutoSize(true);
+        $c++;
 
-        // Buat header tabel nya
-        $sheet->setCellValue('A6', "Keterangan");
-        $sheet->setCellValue('B6', $bln);
-        $sheet->setCellValue('C6', $bln_prev);
-        $sheet->setCellValue('D6', "Until ".$bln);
+        $draw_group_header = function ($col_start, $title) use ($sheet, $bln, $bln_prev, $style_col)
+        {
+            $l1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start);
+            $l2 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+1);
+            $l3 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_start+2);
 
-        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A6:D6')->applyFromArray($style_col);
-        $sheet->getColumnDimension('A:D')->setAutoSize(true);
+            $sheet->setCellValue($l1.'6', $title);
+            $sheet->mergeCells($l1.'6:'.$l3.'6');
+            $sheet->getStyle($l1.'6:'.$l3.'6')->applyFromArray($style_col);
+
+            $sheet->setCellValue($l1.'7', $bln);
+            $sheet->setCellValue($l2.'7', $bln_prev);
+            $sheet->setCellValue($l3.'7', "Until ".$bln);
+
+            $sheet->getStyle($l1.'7:'.$l3.'7')->applyFromArray($style_col);
+            $sheet->getColumnDimension($l1)->setAutoSize(true);
+            $sheet->getColumnDimension($l2)->setAutoSize(true);
+            $sheet->getColumnDimension($l3)->setAutoSize(true);
+        };
+
+        foreach ($data_cabang as $bc => $cabang)
+        {
+            $draw_group_header($c, $cabang['branch_name']);
+            $c += 3;
+        }
+
+        if ($has_total)
+            $draw_group_header($c, "Total All Branch");
 
         $rs_period = Modules::get_period_akunting($data);
 
@@ -348,6 +518,9 @@ class LabaRugiAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                $pplrid = $rs->fields['pplrid'];
+
                 if ($rs->fields['coatid'] == 5)
                 {
                     $amount_bln_prev = $rs->fields['amount_bln_prev'] * -1;
@@ -361,55 +534,105 @@ class LabaRugiAPI extends BaseAPIController
                     $closingbal = $rs->fields['closingbal'];
                 }
 
-                $data_db[$rs->fields['pplrid']]['amount_bln_prev'] += floatval($amount_bln_prev);
-                $data_db[$rs->fields['pplrid']]['amount_bln'] += floatval($amount_bln);
-                $data_db[$rs->fields['pplrid']]['closingbal'] += floatval($closingbal);
+                $data_db[$pplrid]['branches'][$bc]['amount_bln_prev'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln_prev'] ?? 0) + floatval($amount_bln_prev);
+                $data_db[$pplrid]['branches'][$bc]['amount_bln'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln'] ?? 0) + floatval($amount_bln);
+                $data_db[$pplrid]['branches'][$bc]['closingbal'] = ($data_db[$pplrid]['branches'][$bc]['closingbal'] ?? 0) + floatval($closingbal);
+
+                $data_db[$pplrid]['total']['amount_bln_prev'] = ($data_db[$pplrid]['total']['amount_bln_prev'] ?? 0) + floatval($amount_bln_prev);
+                $data_db[$pplrid]['total']['amount_bln'] = ($data_db[$pplrid]['total']['amount_bln'] ?? 0) + floatval($amount_bln);
+                $data_db[$pplrid]['total']['closingbal'] = ($data_db[$pplrid]['total']['closingbal'] ?? 0) + floatval($closingbal);
 
                 $rs->MoveNext();
             }
 
             $rs_pos = LabaRugiMdl::list_pos_rekap();
 
-            $row_pos = 7;
+            $row_pos = 8;
             while (!$rs_pos->EOF)
             {
-                $row = $data_db[$rs_pos->fields['pplrid']];
+                $pplrid = $rs_pos->fields['pplrid'];
+                $row = $data_db[$pplrid] ?? [];
 
                 $space = str_repeat("     ", $rs_pos->fields['level']);
                 $is_header = $rs_pos->fields['parent_pplrid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
                 $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
 
-                $amount_bln_prev = $row['amount_bln_prev'];
-                $amount_bln = $row['amount_bln'];
-                $closingbal = $row['closingbal'];
+                $c = 1;
+                $let_nama = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c);
+                $sheet->setCellValue($let_nama.$row_pos, $space.$nama);
+                $c++;
 
-                // Subtotal Per Header
+                $start_val_col = $c;
+
+                foreach ($data_cabang as $bc => $cabang)
+                {
+                    $amt_prev = floatval($row['branches'][$bc]['amount_bln_prev'] ?? 0);
+                    $amt_bln = floatval($row['branches'][$bc]['amount_bln'] ?? 0);
+                    $amt_cls = floatval($row['branches'][$bc]['closingbal'] ?? 0);
+
+                    if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                    {
+                        $amt_prev = '';
+                        $amt_bln = '';
+                        $amt_cls = '';
+                    }
+
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, $amt_bln);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, $amt_prev);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, $amt_cls);
+                }
+
+                if ($has_total)
+                {
+                    $amt_prev = floatval($row['total']['amount_bln_prev'] ?? 0);
+                    $amt_bln = floatval($row['total']['amount_bln'] ?? 0);
+                    $amt_cls = floatval($row['total']['closingbal'] ?? 0);
+
+                    if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+                    {
+                        $amt_prev = '';
+                        $amt_bln = '';
+                        $amt_cls = '';
+                    }
+
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, $amt_bln);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, $amt_prev);
+                    $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, $amt_cls);
+                }
+
+                $sheet->getStyle('A'.$row_pos.':'.$last_col_letter.$row_pos)->applyFromArray($style_row);
+
+                if ($is_header == 't')
+                    $sheet->getStyle('A'.$row_pos.':'.$last_col_letter.$row_pos)->getFont()->setBold(true);
+
+                if ($rs_pos->fields['sum_total'] == 't')
+                {
+                    $start_val_let = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($start_val_col);
+                    $sheet->getStyle($start_val_let.$row_pos.':'.$last_col_letter.$row_pos)->getFont()->setUnderline(true);
+                }
+
                 if ($rs_pos->fields['parent_pplrid'] != '')
                 {
-                    $data_db[$rs_pos->fields['parent_pplrid']]['amount_bln_prev'] += $row['amount_bln_prev'];
-                    $data_db[$rs_pos->fields['parent_pplrid']]['amount_bln'] += $row['amount_bln'];
-                    $data_db[$rs_pos->fields['parent_pplrid']]['closingbal'] += $row['closingbal'];
+                    $parent_id = $rs_pos->fields['parent_pplrid'];
+
+                    foreach ($data_cabang as $bc => $cabang) {
+                        $p = $row['branches'][$bc]['amount_bln_prev'] ?? 0;
+                        $b = $row['branches'][$bc]['amount_bln'] ?? 0;
+                        $cl = $row['branches'][$bc]['closingbal'] ?? 0;
+
+                        $data_db[$parent_id]['branches'][$bc]['amount_bln_prev'] = ($data_db[$parent_id]['branches'][$bc]['amount_bln_prev'] ?? 0) + $p;
+                        $data_db[$parent_id]['branches'][$bc]['amount_bln'] = ($data_db[$parent_id]['branches'][$bc]['amount_bln'] ?? 0) + $b;
+                        $data_db[$parent_id]['branches'][$bc]['closingbal'] = ($data_db[$parent_id]['branches'][$bc]['closingbal'] ?? 0) + $cl;
+                    }
+
+                    $tot_p = $row['total']['amount_bln_prev'] ?? 0;
+                    $tot_b = $row['total']['amount_bln'] ?? 0;
+                    $tot_c = $row['total']['closingbal'] ?? 0;
+
+                    $data_db[$parent_id]['total']['amount_bln_prev'] = ($data_db[$parent_id]['total']['amount_bln_prev'] ?? 0) + $tot_p;
+                    $data_db[$parent_id]['total']['amount_bln'] = ($data_db[$parent_id]['total']['amount_bln'] ?? 0) + $tot_b;
+                    $data_db[$parent_id]['total']['closingbal'] = ($data_db[$parent_id]['total']['closingbal'] ?? 0) + $tot_c;
                 }
-
-                if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-                {
-                    $amount_bln_prev = '';
-                    $amount_bln = '';
-                    $closingbal = '';
-                }
-
-                $sheet->setCellValue('A'.$row_pos, $space.$nama);
-                $sheet->setCellValue('B'.$row_pos, $amount_bln);
-                $sheet->setCellValue('C'.$row_pos, $amount_bln_prev);
-                $sheet->setCellValue('D'.$row_pos, $closingbal);
-
-                $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->applyFromArray($style_row);
-
-                if ($is_header == 't')
-                    $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->getFont()->setBold(true);
-
-                if ($rs_pos->fields['sum_total'] == 't')
-                    $sheet->getStyle('B'.$row_pos.':D'.$row_pos)->getFont()->setUnderline(true);
 
                 $row_pos++;
 
@@ -417,578 +640,587 @@ class LabaRugiAPI extends BaseAPIController
             }
         }
 
-        if ($data_db[0]['closingbal'] <> 0)
+        if (isset($data_db[0]['total']['closingbal']) && $data_db[0]['total']['closingbal'] <> 0)
         {
             $row_pos++;
 
-            $sheet->setCellValue('A'.$row_pos, 'POS LABA/RUGI LAINNYA');
-            $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount_bln']));
-            $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_bln_prev']));
-            $sheet->setCellValue('D'.$row_pos, floatval($data_db[0]['closingbal']));
+            $c = 1;
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, 'POS LABA/RUGI LAINNYA');
+            $start_val_col = $c;
 
-            $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->applyFromArray($style_row);
+            foreach ($data_cabang as $bc => $cabang)
+            {
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, floatval($data_db[0]['branches'][$bc]['amount_bln'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, floatval($data_db[0]['branches'][$bc]['amount_bln_prev'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, floatval($data_db[0]['branches'][$bc]['closingbal'] ?? 0));
+            }
 
-            $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->getFont()->setBold(true);
+            if ($has_total)
+            {
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, floatval($data_db[0]['total']['amount_bln'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, floatval($data_db[0]['total']['amount_bln_prev'] ?? 0));
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c++).$row_pos, floatval($data_db[0]['total']['closingbal'] ?? 0));
+            }
 
-            $sheet->getStyle('B'.$row_pos.':D'.$row_pos)->getFont()->setUnderline(true);
+            $sheet->getStyle('A'.$row_pos.':'.$last_col_letter.$row_pos)->applyFromArray($style_row)->getFont()->setBold(true);
+
+            $start_val_let = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($start_val_col);
+            $sheet->getStyle($start_val_let.$row_pos.':'.$last_col_letter.$row_pos)->getFont()->setUnderline(true);
         }
 
-        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
 
-        // Set orientasi kertas jadi LANDSCAPE
         $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
 
-        // Set judul file excel nya
         $sheet->setTitle("Laporan Rekap Rugi - Laba");
 
-        // Proses file excel
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Laporan Rekap Rugi - Laba.xlsx"'); // Set nama file excel nya
+        header('Content-Disposition: attachment; filename="Laporan Rekap Rugi - Laba.xlsx"');
         header('Cache-Control: max-age=0');
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
+        exit;
     } /*}}}*/
 
-    public function excel_baru_detail ($data) /*{{{*/
-    {
-        $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
-        );
+    // public function excel_baru_detail ($data) /*{{{*/
+    // {
+    //     $data = array(
+    //         'month' => intval(get_var('month')),
+    //         'year'  => get_var('year'),
+    //     );
 
-        $tgl_cetak = date('Y-m-d');
+    //     $tgl_cetak = date('Y-m-d');
         
-        if ($data['month'] > 12)
-        {
-            $data['prev_month'] = $data['month'] - 1;
-            $data['prev_year'] = $data['year'];
-
-            $edate = '31'.'-'.$data['month'].'-'.$data['year'];
-            $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
-
-            if ($data['prev_month'] == 12)
-                $sdate = date("Y-m-t", strtotime($sdate));
-        }
-        else
-        {
-            $edate = $data['year'].'-'.$data['month'].'-01';
-            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
-
-            $edate = date("Y-m-t", strtotime($edate));
-            $sdate = date("Y-m-t", strtotime($sdate));
-
-            $data['prev_month'] = date("n", strtotime($sdate));
-            $data['prev_year'] = date("Y", strtotime($sdate));
-        }
-
-        if ($data['month'] <= 12)
-        {
-            $edate = strtoupper(dbtstamp2stringina($edate));
-            $bln = monthnamelong($data['month']).' '.$data['year'];
-        }
-        else
-            $bln = $data['month'].'-'.$data['year'];
-
-        if ($data['prev_month'] <= 12)
-        {
-            $sdate = strtoupper(dbtstamp2stringina($sdate));
-            $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
-        }
-        else
-            $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
-
-        $rs_pos = $data_pos = [];
-        $empty_pos = $without_mapping = true;
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
-        $style_col = [
-            'font' => ['bold' => true], // Set font nya jadi bold
-            'alignment' => [
-                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-        ];
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
-        $style_row = [
-            'alignment' => [
-                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-        ];
-
-        $sheet->setCellValue('A1', dataConfigs('company_name'));
-        $sheet->mergeCells('A1:D1');
-
-        $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA');
-        $sheet->mergeCells('A2:D2');
-
-        $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
-        $sheet->mergeCells('A3:D3');
-
-        $sheet->getStyle('A1:D3')->getFont()->setBold(true)->setSize(16);
-
-        $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
-        $sheet->mergeCells('A4:D4');
-
-        $sheet->getStyle('A4:D4')->getFont()->setSize(12);
-
-        $sheet->getStyle('A1:D4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-        // Buat header tabel nya
-        $sheet->setCellValue('A6', "Keterangan");
-        $sheet->setCellValue('B6', $bln);
-        $sheet->setCellValue('C6', $bln_prev);
-        $sheet->setCellValue('D6', "Until ".$bln);
-
-        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A6:D6')->applyFromArray($style_col);
-        $sheet->getColumnDimension('A:D')->setAutoSize(true);
-
-        $rs_period = Modules::get_period_akunting($data);
-
-        if (!$rs_period->EOF)
-        {
-            $data['paid']   = $rs_period->fields['paid'];
-            $data['pbegin'] = $rs_period->fields['pbegin'];
-            $data['pend']   = $rs_period->fields['pend'];
-
-            $rs = LabaRugiMdl::list($data);
-
-            while (!$rs->EOF)
-            {
-                if ($rs->fields['coatid'] == 5)
-                {
-                    $amount_prev = $rs->fields['amount_bln_prev'] * -1;
-                    $amount = $rs->fields['amount_bln'] * -1;
-                    $closingbal = $rs->fields['closingbal'] * -1;
-                }
-                else
-                {
-                    $amount_prev = $rs->fields['amount_bln_prev'];
-                    $amount = $rs->fields['amount_bln'];
-                    $closingbal = $rs->fields['closingbal'];
-                }
-
-                $data_db[$rs->fields['pplid']]['amount_prev'] += floatval($amount_prev);
-                $data_db[$rs->fields['pplid']]['amount'] += floatval($amount);
-                $data_db[$rs->fields['pplid']]['closingbal'] += floatval($closingbal);
-
-                $rs->MoveNext();
-            }
-
-            $rs_pos = LabaRugiMdl::list_pos();
-
-            $row_pos = 7;
-            while (!$rs_pos->EOF)
-            {
-                $row = $data_db[$rs_pos->fields['pplid']];
-
-                $space = str_repeat("     ", $rs_pos->fields['level']);
-                $is_header = $rs_pos->fields['parent_pplid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
-                $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
-
-                $amount_prev = floatval($row['amount_prev']);
-                $amount = floatval($row['amount']);
-                $closingbal = floatval($row['closingbal']);
-
-                // Subtotal Per Header
-                if ($rs_pos->fields['parent_pplid'] != '')
-                {
-                    $data_db[$rs_pos->fields['parent_pplid']]['amount_prev'] += $amount_prev;
-                    $data_db[$rs_pos->fields['parent_pplid']]['amount'] += $amount;
-                    $data_db[$rs_pos->fields['parent_pplid']]['closingbal'] += $closingbal;
-                }
-
-                if ($rs_pos->fields['parent_pplid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-                {
-                    $amount_bln_prev = '';
-                    $amount_bln = '';
-                    $closingbal = '';
-                }
-
-                $sheet->setCellValue('A'.$row_pos, $space.$nama);
-                $sheet->setCellValue('B'.$row_pos, $amount);
-                $sheet->setCellValue('C'.$row_pos, $amount_prev);
-                $sheet->setCellValue('D'.$row_pos, $closingbal);
-
-                $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->applyFromArray($style_row);
-
-                if ($is_header == 't')
-                    $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->getFont()->setBold(true);
-
-                if ($rs_pos->fields['sum_total'] == 't')
-                {
-                    $sheet->getStyle('B'.$row_pos.':D'.$row_pos)->getFont()->setUnderline(true);
-                    $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
-                }
-
-                $row_pos++;
-
-                $rs_pos->MoveNext();
-            }
-        }
-
-        if ($data_db[0]['closingbal'] <> 0)
-        {
-            $row_pos++;
-
-            $sheet->setCellValue('A'.$row_pos, 'POS NERACA LAINNYA');
-            $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount']));
-            $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_prev']));
-            $sheet->setCellValue('D'.$row_pos, floatval($data_db[0]['closingbal']));
-
-            $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->applyFromArray($style_row)->getFont()->setBold(true);
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
-
-            $sheet->getStyle('B'.$row_pos.':D'.$row_pos)->getFont()->setUnderline(true);
-        }
-
-        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
-        $sheet->getDefaultRowDimension()->setRowHeight(-1);
-
-        // Set orientasi kertas jadi LANDSCAPE
-        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-
-        // Set judul file excel nya
-        $sheet->setTitle("Laporan Detail Rugi - Laba");
-
-        // Proses file excel
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Laporan Detail Rugi - Laba.xlsx"'); // Set nama file excel nya
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-    } /*}}}*/
-
-    public function excel_baru_daily ($data) /*{{{*/
-    {
-        $data = array(
-            'sdate' => get_var('sdate', date('d-m-Y')),
-            'edate' => get_var('edate', date('d-m-Y')),
-        );
-
-        $data['sdate'] = date('Y-m-d', strtotime($data['sdate']));
-        $data['edate'] = date('Y-m-d', strtotime($data['edate']));
-        $data['pmonth'] = date('Y', strtotime($data['sdate'])).'-01-01';
-
-        $tgl_cetak = date('Y-m-d');
-        $sdate = dbtstamp2stringina($data['sdate']);
-        $edate = dbtstamp2stringina($data['edate']);
-        $rs_pos = $data_pos = [];
-        $empty_pos = $without_mapping = true;
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
-        $style_col = [
-            'font' => ['bold' => true], // Set font nya jadi bold
-            'alignment' => [
-                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-        ];
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
-        $style_row = [
-            'alignment' => [
-                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-        ];
-
-        $sheet->setCellValue('A1', dataConfigs('company_name'));
-        $sheet->mergeCells('A1:C1');
-
-        $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA DAILY');
-        $sheet->mergeCells('A2:C2');
-
-        $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
-        $sheet->mergeCells('A3:C3');
-
-        $sheet->getStyle('A1:C3')->getFont()->setBold(true)->setSize(16);
-
-        $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
-        $sheet->mergeCells('A4:C4');
-
-        $sheet->getStyle('A4:C4')->getFont()->setSize(12);
-
-        $sheet->getStyle('A1:C4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-        // Buat header tabel nya
-        $sheet->setCellValue('A6', "Keterangan");
-        $sheet->setCellValue('B6', $sdate." sd ".$edate);
-        $sheet->setCellValue('C6', "Until ".$edate);
-
-        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A6:C6')->applyFromArray($style_col);
-        $sheet->getColumnDimension('A:C')->setAutoSize(true);
-
-        $rs = LabaRugiMdl::list_daily($data);
-
-        while (!$rs->EOF)
-        {
-            /*if ($rs->fields['coatid'] == 5)
-            {
-                $amount_period = $rs->fields['amount_period'] * -1;
-                $amount_untill = $rs->fields['amount_untill'] * -1;
-            }
-            else
-            {*/
-                $amount_period = $rs->fields['amount_period'];
-                $amount_untill = $rs->fields['amount_untill'];
-            // }
-
-            $data_db[$rs->fields['pplrid']]['amount_period'] += $amount_period;
-            $data_db[$rs->fields['pplrid']]['amount_untill'] += $amount_untill;
-
-            $rs->MoveNext();
-        }
-
-        $rs_pos = LabaRugiMdl::list_pos_rekap();
-
-        $row_pos = 7;
-        while (!$rs_pos->EOF)
-        {
-            $row = $data_db[$rs_pos->fields['pplrid']];
-
-            $space = str_repeat("     ", $rs_pos->fields['level']);
-            $is_header = $rs_pos->fields['parent_pplrid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
-            $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
-
-            $amount_period = format_uang($row['amount_period'], 2);
-            $amount_untill = format_uang($row['amount_untill'], 2);
-
-            // Subtotal Per Header
-            if ($rs_pos->fields['parent_pplrid'] != '')
-            {
-                $data_db[$rs_pos->fields['parent_pplrid']]['amount_period'] += $row['amount_period'];
-                $data_db[$rs_pos->fields['parent_pplrid']]['amount_untill'] += $row['amount_untill'];
-            }
-
-            if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-            {
-                $amount_period = '';
-                $amount_untill = '';
-            }
-
-            $sheet->setCellValue('A'.$row_pos, $space.$nama);
-            $sheet->setCellValue('B'.$row_pos, $amount_period);
-            $sheet->setCellValue('C'.$row_pos, $amount_untill);
-
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row);
-
-            if ($is_header == 't')
-                $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFont()->setBold(true);
-
-            if ($rs_pos->fields['sum_total'] == 't')
-                $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
-
-            $row_pos++;
-
-            $rs_pos->MoveNext();
-        }
-
-        if ($data_db[0]['closingbal'] <> 0)
-        {
-            $row_pos++;
-
-            $sheet->setCellValue('A'.$row_pos, 'POS LABA/RUGI LAINNYA');
-            $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount_period']));
-            $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_untill']));
-
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row);
-
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFont()->setBold(true);
-
-            $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
-        }
-
-        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
-        $sheet->getDefaultRowDimension()->setRowHeight(-1);
-
-        // Set orientasi kertas jadi LANDSCAPE
-        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-
-        // Set judul file excel nya
-        $sheet->setTitle("Laporan Rekap Rugi - Laba Daily");
-
-        // Proses file excel
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Laporan Rekap Rugi - Laba Daily.xlsx"'); // Set nama file excel nya
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-    } /*}}}*/
-
-    public function excel_baru_detail_daily ($data) /*{{{*/
-    {
-        $data = array(
-            'sdate' => get_var('sdate', date('d-m-Y')),
-            'edate' => get_var('edate', date('d-m-Y')),
-        );
-
-        $data['sdate'] = date('Y-m-d', strtotime($data['sdate']));
-        $data['edate'] = date('Y-m-d', strtotime($data['edate']));
-        $data['pmonth'] = date('Y', strtotime($data['sdate'])).'-01-01';
-
-        $tgl_cetak = date('Y-m-d');
-        $sdate = dbtstamp2stringina($data['sdate']);
-        $edate = dbtstamp2stringina($data['edate']);
-
-        $rs_pos = $data_pos = [];
-        $empty_pos = $without_mapping = true;
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
-        $style_col = [
-            'font' => ['bold' => true], // Set font nya jadi bold
-            'alignment' => [
-                'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
-                'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-        ];
-
-        // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
-        $style_row = [
-            'alignment' => [
-                'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
-            ],
-        ];
-
-        $sheet->setCellValue('A1', dataConfigs('company_name'));
-        $sheet->mergeCells('A1:C1');
-
-        $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA DAILY');
-        $sheet->mergeCells('A2:C2');
-
-        $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
-        $sheet->mergeCells('A3:C3');
-
-        $sheet->getStyle('A1:C3')->getFont()->setBold(true)->setSize(16);
-
-        $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
-        $sheet->mergeCells('A4:C4');
-
-        $sheet->getStyle('A4:C4')->getFont()->setSize(12);
-
-        $sheet->getStyle('A1:C4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-        // Buat header tabel nya
-        $sheet->setCellValue('A6', "Keterangan");
-        $sheet->setCellValue('B6', $sdate." sd ".$edate);
-        $sheet->setCellValue('C6', "Until ".$edate);
-
-        // Apply style header yang telah kita buat tadi ke masing-masing kolom header
-        $sheet->getStyle('A6:C6')->applyFromArray($style_col);
-        $sheet->getColumnDimension('A:C')->setAutoSize(true);
-
-        $rs = LabaRugiMdl::list_daily($data);
-
-        while (!$rs->EOF)
-        {
-            /*if ($rs->fields['coatid'] == 5)
-            {
-                $amount_period = $rs->fields['amount_period'] * -1;
-                $amount_untill = $rs->fields['amount_untill'] * -1;
-            }
-            else
-            {*/
-                $amount_period = $rs->fields['amount_period'];
-                $amount_untill = $rs->fields['amount_untill'];
-            // }
-
-            $data_db[$rs->fields['pplid']]['amount_period'] += $amount_period;
-            $data_db[$rs->fields['pplid']]['amount_untill'] += $amount_untill;
-
-            $rs->MoveNext();
-        }
-
-        $rs_pos = LabaRugiMdl::list_pos();
-
-        $row_pos = 7;
-        while (!$rs_pos->EOF)
-        {
-            $row = $data_db[$rs_pos->fields['pplid']];
-
-            $space = str_repeat("     ", $rs_pos->fields['level']);
-            $is_header = $rs_pos->fields['parent_pplid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
-            $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
-
-            $amount_period = floatval($row['amount_period']);
-            $amount_untill = floatval($row['amount_untill']);
-
-            // Subtotal Per Header
-            if ($rs_pos->fields['parent_pplid'] != '')
-            {
-                $data_db[$rs_pos->fields['parent_pplid']]['amount_period'] += $amount_period;
-                $data_db[$rs_pos->fields['parent_pplid']]['amount_untill'] += $amount_untill;
-            }
-
-            if ($rs_pos->fields['parent_pplid'] == '' && $rs_pos->fields['sum_total'] == 'f')
-            {
-                $amount_period = '';
-                $amount_untill = '';
-            }
-
-            $sheet->setCellValue('A'.$row_pos, $space.$nama);
-            $sheet->setCellValue('B'.$row_pos, $amount_period);
-            $sheet->setCellValue('C'.$row_pos, $amount_untill);
-
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row);
-
-            if ($is_header == 't')
-                $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFont()->setBold(true);
-
-            if ($rs_pos->fields['sum_total'] == 't')
-            {
-                $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
-                $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
-            }
-
-            $row_pos++;
-
-            $rs_pos->MoveNext();
-        }
-
-        if ($data_db[0]['closingbal'] <> 0)
-        {
-            $row_pos++;
-
-            $sheet->setCellValue('A'.$row_pos, 'POS NERACA LAINNYA');
-            $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount_period']));
-            $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_untill']));
-
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row)->getFont()->setBold(true);
-            $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
-
-            $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
-        }
-
-        // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
-        $sheet->getDefaultRowDimension()->setRowHeight(-1);
-
-        // Set orientasi kertas jadi LANDSCAPE
-        $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-
-        // Set judul file excel nya
-        $sheet->setTitle("Laporan Detail PnL Daily");
-
-        // Proses file excel
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Laporan Detail Rugi - Laba Daily.xlsx"'); // Set nama file excel nya
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-    } /*}}}*/
+    //     if ($data['month'] > 12)
+    //     {
+    //         $data['prev_month'] = $data['month'] - 1;
+    //         $data['prev_year'] = $data['year'];
+
+    //         $edate = '31'.'-'.$data['month'].'-'.$data['year'];
+    //         $sdate = '31'.'-'.$data['prev_month'].'-'.$data['year'];
+
+    //         if ($data['prev_month'] == 12)
+    //             $sdate = date("Y-m-t", strtotime($sdate));
+    //     }
+    //     else
+    //     {
+    //         $edate = $data['year'].'-'.$data['month'].'-01';
+    //         $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+
+    //         $edate = date("Y-m-t", strtotime($edate));
+    //         $sdate = date("Y-m-t", strtotime($sdate));
+
+    //         $data['prev_month'] = date("n", strtotime($sdate));
+    //         $data['prev_year'] = date("Y", strtotime($sdate));
+    //     }
+
+    //     if ($data['month'] <= 12)
+    //     {
+    //         $edate = strtoupper(dbtstamp2stringina($edate));
+    //         $bln = monthnamelong($data['month']).' '.$data['year'];
+    //     }
+    //     else
+    //         $bln = $data['month'].'-'.$data['year'];
+
+    //     if ($data['prev_month'] <= 12)
+    //     {
+    //         $sdate = strtoupper(dbtstamp2stringina($sdate));
+    //         $bln_prev = monthnamelong($data['prev_month']).' '.$data['prev_year'];
+    //     }
+    //     else
+    //         $bln_prev = $data['prev_month'].'-'.$data['prev_year'];
+
+    //     $rs_pos = $data_pos = [];
+    //     $empty_pos = $without_mapping = true;
+
+    //     $spreadsheet = new Spreadsheet();
+    //     $sheet = $spreadsheet->getActiveSheet();
+
+    //     // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
+    //     $style_col = [
+    //         'font' => ['bold' => true], // Set font nya jadi bold
+    //         'alignment' => [
+    //             'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
+    //             'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+    //         ],
+    //     ];
+
+    //     // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
+    //     $style_row = [
+    //         'alignment' => [
+    //             'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+    //         ],
+    //     ];
+
+    //     $sheet->setCellValue('A1', dataConfigs('company_name'));
+    //     $sheet->mergeCells('A1:D1');
+
+    //     $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA');
+    //     $sheet->mergeCells('A2:D2');
+
+    //     $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
+    //     $sheet->mergeCells('A3:D3');
+
+    //     $sheet->getStyle('A1:D3')->getFont()->setBold(true)->setSize(16);
+
+    //     $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
+    //     $sheet->mergeCells('A4:D4');
+
+    //     $sheet->getStyle('A4:D4')->getFont()->setSize(12);
+
+    //     $sheet->getStyle('A1:D4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+    //     // Buat header tabel nya
+    //     $sheet->setCellValue('A6', "Keterangan");
+    //     $sheet->setCellValue('B6', $bln);
+    //     $sheet->setCellValue('C6', $bln_prev);
+    //     $sheet->setCellValue('D6', "Until ".$bln);
+
+    //     // Apply style header yang telah kita buat tadi ke masing-masing kolom header
+    //     $sheet->getStyle('A6:D6')->applyFromArray($style_col);
+    //     $sheet->getColumnDimension('A:D')->setAutoSize(true);
+
+    //     $rs_period = Modules::get_period_akunting($data);
+
+    //     if (!$rs_period->EOF)
+    //     {
+    //         $data['paid']   = $rs_period->fields['paid'];
+    //         $data['pbegin'] = $rs_period->fields['pbegin'];
+    //         $data['pend']   = $rs_period->fields['pend'];
+
+    //         $rs = LabaRugiMdl::list($data);
+
+    //         while (!$rs->EOF)
+    //         {
+    //             if ($rs->fields['coatid'] == 5)
+    //             {
+    //                 $amount_prev = $rs->fields['amount_bln_prev'] * -1;
+    //                 $amount = $rs->fields['amount_bln'] * -1;
+    //                 $closingbal = $rs->fields['closingbal'] * -1;
+    //             }
+    //             else
+    //             {
+    //                 $amount_prev = $rs->fields['amount_bln_prev'];
+    //                 $amount = $rs->fields['amount_bln'];
+    //                 $closingbal = $rs->fields['closingbal'];
+    //             }
+
+    //             $data_db[$rs->fields['pplid']]['amount_prev'] += floatval($amount_prev);
+    //             $data_db[$rs->fields['pplid']]['amount'] += floatval($amount);
+    //             $data_db[$rs->fields['pplid']]['closingbal'] += floatval($closingbal);
+
+    //             $rs->MoveNext();
+    //         }
+
+    //         $rs_pos = LabaRugiMdl::list_pos();
+
+    //         $row_pos = 7;
+    //         while (!$rs_pos->EOF)
+    //         {
+    //             $row = $data_db[$rs_pos->fields['pplid']];
+
+    //             $space = str_repeat("     ", $rs_pos->fields['level']);
+    //             $is_header = $rs_pos->fields['parent_pplid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
+    //             $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
+
+    //             $amount_prev = floatval($row['amount_prev']);
+    //             $amount = floatval($row['amount']);
+    //             $closingbal = floatval($row['closingbal']);
+
+    //             // Subtotal Per Header
+    //             if ($rs_pos->fields['parent_pplid'] != '')
+    //             {
+    //                 $data_db[$rs_pos->fields['parent_pplid']]['amount_prev'] += $amount_prev;
+    //                 $data_db[$rs_pos->fields['parent_pplid']]['amount'] += $amount;
+    //                 $data_db[$rs_pos->fields['parent_pplid']]['closingbal'] += $closingbal;
+    //             }
+
+    //             if ($rs_pos->fields['parent_pplid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+    //             {
+    //                 $amount_bln_prev = '';
+    //                 $amount_bln = '';
+    //                 $closingbal = '';
+    //             }
+
+    //             $sheet->setCellValue('A'.$row_pos, $space.$nama);
+    //             $sheet->setCellValue('B'.$row_pos, $amount);
+    //             $sheet->setCellValue('C'.$row_pos, $amount_prev);
+    //             $sheet->setCellValue('D'.$row_pos, $closingbal);
+
+    //             $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->applyFromArray($style_row);
+
+    //             if ($is_header == 't')
+    //                 $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->getFont()->setBold(true);
+
+    //             if ($rs_pos->fields['sum_total'] == 't')
+    //             {
+    //                 $sheet->getStyle('B'.$row_pos.':D'.$row_pos)->getFont()->setUnderline(true);
+    //                 $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
+    //             }
+
+    //             $row_pos++;
+
+    //             $rs_pos->MoveNext();
+    //         }
+    //     }
+
+    //     if ($data_db[0]['closingbal'] <> 0)
+    //     {
+    //         $row_pos++;
+
+    //         $sheet->setCellValue('A'.$row_pos, 'POS NERACA LAINNYA');
+    //         $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount']));
+    //         $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_prev']));
+    //         $sheet->setCellValue('D'.$row_pos, floatval($data_db[0]['closingbal']));
+
+    //         $sheet->getStyle('A'.$row_pos.':D'.$row_pos)->applyFromArray($style_row)->getFont()->setBold(true);
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
+
+    //         $sheet->getStyle('B'.$row_pos.':D'.$row_pos)->getFont()->setUnderline(true);
+    //     }
+
+    //     // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+    //     $sheet->getDefaultRowDimension()->setRowHeight(-1);
+
+    //     // Set orientasi kertas jadi LANDSCAPE
+    //     $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+
+    //     // Set judul file excel nya
+    //     $sheet->setTitle("Laporan Detail Rugi - Laba");
+
+    //     // Proses file excel
+    //     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    //     header('Content-Disposition: attachment; filename="Laporan Detail Rugi - Laba.xlsx"'); // Set nama file excel nya
+    //     header('Cache-Control: max-age=0');
+
+    //     $writer = new Xlsx($spreadsheet);
+    //     $writer->save('php://output');
+    // } /*}}}*/
+
+    // public function excel_baru_daily ($data) /*{{{*/
+    // {
+    //     $data = array(
+    //         'sdate' => get_var('sdate', date('d-m-Y')),
+    //         'edate' => get_var('edate', date('d-m-Y')),
+    //     );
+
+    //     $data['sdate'] = date('Y-m-d', strtotime($data['sdate']));
+    //     $data['edate'] = date('Y-m-d', strtotime($data['edate']));
+    //     $data['pmonth'] = date('Y', strtotime($data['sdate'])).'-01-01';
+
+    //     $tgl_cetak = date('Y-m-d');
+    //     $sdate = dbtstamp2stringina($data['sdate']);
+    //     $edate = dbtstamp2stringina($data['edate']);
+    //     $rs_pos = $data_pos = [];
+    //     $empty_pos = $without_mapping = true;
+
+    //     $spreadsheet = new Spreadsheet();
+    //     $sheet = $spreadsheet->getActiveSheet();
+
+    //     // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
+    //     $style_col = [
+    //         'font' => ['bold' => true], // Set font nya jadi bold
+    //         'alignment' => [
+    //             'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
+    //             'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+    //         ],
+    //     ];
+
+    //     // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
+    //     $style_row = [
+    //         'alignment' => [
+    //             'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+    //         ],
+    //     ];
+
+    //     $sheet->setCellValue('A1', dataConfigs('company_name'));
+    //     $sheet->mergeCells('A1:C1');
+
+    //     $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA DAILY');
+    //     $sheet->mergeCells('A2:C2');
+
+    //     $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
+    //     $sheet->mergeCells('A3:C3');
+
+    //     $sheet->getStyle('A1:C3')->getFont()->setBold(true)->setSize(16);
+
+    //     $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
+    //     $sheet->mergeCells('A4:C4');
+
+    //     $sheet->getStyle('A4:C4')->getFont()->setSize(12);
+
+    //     $sheet->getStyle('A1:C4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+    //     // Buat header tabel nya
+    //     $sheet->setCellValue('A6', "Keterangan");
+    //     $sheet->setCellValue('B6', $sdate." sd ".$edate);
+    //     $sheet->setCellValue('C6', "Until ".$edate);
+
+    //     // Apply style header yang telah kita buat tadi ke masing-masing kolom header
+    //     $sheet->getStyle('A6:C6')->applyFromArray($style_col);
+    //     $sheet->getColumnDimension('A:C')->setAutoSize(true);
+
+    //     $rs = LabaRugiMdl::list_daily($data);
+
+    //     while (!$rs->EOF)
+    //     {
+    //         /*if ($rs->fields['coatid'] == 5)
+    //         {
+    //             $amount_period = $rs->fields['amount_period'] * -1;
+    //             $amount_untill = $rs->fields['amount_untill'] * -1;
+    //         }
+    //         else
+    //         {*/
+    //             $amount_period = $rs->fields['amount_period'];
+    //             $amount_untill = $rs->fields['amount_untill'];
+    //         // }
+
+    //         $data_db[$rs->fields['pplrid']]['amount_period'] += $amount_period;
+    //         $data_db[$rs->fields['pplrid']]['amount_untill'] += $amount_untill;
+
+    //         $rs->MoveNext();
+    //     }
+
+    //     $rs_pos = LabaRugiMdl::list_pos_rekap();
+
+    //     $row_pos = 7;
+    //     while (!$rs_pos->EOF)
+    //     {
+    //         $row = $data_db[$rs_pos->fields['pplrid']];
+
+    //         $space = str_repeat("     ", $rs_pos->fields['level']);
+    //         $is_header = $rs_pos->fields['parent_pplrid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
+    //         $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
+
+    //         $amount_period = format_uang($row['amount_period'], 2);
+    //         $amount_untill = format_uang($row['amount_untill'], 2);
+
+    //         // Subtotal Per Header
+    //         if ($rs_pos->fields['parent_pplrid'] != '')
+    //         {
+    //             $data_db[$rs_pos->fields['parent_pplrid']]['amount_period'] += $row['amount_period'];
+    //             $data_db[$rs_pos->fields['parent_pplrid']]['amount_untill'] += $row['amount_untill'];
+    //         }
+
+    //         if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+    //         {
+    //             $amount_period = '';
+    //             $amount_untill = '';
+    //         }
+
+    //         $sheet->setCellValue('A'.$row_pos, $space.$nama);
+    //         $sheet->setCellValue('B'.$row_pos, $amount_period);
+    //         $sheet->setCellValue('C'.$row_pos, $amount_untill);
+
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row);
+
+    //         if ($is_header == 't')
+    //             $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFont()->setBold(true);
+
+    //         if ($rs_pos->fields['sum_total'] == 't')
+    //             $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
+
+    //         $row_pos++;
+
+    //         $rs_pos->MoveNext();
+    //     }
+
+    //     if ($data_db[0]['closingbal'] <> 0)
+    //     {
+    //         $row_pos++;
+
+    //         $sheet->setCellValue('A'.$row_pos, 'POS LABA/RUGI LAINNYA');
+    //         $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount_period']));
+    //         $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_untill']));
+
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row);
+
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFont()->setBold(true);
+
+    //         $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
+    //     }
+
+    //     // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+    //     $sheet->getDefaultRowDimension()->setRowHeight(-1);
+
+    //     // Set orientasi kertas jadi LANDSCAPE
+    //     $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+
+    //     // Set judul file excel nya
+    //     $sheet->setTitle("Laporan Rekap Rugi - Laba Daily");
+
+    //     // Proses file excel
+    //     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    //     header('Content-Disposition: attachment; filename="Laporan Rekap Rugi - Laba Daily.xlsx"'); // Set nama file excel nya
+    //     header('Cache-Control: max-age=0');
+
+    //     $writer = new Xlsx($spreadsheet);
+    //     $writer->save('php://output');
+    // } /*}}}*/
+
+    // public function excel_baru_detail_daily ($data) /*{{{*/
+    // {
+    //     $data = array(
+    //         'sdate' => get_var('sdate', date('d-m-Y')),
+    //         'edate' => get_var('edate', date('d-m-Y')),
+    //     );
+
+    //     $data['sdate'] = date('Y-m-d', strtotime($data['sdate']));
+    //     $data['edate'] = date('Y-m-d', strtotime($data['edate']));
+    //     $data['pmonth'] = date('Y', strtotime($data['sdate'])).'-01-01';
+
+    //     $tgl_cetak = date('Y-m-d');
+    //     $sdate = dbtstamp2stringina($data['sdate']);
+    //     $edate = dbtstamp2stringina($data['edate']);
+
+    //     $rs_pos = $data_pos = [];
+    //     $empty_pos = $without_mapping = true;
+
+    //     $spreadsheet = new Spreadsheet();
+    //     $sheet = $spreadsheet->getActiveSheet();
+
+    //     // Buat sebuah variabel untuk menampung pengaturan style dari header tabel
+    //     $style_col = [
+    //         'font' => ['bold' => true], // Set font nya jadi bold
+    //         'alignment' => [
+    //             'horizontal'    => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, // Set text jadi ditengah secara horizontal (center)
+    //             'vertical'      => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+    //         ],
+    //     ];
+
+    //     // Buat sebuah variabel untuk menampung pengaturan style dari isi tabel
+    //     $style_row = [
+    //         'alignment' => [
+    //             'vertical'  => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER // Set text jadi di tengah secara vertical (middle)
+    //         ],
+    //     ];
+
+    //     $sheet->setCellValue('A1', dataConfigs('company_name'));
+    //     $sheet->mergeCells('A1:C1');
+
+    //     $sheet->setCellValue('A2', 'LAPORAN REKAP RUGI / LABA DAILY');
+    //     $sheet->mergeCells('A2:C2');
+
+    //     $sheet->setCellValue('A3', 'PER '.$sdate.' DAN '.$edate);
+    //     $sheet->mergeCells('A3:C3');
+
+    //     $sheet->getStyle('A1:C3')->getFont()->setBold(true)->setSize(16);
+
+    //     $sheet->setCellValue('A4', strtoupper('Tgl cetak : '.dbtstamp2stringina($tgl_cetak)));
+    //     $sheet->mergeCells('A4:C4');
+
+    //     $sheet->getStyle('A4:C4')->getFont()->setSize(12);
+
+    //     $sheet->getStyle('A1:C4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+    //     // Buat header tabel nya
+    //     $sheet->setCellValue('A6', "Keterangan");
+    //     $sheet->setCellValue('B6', $sdate." sd ".$edate);
+    //     $sheet->setCellValue('C6', "Until ".$edate);
+
+    //     // Apply style header yang telah kita buat tadi ke masing-masing kolom header
+    //     $sheet->getStyle('A6:C6')->applyFromArray($style_col);
+    //     $sheet->getColumnDimension('A:C')->setAutoSize(true);
+
+    //     $rs = LabaRugiMdl::list_daily($data);
+
+    //     while (!$rs->EOF)
+    //     {
+    //         /*if ($rs->fields['coatid'] == 5)
+    //         {
+    //             $amount_period = $rs->fields['amount_period'] * -1;
+    //             $amount_untill = $rs->fields['amount_untill'] * -1;
+    //         }
+    //         else
+    //         {*/
+    //             $amount_period = $rs->fields['amount_period'];
+    //             $amount_untill = $rs->fields['amount_untill'];
+    //         // }
+
+    //         $data_db[$rs->fields['pplid']]['amount_period'] += $amount_period;
+    //         $data_db[$rs->fields['pplid']]['amount_untill'] += $amount_untill;
+
+    //         $rs->MoveNext();
+    //     }
+
+    //     $rs_pos = LabaRugiMdl::list_pos();
+
+    //     $row_pos = 7;
+    //     while (!$rs_pos->EOF)
+    //     {
+    //         $row = $data_db[$rs_pos->fields['pplid']];
+
+    //         $space = str_repeat("     ", $rs_pos->fields['level']);
+    //         $is_header = $rs_pos->fields['parent_pplid'] == '' || $rs_pos->fields['sum_total'] == 't' ? 't' : 'f';
+    //         $nama = $rs_pos->fields['kode_pos'].' '.$rs_pos->fields['nama_pos'];
+
+    //         $amount_period = floatval($row['amount_period']);
+    //         $amount_untill = floatval($row['amount_untill']);
+
+    //         // Subtotal Per Header
+    //         if ($rs_pos->fields['parent_pplid'] != '')
+    //         {
+    //             $data_db[$rs_pos->fields['parent_pplid']]['amount_period'] += $amount_period;
+    //             $data_db[$rs_pos->fields['parent_pplid']]['amount_untill'] += $amount_untill;
+    //         }
+
+    //         if ($rs_pos->fields['parent_pplid'] == '' && $rs_pos->fields['sum_total'] == 'f')
+    //         {
+    //             $amount_period = '';
+    //             $amount_untill = '';
+    //         }
+
+    //         $sheet->setCellValue('A'.$row_pos, $space.$nama);
+    //         $sheet->setCellValue('B'.$row_pos, $amount_period);
+    //         $sheet->setCellValue('C'.$row_pos, $amount_untill);
+
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row);
+
+    //         if ($is_header == 't')
+    //             $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFont()->setBold(true);
+
+    //         if ($rs_pos->fields['sum_total'] == 't')
+    //         {
+    //             $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
+    //             $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
+    //         }
+
+    //         $row_pos++;
+
+    //         $rs_pos->MoveNext();
+    //     }
+
+    //     if ($data_db[0]['closingbal'] <> 0)
+    //     {
+    //         $row_pos++;
+
+    //         $sheet->setCellValue('A'.$row_pos, 'POS NERACA LAINNYA');
+    //         $sheet->setCellValue('B'.$row_pos, floatval($data_db[0]['amount_period']));
+    //         $sheet->setCellValue('C'.$row_pos, floatval($data_db[0]['amount_untill']));
+
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->applyFromArray($style_row)->getFont()->setBold(true);
+    //         $sheet->getStyle('A'.$row_pos.':C'.$row_pos)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F2ECEC');
+
+    //         $sheet->getStyle('B'.$row_pos.':C'.$row_pos)->getFont()->setUnderline(true);
+    //     }
+
+    //     // Set height semua kolom menjadi auto (mengikuti height isi dari kolommnya, jadi otomatis)
+    //     $sheet->getDefaultRowDimension()->setRowHeight(-1);
+
+    //     // Set orientasi kertas jadi LANDSCAPE
+    //     $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+
+    //     // Set judul file excel nya
+    //     $sheet->setTitle("Laporan Detail PnL Daily");
+
+    //     // Proses file excel
+    //     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    //     header('Content-Disposition: attachment; filename="Laporan Detail Rugi - Laba Daily.xlsx"'); // Set nama file excel nya
+    //     header('Cache-Control: max-age=0');
+
+    //     $writer = new Xlsx($spreadsheet);
+    //     $writer->save('php://output');
+    // } /*}}}*/
 }
 ?>

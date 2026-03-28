@@ -2,7 +2,7 @@
 
 @push('css')
 <style type="text/css">
-    table tr th { vertical-align: middle; }
+    table tr th { vertical-align: middle; text-align: center; }
     h2 span { font-weight: bold; }
 </style>
 
@@ -39,10 +39,28 @@
 <table width="100%" class="pad">
     <thead>
         <tr>
-            <th>Keterangan</th>
-            <th>{{ $bln }}</th>
-            <th>{{ $bln_prev }}</th>
-            <th>Until {{ $bln }}</th>
+            <th rowspan="2">Keterangan</th>
+
+            @foreach ($data_cabang as $bc => $cabang)
+                <th colspan="3">{{ $cabang['branch_name'] }}</th>
+            @endforeach
+
+            @if(count($data_cabang) > 1)
+                <th colspan="3">Total All Branch</th>
+            @endif
+        </tr>
+        <tr>
+            @foreach ($data_cabang as $bc => $cabang)
+                <th>{{ $bln }}</th>
+                <th>{{ $bln_prev }}</th>
+                <th>Until {{ $bln }}</th>
+            @endforeach
+
+            @if(count($data_cabang) > 1)
+                <th>{{ $bln }}</th>
+                <th>{{ $bln_prev }}</th>
+                <th>Until {{ $bln }}</th>
+            @endif
         </tr>
     </thead>
     <tbody>
@@ -50,26 +68,49 @@
             @foreach ($data_pos as $row)
                 @php
                     $row = FieldsToObject($row);
+                    $amounts = json_decode(json_encode($row->amounts), true);
                 @endphp
 
                 <tr>
                     <td>{!! $row->nama_pos !!}</td>
-                    <td align="right">{!! $row->amount_bln !!}</td>
-                    <td align="right">{!! $row->amount_bln_prev !!}</td>
-                    <td align="right">{!! $row->closingbal !!}</td>
+
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <td align="right">{!! $amounts['branches'][$bc]['amount_bln'] ?? '' !!}</td>
+                        <td align="right">{!! $amounts['branches'][$bc]['amount_bln_prev'] ?? '' !!}</td>
+                        <td align="right">{!! $amounts['branches'][$bc]['closingbal'] ?? '' !!}</td>
+                    @endforeach
+
+                    @if(count($data_cabang) > 1)
+                        <td align="right">{!! $amounts['total']['amount_bln'] !!}</td>
+                        <td align="right">{!! $amounts['total']['amount_bln_prev'] !!}</td>
+                        <td align="right">{!! $amounts['total']['closingbal'] !!}</td>
+                    @endif
                 </tr>
             @endforeach
         @endif
 
         @if (!$without_mapping)
         <tr>
-            <td colspan="3">&nbsp;</td>
+            @php
+                $colspan_kosong = 1 + (count($data_cabang) * 3) + (count($data_cabang) > 1 ? 3 : 0);
+            @endphp
+
+            <td colspan="{{ $colspan_kosong }}">&nbsp;</td>
         </tr>
         <tr>
             <td><b>POS LABA/RUGI LAINNYA</b></td>
-            <td align="right"><b><u>{!! $pos_amount !!}</u></b></td>
-            <td align="right"><b><u>{!! $pos_amount_prev !!}</u></b></td>
-            <td align="right"><b><u>{!! $pos_closingbal !!}</u></b></td>
+
+            @foreach ($data_cabang as $bc => $cabang)
+                <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['amount_bln'] ?? '' !!}</u></b></td>
+                <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['amount_bln_prev'] ?? '' !!}</u></b></td>
+                <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['closingbal'] ?? '' !!}</u></b></td>
+            @endforeach
+
+            @if(count($data_cabang) > 1)
+                <td align="right"><b><u>{!! $pos_lainnya['total']['amount_bln'] !!}</u></b></td>
+                <td align="right"><b><u>{!! $pos_lainnya['total']['amount_bln_prev'] !!}</u></b></td>
+                <td align="right"><b><u>{!! $pos_lainnya['total']['closingbal'] !!}</u></b></td>
+            @endif
         </tr>
         @endif
     </tbody>
