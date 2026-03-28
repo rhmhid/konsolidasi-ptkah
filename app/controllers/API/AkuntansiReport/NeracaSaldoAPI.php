@@ -7,11 +7,15 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class NeracaSaldoAPI extends BaseAPIController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/NeracaSaldoMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function excel_get () /*{{{*/
@@ -147,7 +151,7 @@ class NeracaSaldoAPI extends BaseAPIController
             while (!$rs->EOF)
             {
                 $coacode = $rs->fields['coacode'];
-                $bc = $rs->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
 
                 if (!isset($data_db[$coacode]))
                 {
@@ -187,7 +191,7 @@ class NeracaSaldoAPI extends BaseAPIController
                 if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
                 {
                     $coacode = $rss->fields['coacode'];
-                    $bc = $rss->fields['branch_code'] ?? '';
+                    $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
 
                     if (!isset($data_db[$coacode]))
                     {
@@ -221,7 +225,7 @@ class NeracaSaldoAPI extends BaseAPIController
             {
                 $no = 1;
                 $empty_tb = false;
-                $row_idx = 6;
+                $row_idx = 7;
 
                 foreach ($data_db as $coacode => $tmp)
                 {
