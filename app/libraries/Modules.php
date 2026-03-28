@@ -1205,7 +1205,7 @@ class Modules
         if ($opsi_all == 'f')
         {
             $addsql2 .= " AND br.idx = 4";
-            $optionsCabang = FilterCabang($bid);
+            $optionsCabang = FilterCabang($bid, 't');
             $addsql2 .= $optionsCabang['query'];
         }
         else
