@@ -7,11 +7,15 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class NeracaAPI extends BaseAPIController
 {
+    static $ho_jkk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
         $this->load->model('AkuntansiReport/NeracaMdl');
+
+        self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
     } /*}}}*/
 
     public function excel_get ($mytipe) /*{{{*/
@@ -166,7 +170,7 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $rs->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
                 $coaid = $rs->fields['coaid'];
                 $coatid = $rs->fields['coatid'];
                 $op = floatval($rs->fields['openingbal']);
@@ -225,7 +229,7 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rss->EOF)
             {
-                $bc = $rss->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
                 $coaid = $rss->fields['coaid'];
                 $coatid = $rss->fields['coatid'];
                 $op = floatval($rss->fields['openingbal']);
@@ -275,7 +279,7 @@ class NeracaAPI extends BaseAPIController
             '3.4' => 'TOTAL LIABILITY + EQUITY'
         );
 
-        $row_aktiva = $row_pasiva = 7;
+        $row_aktiva = $row_pasiva = 8;
 
         $print_row = function ($curr_row, $start_col, $no, $code, $name, $pos, $data_row, $is_bold = false) use ($sheet, $data_cabang, $has_total, $style_row, $cols_per_side)
         {
@@ -586,7 +590,7 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $rs->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
                 $pnid = $rs->fields['pnid'];
 
                 if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
@@ -613,7 +617,7 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rss->EOF)
             {
-                $bc = $rss->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
                 $pnid = $rss->fields['pnid'];
                 $op = $rss->fields['openingbal'];
                 $cl = $rss->fields['closingbal'];
@@ -960,7 +964,7 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $rs->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
                 $pnid = $rs->fields['pnid'];
                 $coaid = $rs->fields['coaid'];
 
@@ -996,7 +1000,7 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rss->EOF)
             {
-                $bc = $rss->fields['branch_code'] ?? '';
+                $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
                 $pnid = $rss->fields['pnid'];
                 $coaid = $rss->fields['coaid'];
                 $op = $rss->fields['openingbal'];
