@@ -2,7 +2,7 @@
 
 @push('css')
 <style type="text/css">
-    table tr th { vertical-align: middle; }
+    table tr th { vertical-align: middle; text-align: center; }
     h2 span { font-weight: bold; }
 </style>
 
@@ -18,6 +18,9 @@
     {
         let $param = 'sdate={{ $data['sdate'] }}'
             $param += '&edate={{ $data['edate'] }}'
+            $param += '&bid={{ $data['bid'] }}'
+            $param += '&status_cabang={{ $data['status_cabang'] }}'
+            $param += '&status_coa={{ $data['status_coa'] }}'
 
         let $link = "{{ route('akuntansi_report.laba_rugi.detail_coa.cetak', ['mytipe' => ':mytipe', 'myid' => ':myid']) }}"
             $link = $link.replace(':mytipe', '{{ $mytipe }}')
@@ -55,9 +58,26 @@
 <table width="100%" class="pad">
     <thead>
         <tr>
-            <th>Keterangan</th>
-            <th>{{ $sdate }} sd {{ $edate }}</th>
-            <th>Until {{ $edate }}</th>
+            <th rowspan="2">Keterangan</th>
+
+            @foreach ($data_cabang as $bc => $cabang)
+                <th colspan="2">{{ $cabang['branch_name'] }}</th>
+            @endforeach
+
+            @if(count($data_cabang) > 1)
+                <th colspan="2">Total All Branch</th>
+            @endif
+        </tr>
+        <tr>
+            @foreach ($data_cabang as $bc => $cabang)
+                <th>{{ $sdate }} sd {{ $edate }}</th>
+                <th>Until {{ $edate }}</th>
+            @endforeach
+
+            @if(count($data_cabang) > 1)
+                <th>{{ $sdate }} sd {{ $edate }}</th>
+                <th>Until {{ $edate }}</th>
+            @endif
         </tr>
     </thead>
     <tbody>
@@ -65,24 +85,45 @@
             @foreach ($data_pos as $rec)
                 @php
                     $rec = FieldsToObject($rec);
+                    $amounts = json_decode(json_encode($rec->amounts), true);
                 @endphp
 
                 <tr style="background: {{ $rec->color }};">
                     <td>{!! $rec->nama_pos !!}</td>
-                    <td align="right">{!! $rec->amount_period !!}</td>
-                    <td align="right">{!! $rec->amount_untill !!}</td>
+
+                    @foreach ($data_cabang as $bc => $cabang)
+                        <td align="right">{!! $amounts['branches'][$bc]['amount_period'] ?? '' !!}</td>
+                        <td align="right">{!! $amounts['branches'][$bc]['amount_untill'] ?? '' !!}</td>
+                    @endforeach
+
+                    @if(count($data_cabang) > 1)
+                        <td align="right">{!! $amounts['total']['amount_period'] !!}</td>
+                        <td align="right">{!! $amounts['total']['amount_untill'] !!}</td>
+                    @endif
                 </tr>
             @endforeach
         @endif
 
         @if (!$without_mapping)
         <tr>
-            <td colspan="3">&nbsp;</td>
+            @php
+                $colspan_kosong = 1 + (count($data_cabang) * 2) + (count($data_cabang) > 1 ? 2 : 0);
+            @endphp
+
+            <td colspan="{{ $colspan_kosong }}">&nbsp;</td>
         </tr>
         <tr style="background: #F2ECEC">
             <td><b>POS LABA/RUGI LAINNYA</b></td>
-            <td align="right"><b><u>{!! $pos_amount_period !!}</u></b></td>
-            <td align="right"><b><u>{!! $pos_amount_untill !!}</u></b></td>
+
+            @foreach ($data_cabang as $bc => $cabang)
+                <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['amount_period'] ?? '' !!}</u></b></td>
+                <td align="right"><b><u>{!! $pos_lainnya['branches'][$bc]['amount_untill'] ?? '' !!}</u></b></td>
+            @endforeach
+
+            @if(count($data_cabang) > 1)
+                <td align="right"><b><u>{!! $pos_lainnya['total']['amount_period'] !!}</u></b></td>
+                <td align="right"><b><u>{!! $pos_lainnya['total']['amount_untill'] !!}</u></b></td>
+            @endif
         </tr>
         @endif
     </tbody>

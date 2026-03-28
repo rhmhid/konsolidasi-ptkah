@@ -193,8 +193,11 @@
                 return false
             }
 
-            var $param = 'sdate=' + sPeriod
+            var $param = 'bid=' + $sBid
+                $param += '&sdate=' + sPeriod
                 $param += '&edate=' + ePeriod
+                $param += '&status_cabang=' + $statusCabang
+                $param += '&status_coa=' + $statusCoa
         }
         else
         {
@@ -245,9 +248,6 @@
 
                 return false
             }
-
-            let $param = 'sdate=' + sPeriod
-                $param += '&edate=' + ePeriod
 
             return {
                 bid: $form.find('[id="s-Bid"]').val(),
