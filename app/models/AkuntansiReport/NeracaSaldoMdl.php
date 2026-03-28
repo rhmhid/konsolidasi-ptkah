@@ -184,7 +184,7 @@ class NeracaSaldoMdl extends DB
                     INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
                     LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
                     LEFT JOIN branch br ON mcb.bid = br.bid
-                    WHERE mc.allow_post = 't'
+                    WHERE mc.allow_post = 't' $addsql
                 ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
                 ORDER BY tmp.coacode";
         $rs = DB::Execute($sql);

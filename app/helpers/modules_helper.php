@@ -3046,7 +3046,7 @@
         return $ret;
     } /*}}}*/
 
-    function FilterCabang ($bid = '') /*{{{*/
+    function FilterCabang ($bid = '', $only_head = 'f') /*{{{*/
     {
         $ret = [
             'conn_kah'  => TRUE,
@@ -3077,7 +3077,7 @@
                 'conn_kah'  => TRUE,
                 'conn_rsjk' => TRUE,
                 'conn_jkk'  => TRUE,
-                'query'     => " AND (br.kdbid IN (1, 3) OR br.branch_code = '$ho_jkk')",
+                'query'     => $only_head == 't' ? " AND (br.kdbid IN (1, 3) OR br.branch_code = '$ho_jkk')" : '',
             ];
         }
         elseif ($bid)
