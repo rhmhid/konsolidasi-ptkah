@@ -15,13 +15,13 @@ class DaftarJurnalAPI extends BaseAPIController
     {
         $data = array(
             'draw'              => get_var('draw'),
+            'bid'               => get_var('bid'),
+            'status_cabang'     => get_var('status_cabang'),
             'jurnal_speriod'    => get_var('jurnal_speriod', date('d-m-Y')),
             'jurnal_eperiod'    => get_var('jurnal_eperiod', date('d-m-Y')),
-            'jtid'              => get_var('jtid'),
             'is_posted'         => get_var('is_posted'),
             'gldoc'             => get_var('gldoc'),
             'keterangan'        => get_var('keterangan'),
-            'bid'               => get_var('bid'),
             'start'             => get_var('start'),
             'length'            => get_var('length'),
         );
@@ -56,9 +56,9 @@ class DaftarJurnalAPI extends BaseAPIController
         $this->response($data, REST::HTTP_OK);
     } /*}}}*/
 
-    public function detail_get ($myglid,$mybid) /*{{{*/
+    public function detail_get ($myglid, $mybid) /*{{{*/
     {
-        $rsd = DaftarJurnalMdl::detail_jurnal($myglid,$mybid);
+        $rsd = DaftarJurnalMdl::detail_jurnal($myglid, $mybid);
 
         $data_db = !$rsd->EOF ? FieldsToObject($rsd->fields) : New stdClass();
 

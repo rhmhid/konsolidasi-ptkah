@@ -20,7 +20,7 @@
             <table class="table table-row-bordered border-bottom border-gray-300 align-middle rounded-0 g-4 fs-8 w-100">
                 <tr>
                     <td style="width: 10%;">Doc No.</td>
-                    <td style="width: 15%;">{{ $data_db->gldoc }}</td>
+                    <td style="width: 15%;">{{ $data_db->gldoc }} <i>[ {{ $data_db->branch_name }} ]</td>
                     <td style="width: 10%;">Doc Type</td>
                     <td style="width: 15%;">{{ $data_db->journal_name }}</td>
                 </tr>
@@ -73,7 +73,7 @@
 
                         <tr>
                             <td class="text-center">{{ $row->coacode }}</td>
-                            <td>{{ $row->notes }}<br /><I>[ {{ $row->coaname }} ]</I></td>
+                            <td>{{ $row->notes }}<br /><i>[ {{ $row->coaname }} ]</i></td>
                             <td class="text-end">Rp. {{ format_uang($row->debet, 2) }}</td>
                             <td class="text-end">Rp. {{ format_uang($row->credit, 2) }}</td>
                             <td>{{ $row->cost_center }}</td>
@@ -93,7 +93,7 @@
 
         <div class="mt-3 w-100 py-4 border-top d-flex justify-content-between">
             <button type="button" class="btn btn-danger btn-sm rounded-1" id="me_btn_tutup" data-bs-dismiss="modal">Tutup</button>
-            <button type="submit" class="btn btn-dark btn-sm rounded-1" id="me_btn_cetak" data-glid="{{ $myglid}}">
+            <button type="submit" class="btn btn-dark btn-sm rounded-1" id="me_btn_cetak" data-glid="{{ $myglid }}" data-bid="{{ $mybid }}">
                 <i class="las la-print"></i> Cetak
             </button>
         </div>
@@ -104,9 +104,11 @@
     $('#me_btn_cetak').on('click', function ()
     {
         let myglid = $(this).data('glid')
+        const bid = $(this).data('bid')
 
-        let link = "{{ route('akunting.daftar_jurnal.cetak', ['myglid' => ':myglid']) }}"
+        let link = "{{ route('akunting.daftar_jurnal.cetak', ['myglid' => ':myglid', 'mybid' => ':mybid']) }}"
             link = link.replace(':myglid', myglid)
+            link = link.replace(':mybid', bid)
 
         NewWindow(link, 'jurnal_detail', 1000, 500, 'yes')
         return false

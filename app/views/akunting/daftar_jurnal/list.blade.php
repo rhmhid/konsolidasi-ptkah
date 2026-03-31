@@ -23,17 +23,30 @@
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
                         <div class="row g-0 gx-4">
-
                             <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
                                 {!! $cmb_cabang !!}
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="p-6 pb-0">
-                        <div class="row g-0 gx-4">
-                           <div class="col-lg-4">
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status Cabang</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">Periode</label>
                                 <div class="input-group">
                                     <input type="text" id="sJurnal-period" class="form-control form-control-sm rounded-1" readonly="" />
@@ -42,25 +55,20 @@
                                     </span>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2">Tipe Jurnal</label>
-                                {!! $cmb_tipe_jurnal !!}
-                            </div>
-
+                        <div class="row g-0 gx-4 mt-3">
                             <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">Status Posting</label>
                                 {!! $cmb_posted !!}
                             </div>
-                        </div>
 
-                        <div class="row g-0 gx-4 mt-3">
                             <div class="col-lg-3">
                                 <label class="text-dark fw-bold fs-7 pb-2">No. Jurnal</label>
                                 <input type="text" id="sGlDoc" class="form-control form-control-sm rounded-1" />
                             </div>
 
-                            <div class="col-lg-8">
+                            <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">Keterangan</label>
                                 <input type="text" id="sKeterangan" class="form-control form-control-sm rounded-1" />
                             </div>
@@ -135,13 +143,13 @@
         url     : "{{ route('api.akunting.daftar_jurnal') }}",
         data    : function (params)
                 {
+                    params.bid              = $("#sBid").val()
+                    params.status_cabang    = $('input[name="status_cabang"]:checked').val()
                     params.jurnal_speriod   = sPeriod
                     params.jurnal_eperiod   = ePeriod
-                    params.jtid             = $("#sJtid").val()
                     params.is_posted        = $("#sPosted").val()
                     params.gldoc            = $("#sGlDoc").val()
                     params.keterangan       = $("#sKeterangan").val()
-                    params.bid              = $("#sBid").val()
                 },
     }
 
@@ -150,7 +158,6 @@
                     {
                         data: 'branch_name',
                         name: 'branch_name',
-                        className: 'dt-body-center',
                     },
                     {
                         data: 'jurnal_date',
@@ -244,9 +251,9 @@
         const glid = $(this).data('glid')
         const bid = $(this).data('bid')
 
-        let getForm = async function (glid,bid)
+        let getForm = async function (glid, bid)
         {
-            let link = "{{ route('api.akunting.daftar_jurnal.detail', ['myglid' => ':myglid','mybid' => ':mybid']) }}"
+            let link = "{{ route('api.akunting.daftar_jurnal.detail', ['myglid' => ':myglid', 'mybid' => ':mybid']) }}"
                 link = link.replace(':myglid', glid)
                 link = link.replace(':mybid', bid)
 
@@ -267,7 +274,7 @@
 
         showLoading()
 
-        getForm(glid,bid).then((res) => {
+        getForm(glid, bid).then((res) => {
             Swal.close()
 
             // Show modal

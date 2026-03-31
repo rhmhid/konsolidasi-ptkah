@@ -53,8 +53,8 @@
 <table width="100%" class="pad">
     <tbody>
         <tr>
-            <td width="10%;">Entry Date</td>
-            <td width="15%;">: {{ $data_db->gldoc }}</td>
+            <td width="10%;">Doc No.</td>
+            <td width="15%;">: {{ $data_db->gldoc }} <i>[ {{ $data_db->branch_name }} ]</i></td>
             <td width="10%;">Doc Type</td>
             <td width="15%;">: {{ $data_db->journal_name }}</td>
         </tr>
@@ -107,7 +107,7 @@
 
             <tr>
                 <td align="center">{{ $row->coacode }}</td>
-                <td>{{ $row->notes }}<br /><I>[ {{ $row->coaname }} ]</I></td>
+                <td>{{ $row->notes }}<br /><i>[ {{ $row->coaname }} ]</i></td>
                 <td align="right">Rp. {{ format_uang($row->debet, 2) }}</td>
                 <td align="right">Rp. {{ format_uang($row->credit, 2) }}</td>
                 <td>{{ $row->cost_center }}</td>
