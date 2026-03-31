@@ -13,9 +13,6 @@ class DaftarJurnal extends BaseController
 
     public function list () /*{{{*/
     {
-        $data_tipe_jurnal = Modules::data_tipe_jurnal();
-        $cmb_tipe_jurnal = $data_tipe_jurnal->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sJtid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
-
         $data_cabang = Modules::data_cabang_all();
         $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sBid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
@@ -23,21 +20,21 @@ class DaftarJurnal extends BaseController
         $cmb_posted = $data_posted->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sPosted" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
         return view('akunting.daftar_jurnal.list', compact(
-            'cmb_tipe_jurnal',
             'cmb_cabang',
             'cmb_posted'
         ));
     } /*}}}*/
 
-    public function cetak ($myglid) /*{{{*/
+    public function cetak ($myglid, $mybid) /*{{{*/
     {
-        $rsd = DaftarJurnalMdl::detail_jurnal($myglid);
+        $rsd = DaftarJurnalMdl::detail_jurnal($myglid, $mybid);
 
         $data_db = !$rsd->EOF ? FieldsToObject($rsd->fields) : New stdClass();
         $now = dbtstamp2stringina(date('Y-m-d'));
 
         return view('akunting.daftar_jurnal.cetak', compact(
             'myglid',
+            'mybid',
             'rsd',
             'data_db',
             'now'

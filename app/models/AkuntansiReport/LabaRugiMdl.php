@@ -334,7 +334,6 @@ class LabaRugiMdl extends DB
                     'pplid'         => $row['pplid'],
                     'pplrid'        => $row['pplrid'],
                 );
-                
 
                 $sqli = "SELECT * FROM temp_profit_loss WHERE 1 = 2";
                 $rsi = DB::Execute($sqli);
