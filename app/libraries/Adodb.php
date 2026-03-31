@@ -50,6 +50,11 @@ class Adodb
 	    if (!$db->Connect($host_conn, $username, $password, $database))
 	        die("Gagal Terhubung ke Group [$group]: " . $db->ErrorMsg());
 
+	    $db->debug = env('DB_DEBUG');
+
+		// SET DATESTYLE
+		$db->Execute("SET DATESTYLE = 'iso, dmy'");
+
 	    return $db;
 	}
 
