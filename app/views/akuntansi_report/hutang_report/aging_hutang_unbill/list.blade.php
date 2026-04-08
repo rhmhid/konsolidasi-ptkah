@@ -34,8 +34,8 @@
                             </div>
 
                             <div class="col-lg-9">
-                                <label class="text-dark fw-bold fs-7 pb-2">Nama Supplier</label>
-                                {!! $cmb_supp !!}
+                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
+                                {!! $cmb_cabang !!}
                             </div>
                         </div>
 
@@ -80,7 +80,7 @@
 
         const $form = $('#form-aging-hutang-unbill')
         const $sDate = $form.find('[id="sDate"]').val()
-        const $suppid = $form.find('[id="suppid"] option:selected').val()
+        const $bid = $form.find('[id="s-Bid"] option:selected').val()
 
         if ($sDate == '')
         {
@@ -90,7 +90,7 @@
         }
 
         let $param = 'sdate=' + $sDate
-            $param += '&suppid=' + $suppid
+            $param += '&bid=' + $bid
 
         let $link = "{{ route('hutang_report.aging_hutang_unbill.cetak') }}"
 
@@ -102,11 +102,11 @@
     {
         const $form = $('#form-aging-hutang-unbill')
         const $sDate = $form.find('[id="sDate"]').val()
-        const $suppid = $form.find('[id="suppid"] option:selected').val()
+        const $bid = $form.find('[id="s-Bid"] option:selected').val()
 
         return {
             sdate: $sDate,
-            suppid: $suppid
+            bid: $bid
         }
     }
 

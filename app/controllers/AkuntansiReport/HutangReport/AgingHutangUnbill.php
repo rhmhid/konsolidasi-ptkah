@@ -15,12 +15,12 @@ class AgingHutangUnbill extends BaseController
     {
         $sdate = date('d-m-Y');
 
-        $data_supplier = Modules::data_supplier();
-        $cmb_supp = $data_supplier->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="suppid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Supplier..."');
+        $data_cabang = Modules::data_cabang_all();
+        $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Cabang..."');
 
         return view('akuntansi_report/hutang_report/aging_hutang_unbill.list', compact(
             'sdate',
-            'cmb_supp'
+            'cmb_cabang'
         ));
     } /*}}}*/
 
@@ -28,7 +28,7 @@ class AgingHutangUnbill extends BaseController
     {
         $data = array(
             'sdate'     => get_var('sdate', date('d-m-Y')),
-            'suppid'    => get_var('suppid')
+            'bid'       => get_var('bid')
         );
 
         $sdate = dbtstamp2stringina(date('Y-m-d', strtotime($data['sdate'])));

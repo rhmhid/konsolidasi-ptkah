@@ -48,6 +48,7 @@
     <thead>
         <tr>
             <th>No</th>
+            <th>Cabang</th>
             <th>Tanggal Penerimaan</th>
             <th>Kode Penerimaan</th>
             <th>Nama Supplier</th>
@@ -72,6 +73,7 @@
 
             <tr>
                 <td align="center">{{ $no++ }}</td>
+                <td>{{ $row->branch_name }}</td>
                 <td align="center">{{ dbtstamp2stringlong_ina($row->grdate) }}</td>
                 <td align="center">{{ $row->grcode }}</td>
                 <td>{{ $row->nama_supp }}</td>
@@ -80,13 +82,13 @@
             </tr>
         @empty
             <tr>
-                <td colspan="6" align="center"><em>Tidak ada data untuk ditampilkan.</em></td>
+                <td colspan="7" align="center"><em>Tidak ada data untuk ditampilkan.</em></td>
             </tr>
         @endforelse
 
         @if ($hasData)
             <tr>
-                <td colspan="5" align="right"><b>TOTAL</b></td>
+                <td colspan="6" align="right"><b>TOTAL</b></td>
                 <td align="right"><b>{{ $totall > 0 ? format_uang($totall, 2) : '' }}</b></td>
             </tr>
         @endif
