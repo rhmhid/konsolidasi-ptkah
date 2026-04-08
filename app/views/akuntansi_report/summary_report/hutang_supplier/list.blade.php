@@ -19,7 +19,7 @@
                     </div>
                 </div>
 
-                <form method="post" id="form-daftar-jurnal" novalidate="">
+                <form method="post" id="form-sap" novalidate="">
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
                         <div class="row g-0 gx-4">
@@ -47,27 +47,41 @@
                             </div>
 
                             <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2">Periode</label>
-                                <div class="input-group">
-                                    <input type="text" id="sJurnal-period" class="form-control form-control-sm rounded-1" readonly="" />
-                                    <span class="input-group-text">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row g-0 gx-4 mt-3">
-                            <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">C.O.A Hutang</label>
                                 {!! $cmb_coa_hutang !!}
                             </div>
+                        </div>
 
-                            <div class="col-lg-1">
+                        <div class="row g-0 gx-4 mt-3 mb-5">
+                            <div class="col-lg-3">
+                                <label class="text-dark fw-bold fs-7 pb-2">Bulan</label>
+                                <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2" required="">
+                                    {!! get_combo_option_month_lk(date('m')) !!}
+                                </select>
+                            </div>
+
+                            <div class="col-lg-2">
+                                <label class="text-dark fw-bold fs-7 pb-2">Tahun</label>
+                                <select class="form-select form-select-sm rounded-1 w-100" id="s-Year" data-control="select2" required="">
+                                    {!! get_combo_option_year(date('Y'), 2024, date('Y')+1) !!}
+                                </select>
+                            </div>
+
+                            <div class="col-lg-3">&nbsp;</div>
+
+                            <div class="col-lg-2">
                                 <label class="text-dark fw-bold fs-8 pb-2 d-block">&nbsp;</label>
-                                <button type="submit" class="btn btn-sm btn-dark rounded-1 me-4 w-100" id="btncari">
-                                    <i class="la la-search"></i>
-                                    Cari
+                                <button type="button" class="btn btn-sm btn-danger rounded-1 me-4 w-100" id="btnCetak">
+                                    <i class="la la-print"></i>
+                                    Cetak
+                                </button>
+                            </div>
+
+                            <div class="col-lg-2">
+                                <label class="text-dark fw-bold fs-8 pb-2 d-block">&nbsp;</label>
+                                <button type="submit" class="btn btn-sm btn-primary rounded-1 me-4 w-100" id="btnExcel">
+                                    <i class="la la-file-excel"></i>
+                                    Export Excel
                                 </button>
                             </div>
                         </div>
@@ -75,212 +89,90 @@
                     <!--end::Compact form-->
                 </form>
             </div>
-
-            <div class="card-body p-6 mt-n2 border-top-3 border-dark" id="kt_content_body">
-                <table id="myTableDaftarJurnal" class="table table-striped table-row-bordered border border-bottom border-gray-300 align-middle rounded-0 g-4 fs-8 w-100">
-                    <thead class="bg-dark text-uppercase fs-7 text-center">
-                        <tr class="fw-bold text-white">
-                            <th class="border-start py-5" rowspan="2">Cabang</th>
-                            <th class="border-start py-5" rowspan="2">Beginning Balance Total</th>
-                            <th class="border-start py-5" colspan="5">A/P Purchasing Invoice</th>
-                            <th class="border-start py-5" colspan="5">A/P Purchasing Payment</th>
-                            <th class="border-start py-5" rowspan="2">Other Journal</th>
-                            <th class="border-start py-5" rowspan="2">Ending Balance Total</th>
-                        </tr>
-                        <tr class="fw-bold text-white">
-                            <th class="border-start py-5">Beginning</th>
-                            <th class="border-start py-5">Debet</th>
-                            <th class="border-start py-5">Credit</th>
-                            <th class="border-start py-5">Balance</th>
-                            <th class="border-start py-5">End</th>
-                            <th class="border-start py-5">Beginning</th>
-                            <th class="border-start py-5">Debet</th>
-                            <th class="border-start py-5">Credit</th>
-                            <th class="border-start py-5">Balance</th>
-                            <th class="border-start py-5">End</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
         </div>
     </div>
 </div>
-
-<!--begin::Modal - Ubah-->
-<div class="modal fade" id="mdl-form-jurnal" data-bs-focus="false" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="mdl-form-jurnal" aria-hidden="true">
-    <!--begin::Modal dialog-->
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen">
-        <!--begin::Modal content-->
-        <div class="modal-content"></div>
-        <!--end::Modal content-->
-    </div>
-</div>
-<!--end::Modal - Ubah-->
 @endsection
 
 @push('script')
 <script type="text/javascript">
-    var sPeriod, ePeriod
-
-    $('#sJurnal-period').flatpickr({
-        defaultDate: new Date(),
-        altInput: true,
-        altFormat: "d-m-Y",
-        dateFormat: "d-m-Y",
-        weekNumbers: true,
-        mode: "range",
-        onClose: function (selectedDates, dateStr, instance)
-        {
-            var dateArr = selectedDates.map(date => this.formatDate(date, "d-m-Y"))
-
-            sPeriod = dateArr[0]
-            ePeriod = dateArr[1]
-        }
-    })
-
-    // DATATABLE myTableDaftarJurnal
-    const ajaxOptions = {
-        url     : "{{ route('api.akunting.daftar_jurnal') }}",
-        data    : function (params)
-                {
-                    params.bid              = $("#sBid").val()
-                    params.status_cabang    = $('input[name="status_cabang"]:checked').val()
-                    params.jurnal_speriod   = sPeriod
-                    params.jurnal_eperiod   = ePeriod
-                    params.is_posted        = $("#sPosted").val()
-                    params.gldoc            = $("#sGlDoc").val()
-                    params.keterangan       = $("#sKeterangan").val()
-                },
-    }
-
-    const options = {
-        columns:[
-                    {
-                        data: 'branch_name',
-                        name: 'branch_name',
-                    },
-                    {
-                        data: 'jurnal_date',
-                        name: 'jurnal_date',
-                        className: 'dt-body-center',
-
-                        render: function (data, type, row, meta)
-                        {
-                            let $ret = `${row.jurnal_date}<br /><I class="text-danger fw-semibold">[ ${row.journal_name} ]</I>`
-
-                            return $ret
-                        }
-                    },
-                    {
-                        data: 'jurnal_doc',
-                        name: 'jurnal_doc',
-                        className: 'dt-body-center',
-                    },
-                    {
-                        data: 'keterangan',
-                        name: 'keterangan',
-                    },
-                    {
-                        data: 'is_posted',
-                        name: 'is_posted',
-                        className: 'dt-body-center',
-
-                        render: function (data)
-                        {
-                            let status = 'danger'
-                            let txt = 'NOT POSTED'
-
-                            if (data == 't')
-                            {
-                                status = 'success'
-                                txt = 'POSTED'
-                            }
-
-                            let $icon = `<span class="badge badge-light-${status}">
-                                            ${txt}
-                                        </span>`
-
-                            return $icon
-                        }
-                    },
-                    {
-                        data: 'user_input',
-                        name: 'user_input',
-                    },
-                    {
-                        data: 'glid',
-                        name: 'glid',
-                        className: 'dt-body-center',
-
-                        render: function (data, type, row, meta)
-                        {
-                            $btnFungsi = `<a href="javascript:void(0)" data-glid="${row.glid}" data-bid="${row.bid}" title="Cetak" class="btn btn-dark btn-sm btn-icon fs-8 jurnal-detail">
-                                            <i class="las la-eye"></i>
-                                        </a>`
-
-                            return $btnFungsi
-                        },
-
-                        width: "60px",
-                        sortable: false,
-                    },
-                ],
-
-        order: [[0, 'asc'], [1, 'asc']],
-
-        pagingType: 'simple_numbers',
-        autoWidth: false
-    }
-
-    table = setupDataTable(
-                '#myTableDaftarJurnal',
-                ajaxOptions,
-                options
-            )
-
     // aksi submit cari
-    $('#form-daftar-jurnal').submit(function (e)
+    $('#btnCetak').click(function (e)
     {
         e.preventDefault() // batalkan aksi form submit
 
-        table.ajax.reload()
-    })
+        const $form = $('#form-sap')
+        const $sBid = $form.find('[id="s-Bid"]').val()
+        const $sMonth = $form.find('[id="s-Month"]').val()
+        const $sYear = $form.find('[id="s-Year"]').val()
+        const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
+        const $coaHutang = $form.find('[id="s-CoaHutang"] option:selected').val()
 
-    $('#myTableDaftarJurnal').on('click', '.jurnal-detail', function ()
-    {
-        const glid = $(this).data('glid')
-        const bid = $(this).data('bid')
-
-        let getForm = async function (glid, bid)
+        if ($sMonth == '')
         {
-            let link = "{{ route('api.akunting.daftar_jurnal.detail', ['myglid' => ':myglid', 'mybid' => ':mybid']) }}"
-                link = link.replace(':myglid', glid)
-                link = link.replace(':mybid', bid)
+            swalShowMessage('Perhatian!', "Bulan Harus Dipilih.", 'warning')
 
-            try {
-                result = await $.ajax({
-                    url     : link,
-                    type    : 'GET',
-                    data    : { }
-                })
-
-                return result
-            } catch (error) {
-                Swal.close()
-
-                swalShowMessage('Gagal', 'Gagal membuka form.', 'error')
-            }
+            return false
         }
 
-        showLoading()
+        if ($sYear == '')
+        {
+            swalShowMessage('Perhatian!', "Tahun Harus Dipilih.", 'warning')
 
-        getForm(glid, bid).then((res) => {
-            Swal.close()
+            return false
+        }
 
-            // Show modal
-            openModal('mdl-form-jurnal', res, null, true)
-        })
+        var $param = 'bid=' + $sBid
+            $param += '&month=' + $sMonth
+            $param += '&year=' + $sYear
+            $param += '&status_cabang=' + $statusCabang
+            $param += '&coa_hutang=' + $coaHutang
+
+        let $link = "{{ route('summary_report.ap_purchasing.cetak') }}"
+
+        popFullScreen($link + '?' + $param)
+        return false
+    })
+
+    function ParamsForm ()
+    {
+        const $form = $('#form-sap')
+
+        return {
+            bid: $form.find('[id="s-Bid"]').val(),
+            month: $form.find('[id="s-Month"]').val(),
+            year: $form.find('[id="s-Year"]').val(),
+            status_cabang: $form.find('input[name="status_cabang"]:checked').val(),
+            coa_hutang: $form.find('[id="s-CoaHutang"] option:selected').val()
+        }
+    }
+
+    // aksi submit edit / update
+    $('#form-sap').submit(function (e)
+    {
+        e.preventDefault() // batalkan aksi form submit
+
+        // untuk cek apakah inputan yang mandatory (required) terisi, pastikan form nya novalidate
+        if (validasiForm(this))
+        {
+            showLoading()
+
+            setTimeout((function ()
+            {
+                const $form = $('#form-sap')
+                const name = 'Summary A/P Purchasing - ' + moment().format('DD-MM-YYYY') + '.xlsx'
+
+                let href = "{{ route('api.summary_report.ap_purchasing.excel') }}"
+
+                exportExcel({
+                    name,
+                    url: href,
+                    params: ParamsForm()
+                }).finally(() => {
+                    Swal.close()
+                })
+            }), 2e3)
+        }
     })
 </script>
 @endpush
