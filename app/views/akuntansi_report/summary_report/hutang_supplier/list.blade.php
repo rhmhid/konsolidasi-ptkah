@@ -46,14 +46,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2">C.O.A Hutang</label>
-                                {!! $cmb_coa_hutang !!}
-                            </div>
-                        </div>
-
-                        <div class="row g-0 gx-4 mt-3 mb-5">
-                            <div class="col-lg-3">
+                            <div class="col-lg-2">
                                 <label class="text-dark fw-bold fs-7 pb-2">Bulan</label>
                                 <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2" required="">
                                     {!! get_combo_option_month_lk(date('m')) !!}
@@ -66,8 +59,10 @@
                                     {!! get_combo_option_year(date('Y'), 2024, date('Y')+1) !!}
                                 </select>
                             </div>
+                        </div>
 
-                            <div class="col-lg-3">&nbsp;</div>
+                        <div class="row g-0 gx-4 mt-3 mb-5">
+                            <div class="col-lg-8">&nbsp;</div>
 
                             <div class="col-lg-2">
                                 <label class="text-dark fw-bold fs-8 pb-2 d-block">&nbsp;</label>
@@ -106,7 +101,6 @@
         const $sMonth = $form.find('[id="s-Month"]').val()
         const $sYear = $form.find('[id="s-Year"]').val()
         const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
-        const $coaHutang = $form.find('[id="s-CoaHutang"] option:selected').val()
 
         if ($sMonth == '')
         {
@@ -126,7 +120,6 @@
             $param += '&month=' + $sMonth
             $param += '&year=' + $sYear
             $param += '&status_cabang=' + $statusCabang
-            $param += '&coa_hutang=' + $coaHutang
 
         let $link = "{{ route('summary_report.ap_purchasing.cetak') }}"
 
@@ -142,8 +135,7 @@
             bid: $form.find('[id="s-Bid"]').val(),
             month: $form.find('[id="s-Month"]').val(),
             year: $form.find('[id="s-Year"]').val(),
-            status_cabang: $form.find('input[name="status_cabang"]:checked').val(),
-            coa_hutang: $form.find('[id="s-CoaHutang"] option:selected').val()
+            status_cabang: $form.find('input[name="status_cabang"]:checked').val()
         }
     }
 

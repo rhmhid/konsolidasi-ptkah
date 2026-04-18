@@ -8,7 +8,7 @@ class HutangSupplier extends BaseController
     {
         parent::__construct();
 
-        // $this->load->model('AkuntansiReport/SummaryReport/HutangSupplierMdl');
+        $this->load->model('AkuntansiReport/SummaryReport/HutangSupplierMdl');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -16,12 +16,8 @@ class HutangSupplier extends BaseController
         $data_cabang = Modules::data_cabang_all();
         $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
-        $data_coa_hutang = Modules::data_cabang_all();
-        $cmb_coa_hutang = $data_coa_hutang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-CoaHutang" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
-
         return view('akuntansi_report.summary_report.hutang_supplier.list', compact(
-            'cmb_cabang',
-            'cmb_coa_hutang'
+            'cmb_cabang'
         ));
     } /*}}}*/
 
@@ -32,18 +28,9 @@ class HutangSupplier extends BaseController
             'month'         => intval(get_var('month')),
             'year'          => get_var('year'),
             'status_cabang' => get_var('status_cabang'),
-            'status_coa'    => get_var('status_coa'),
         );
 
-        $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
-
-        $data_cabang = [];
-        while (!$rs_cabang->EOF)
-        {
-            $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
-
-            $rs_cabang->MoveNext();
-        }
+        $rs = HutangSupplierMdl::list($data);
 
         $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
 
@@ -54,9 +41,7 @@ class HutangSupplier extends BaseController
             'cabang',
             'data',
             'report_month',
-            'data_cabang',
-            'data_tb',
-            'data_sum'
+            'rs'
         ));
     } /*}}}*/
 }

@@ -23,13 +23,11 @@ class HutangSupplierMdl extends DB
 
         $addsql = $addsql2 = "";
         $bid = $data['bid'];
-        // $status_cabang = $data['status_cabang'];
-        // $jurnal_speriod = $data['jurnal_speriod'];
-        // $jurnal_eperiod = $data['jurnal_eperiod'];
-        // $bid  = $data['bid'];
-        // $is_posted = $data['is_posted'];
-        // $gldoc = strtolower(trim($data['gldoc']));
-        // $keterangan = strtolower(trim($data['keterangan']));
+        $status_cabang = $data['status_cabang'];
+        $month = $data['month'];
+        $year = $data['year'];
+        $sdate = date('Y-m-d', strtotime($data['year'].'-'.$data['month'].'-01'));
+        $edate = date('Y-m-t', strtotime($sdate));
         $record = [];
         $optionsCabang = FilterCabang($bid);
 
@@ -37,45 +35,44 @@ class HutangSupplierMdl extends DB
         DB::Execute("DROP TABLE IF EXISTS temp_summary_ap");
 
         $sqli = "CREATE TEMPORARY TABLE temp_summary_ap (
-                    branch_code VARCHAR(255),
-                    glid BIGINT,
-                    gldate TIMESTAMP,
-                    gldesc TEXT,
-                    useri VARCHAR(255),
-                    is_posted BOOLEAN,
-                    gldoc VARCHAR(255),
-                    journal_name VARCHAR(255)
+                    branch_code VARCHAR,
+                    bebal NUMERIC(18, 2) DEFAULT 0,
+                    ap_inv NUMERIC(18, 2) DEFAULT 0,
+                    ap_pay NUMERIC(18, 2) DEFAULT 0,
+                    opbal NUMERIC(18, 2) DEFAULT 0
                 );";
         DB::Execute($sqli);
 
-        DB::Execute("CREATE INDEX idx_temp_glid ON temp_summary_ap(glid);");
+        DB::Execute("CREATE INDEX idx_temp_ap_cabang ON temp_summary_ap(branch_code);");
         /* E: Create Temp Table */
 
         /* B: Get Data PT. JKK */
         if ($optionsCabang['conn_jkk'])
         {
-            $sql = "SELECT d.branch_code, a.glid, a.gldate, a.gldesc, c.nama_lengkap AS useri
-                        , format_glcode(a.gldate, b.doc_code, a.gldoc, a.glid) AS gldoc
-                        , b.journal_name, a.is_posted
-                    FROM general_ledger a
-                    INNER JOIN journal_type b ON b.jtid = a.jtid
-                    INNER JOIN person c ON c.pid = a.create_by
-                    INNER JOIN branch d ON d.bid = a.bid
-                    WHERE DATE(a.gldate) BETWEEN DATE('$jurnal_speriod') AND DATE('$jurnal_eperiod')
-                        $addsql";
+            $sql = "SELECT br.branch_code
+                        , SUM(CASE WHEN DATE(gl.gldate) < '$edate' THEN gld.credit - gld.debet END) AS bebal
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (20, 22) THEN (gld.credit - gld.debet) END) AS ap_inv
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (21, 23) THEN (gld.debet - gld.credit) END) AS ap_pay
+                        , SUM(gld.credit - gld.debet) AS opbal
+                    FROM general_ledger_d gld
+                    INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                    INNER JOIN journal_type jt ON jt.jtid = gl.jtid
+                    INNER JOIN branch br ON gl.bid = br.bid
+                    INNER JOIN m_supplier ms ON ms.suppid = gl.suppid
+                    WHERE gl.jtid IN (20, 21, 22, 23) AND gld.gltype = (CASE WHEN gl.jtid IN (21, 23) THEN 1 ELSE 2 END)
+                        AND DATE(gl.gldate) <= '$edate' AND ms.suppid NOT IN (-1)
+                    GROUP BY br.branch_code";
+            echo "<br /><br /><br /><br /><br />";myprint_r($sql);
             $rs = DB2::Execute($sql);
 
             while (!$rs->EOF)
             {
                 $record[] = array(
                     'branch_code'   => $rs->fields['branch_code'],
-                    'glid'          => $rs->fields['glid'],
-                    'gldate'        => $rs->fields['gldate'],
-                    'gldesc'        => $rs->fields['gldesc'],
-                    'useri'         => $rs->fields['useri'],
-                    'gldoc'         => $rs->fields['gldoc'],
-                    'journal_name'  => $rs->fields['journal_name'],
-                    'is_posted'     => $rs->fields['is_posted']
+                    'bebal'         => floatval($rs->fields['bebal']),
+                    'ap_inv'        => floatval($rs->fields['ap_inv']),
+                    'ap_pay'        => floatval($rs->fields['ap_pay']),
+                    'opbal'         => floatval($rs->fields['opbal']),
                 );
 
                 $rs->MoveNext();
@@ -86,31 +83,31 @@ class HutangSupplierMdl extends DB
         /* B: Get Data PT. KAH */
         if ($optionsCabang['conn_kah'])
         {
-            $sql = "SELECT a.glid, a.gldate, a.gldesc, c.nama_lengkap AS useri
-                        , format_glcode(a.gldate, b.doc_code, a.gldoc, a.glid) AS gldoc
-                        , b.journal_name, a.is_posted
-                    FROM general_ledger a
-                    INNER JOIN journal_type b ON b.jtid = a.jtid
-                    INNER JOIN person c ON c.pid = a.create_by
-                    WHERE DATE(a.gldate) BETWEEN DATE('$jurnal_speriod') AND DATE('$jurnal_eperiod')
-                        $addsql";
-            $rs = DB3::Execute($sql);
+            // $sql = "SELECT a.glid, a.gldate, a.gldesc, c.nama_lengkap AS useri
+            //             , format_glcode(a.gldate, b.doc_code, a.gldoc, a.glid) AS gldoc
+            //             , b.journal_name, a.is_posted
+            //         FROM general_ledger a
+            //         INNER JOIN journal_type b ON b.jtid = a.jtid
+            //         INNER JOIN person c ON c.pid = a.create_by
+            //         WHERE DATE(a.gldate) BETWEEN DATE('$jurnal_speriod') AND DATE('$jurnal_eperiod')
+            //             $addsql";
+            // $rs = DB3::Execute($sql);
 
-            while (!$rs->EOF)
-            {
-                $record[] = array(
-                    'branch_code'   => self::$kode_kah,
-                    'glid'          => $rs->fields['glid'],
-                    'gldate'        => $rs->fields['gldate'],
-                    'gldesc'        => $rs->fields['gldesc'],
-                    'useri'         => $rs->fields['useri'],
-                    'gldoc'         => $rs->fields['gldoc'],
-                    'journal_name'  => $rs->fields['journal_name'],
-                    'is_posted'     => $rs->fields['is_posted']
-                );
+            // while (!$rs->EOF)
+            // {
+            //     $record[] = array(
+            //         'branch_code'   => self::$kode_kah,
+            //         'glid'          => $rs->fields['glid'],
+            //         'gldate'        => $rs->fields['gldate'],
+            //         'gldesc'        => $rs->fields['gldesc'],
+            //         'useri'         => $rs->fields['useri'],
+            //         'gldoc'         => $rs->fields['gldoc'],
+            //         'journal_name'  => $rs->fields['journal_name'],
+            //         'is_posted'     => $rs->fields['is_posted']
+            //     );
 
-                $rs->MoveNext();
-            }
+            //     $rs->MoveNext();
+            // }
         }
         /* E: Get Data PT. KAH */
 
@@ -128,13 +125,10 @@ class HutangSupplierMdl extends DB
             {
                 $data = array(
                     'branch_code'   => $row['branch_code'],
-                    'glid'          => $row['glid'],
-                    'gldate'        => $row['gldate'],
-                    'gldesc'        => $row['gldesc'],
-                    'useri'         => $row['useri'],
-                    'gldoc'         => $row['gldoc'],
-                    'journal_name'  => $row['journal_name'],
-                    'is_posted'     => $row['is_posted']
+                    'bebal'         => floatval($row['bebal']),
+                    'ap_inv'        => floatval($row['ap_inv']),
+                    'ap_pay'        => floatval($row['ap_pay']),
+                    'opbal'         => floatval($row['opbal']),
                 );
 
                 $sqli = "SELECT * FROM temp_summary_ap WHERE 1 = 2";
@@ -154,7 +148,7 @@ class HutangSupplierMdl extends DB
                 FROM temp_summary_ap tmp
                 INNER JOIN branch br ON br.branch_code = tmp.branch_code
                 WHERE 1 = 1 $addsql2
-                ORDER BY tmp.gldate DESC, tmp.glid DESC";
+                ORDER BY br.is_primary DESC, br.branch_name";
 
         if ($istot == false) $sqlx = $sql.$lp;
         else $sqlx = $sql;
