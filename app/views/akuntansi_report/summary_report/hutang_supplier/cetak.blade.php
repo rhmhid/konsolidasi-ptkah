@@ -65,34 +65,58 @@
     <span style="text-transform: uppercase;">Periode : {{ $report_month }}</span>
 </h2>
 
-@php
-    $jml_bid = 1;
-@endphp
 <table width="100%" class="bdr2 pad">
     <thead>
         <tr>
-            <th rowspan="2">No.</th>
-            <th rowspan="2">Cabang</th>
-            <th rowspan="2">Begining Balance Total</th>
-            <th colspan="5">A/P PURCHASING INVOICE</th>
-            <th colspan="5">A/P PURCHASING PAYMENT</th>
-            <th rowspan="2">Other Jurnal</th>
-            <th rowspan="2">Ending Balance Total</th>
-        </tr>
-        <tr>
-            <th>Begining</th>
-            <th>Debet</th>
-            <th>Credit</th>
-            <th>Balance</th>
-            <th>End</th>
-            <th>Begining</th>
-            <th>Debet</th>
-            <th>Credit</th>
-            <th>Balance</th>
-            <th>End</th>
+            <th>No.</th>
+            <th>Cabang</th>
+            <th>Begining Balance Total</th>
+            <th>A/P Purchasing Invoice</th>
+            <th>A/P Purchasing Payment</th>
+            <th>Ending Balance</th>
         </tr>
     </thead>
     <tbody>
+        @php
+            $no = 1;
+            $tot_bebal = $tot_ap_inv = $tot_ap_pay = $tot_opbal = 0;
+        @endphp
+
+        @forelse ($rs as $row)
+            @php
+                $row = FieldsToObject($row);
+
+                $tot_bebal += $row->bebal ?? 0;
+                $tot_ap_inv += $row->ap_inv ?? 0;
+                $tot_ap_pay += $row->ap_pay ?? 0;
+                $tot_opbal += $row->opbal ?? 0;
+            @endphp
+
+            <tr>
+                <td align="center">{{ $no++ }}</td>
+                <td>
+                    <a href="javascript:void(0)" onclick="BukuBesar('{{ $row->coaid }}');">{{ $row->branch_name }}</a></td>
+                <td align="right">{{ format_uang($row->bebal, 2) }}</td>
+                <td align="right">{{ format_uang($row->ap_inv, 2) }}</td>
+                <td align="right">{{ format_uang($row->ap_pay, 2) }}</td>
+                <td align="right">{{ format_uang($row->opbal, 2) }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="6" align="center"><em>Tidak ada data untuk ditampilkan.</em></td>
+            </tr>
+        @endforelse
     </tbody>
+    @if ($no > 1)
+        <tfoot>
+            <tr>
+                <td colspan="2" align="right"><b>TOTAL</b></td>
+                <td align="right"><b>{{ format_uang($tot_bebal, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_ap_inv, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_ap_pay, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_opbal, 2) }}</b></td>
+            </tr>
+        </tfoot>
+    @endif
 </table>
 @endsection
