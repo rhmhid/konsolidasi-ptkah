@@ -25,15 +25,6 @@
 
     function ExportExcel ()
     {
-        // let $param = 'bid={{ $data['bid'] }}'
-        //     $param += '&month={{ $data['month'] }}'
-        //     $param += '&year={{ $data['year'] }}'
-
-        // let $link = "{{ route('api.summary_report.ap_purchasing.detail.excel') }}"
-
-        // window.location.replace($link + '?' + $param)
-        // return false
-
         setTimeout((function ()
         {
             const name = 'Summary Report AP Purchasing Detail - ' + moment().format('DD-MM-YYYY') + '.xlsx'
