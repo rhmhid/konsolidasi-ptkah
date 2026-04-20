@@ -152,7 +152,7 @@
             setTimeout((function ()
             {
                 const $form = $('#form-sap')
-                const name = 'Summary A/P Purchasing - ' + moment().format('DD-MM-YYYY') + '.xlsx'
+                const name = 'Summary Report AP Purchasing - ' + moment().format('DD-MM-YYYY') + '.xlsx'
 
                 let href = "{{ route('api.summary_report.ap_purchasing.excel') }}"
 

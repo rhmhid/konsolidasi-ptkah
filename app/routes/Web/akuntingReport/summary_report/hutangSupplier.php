@@ -4,4 +4,5 @@ Route::group('summary-report/ap-purchasing', ['middleware' => 'AuthMiddleware'],
 {
     Route::get('/', 'AkuntansiReport/SummaryReport/HutangSupplier@list')->name('summary_report.ap_purchasing');
     Route::get('/cetak', 'AkuntansiReport/SummaryReport/HutangSupplier@cetak')->name('summary_report.ap_purchasing.cetak');
+    Route::get('detail', 'AkuntansiReport/SummaryReport/HutangSupplier@detail')->name('summary_report.ap_purchasing.detail');
 });

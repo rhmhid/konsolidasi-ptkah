@@ -44,5 +44,28 @@ class HutangSupplier extends BaseController
             'rs'
         ));
     } /*}}}*/
+
+    public function detail () /*{{{*/
+    {
+        $data = array(
+            'bid'   => get_var('bid'),
+            'month' => intval(get_var('month')),
+            'year'  => get_var('year'),
+        );
+
+        $rs = HutangSupplierMdl::detail($data);
+
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
+
+        if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
+        else $report_month = $data['month'].'-'.$data['year'];
+
+        return view('akuntansi_report.summary_report.hutang_supplier.detail', compact(
+            'cabang',
+            'data',
+            'report_month',
+            'rs'
+        ));
+    } /*}}}*/
 }
 ?>
