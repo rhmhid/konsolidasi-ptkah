@@ -158,10 +158,10 @@ class HutangSupplierAPI extends BaseAPIController
 
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
         $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-        $sheet->setTitle("Summary Report AP Purchasing Detail");
+        $sheet->setTitle("Summary Report AP Purchasing");
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Summary Report AP Purchasing Detail.xlsx"');
+        header('Content-Disposition: attachment; filename="Summary Report AP Purchasing.xlsx"');
         header('Cache-Control: max-age=0');
 
         $writer = new Xlsx($spreadsheet);
