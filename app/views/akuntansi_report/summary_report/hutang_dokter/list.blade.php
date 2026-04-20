@@ -13,7 +13,7 @@
                         <div class="d-flex flex-column flex-grow-1">
                             <h2 class="pt-2 text-dark">
                                 <span class="las la-file-alt text-dark me-4"></span>
-                                Summary A/P Purchasing
+                                Summary A/P Doctor
                             </h2>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
             $param += '&year=' + $sYear
             $param += '&status_cabang=' + $statusCabang
 
-        let $link = "{{ route('summary_report.ap_purchasing.cetak') }}"
+        let $link = "{{ route('summary_report.ap_dokter.cetak') }}"
 
         popFullScreen($link + '?' + $param)
         return false
@@ -152,9 +152,9 @@
             setTimeout((function ()
             {
                 const $form = $('#form-sap')
-                const name = 'Summary Report AP Purchasing - ' + moment().format('DD-MM-YYYY') + '.xlsx'
+                const name = 'Summary Report AP Doctor - ' + moment().format('DD-MM-YYYY') + '.xlsx'
 
-                let href = "{{ route('api.summary_report.ap_purchasing.excel') }}"
+                let href = "{{ route('api.summary_report.ap_dokter.excel') }}"
 
                 exportExcel({
                     name,

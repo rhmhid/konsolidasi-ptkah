@@ -20,7 +20,7 @@
             $param += '&month={{ $data['month'] }}'
             $param += '&year={{ $data['year'] }}'
 
-        let $link = "{{ route('summary_report.ap_purchasing.detail') }}"
+        let $link = "{{ route('summary_report.ap_dokter.detail') }}"
 
         popFullScreen2($link + '?' + $param)
         return false
@@ -57,7 +57,7 @@
 
 @section('content')
 <h2 class="bdr">
-    Summary Report A/P Purchasing
+    Summary Report A/P Doctor
     <span style="text-transform: uppercase;">Cabang : {{ $cabang }}</span>
     <span style="text-transform: uppercase;">Periode : {{ $report_month }}</span>
 </h2>
@@ -68,8 +68,8 @@
             <th>No.</th>
             <th>Cabang</th>
             <th>Begining Balance Total</th>
-            <th>A/P Purchasing Invoice</th>
-            <th>A/P Purchasing Payment</th>
+            <th>A/P Doctor Invoice</th>
+            <th>A/P Doctor Payment</th>
             <th>Ending Balance</th>
         </tr>
     </thead>

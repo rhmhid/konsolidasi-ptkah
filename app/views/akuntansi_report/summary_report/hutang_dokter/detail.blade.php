@@ -14,16 +14,31 @@
 
 @push('script')
 <script type="text/javascript">
-    function DetailSummary (bid)
+    function ParamsForm ()
     {
-        let $param = 'bid=' + bid
-            $param += '&month={{ $data['month'] }}'
-            $param += '&year={{ $data['year'] }}'
+        return {
+            bid: {{ $data['bid'] }},
+            month: {{ $data['month'] }},
+            year: {{ $data['year'] }}
+        }
+    }
 
-        let $link = "{{ route('summary_report.ap_purchasing.detail') }}"
+    function ExportExcel ()
+    {
+        setTimeout((function ()
+        {
+            const name = 'Summary Report AP Doctor Detail - ' + moment().format('DD-MM-YYYY') + '.xlsx'
 
-        popFullScreen2($link + '?' + $param)
-        return false
+            let href = "{{ route('api.summary_report.ap_dokter.detail.excel') }}"
+
+            exportExcel({
+                name,
+                url: href,
+                params: ParamsForm()
+            }).finally(() => {
+                Swal.close()
+            })
+        }), 2e3)
     }
 </script>
 @endpush
@@ -31,8 +46,9 @@
 @push('function')
 <div id="functions">
     <ul>
-        <li><a href="javascript:void(0)" onclick="JavaScript:window.print();">Print</a></li>
-        <li><a href="javascript:void(0)" onclick="JavaScript:window.close();">Close</a></li>
+        <li><a href="javascript:void(0)" onclick="window.print();">Print</a></li>
+        <li><a href="javascript:void(0)" onclick="window.close();">Close</a></li>
+        <li><a href="javascript:void(0)" onclick="ExportExcel();">Export Excel</a></li>
     </ul>        
 </div>
 @endpush
@@ -57,7 +73,7 @@
 
 @section('content')
 <h2 class="bdr">
-    Summary Report A/P Purchasing
+    Summary Report A/P Doctor ( Detail )
     <span style="text-transform: uppercase;">Cabang : {{ $cabang }}</span>
     <span style="text-transform: uppercase;">Periode : {{ $report_month }}</span>
 </h2>
@@ -66,10 +82,10 @@
     <thead>
         <tr>
             <th>No.</th>
-            <th>Cabang</th>
+            <th>Supplier</th>
             <th>Begining Balance Total</th>
-            <th>A/P Purchasing Invoice</th>
-            <th>A/P Purchasing Payment</th>
+            <th>A/P Doctor Invoice</th>
+            <th>A/P Doctor Payment</th>
             <th>Ending Balance</th>
         </tr>
     </thead>
@@ -91,8 +107,7 @@
 
             <tr>
                 <td align="center">{{ $no++ }}</td>
-                <td>
-                    <a href="javascript:void(0)" onclick="DetailSummary('{{ $row->bid }}');">{{ $row->branch_name }}</a></td>
+                <td>{{ $row->nama_dokter }}</td>
                 <td align="right">{{ format_uang($row->opbal, 2) }}</td>
                 <td align="right">{{ format_uang($row->ap_inv, 2) }}</td>
                 <td align="right">{{ format_uang($row->ap_pay, 2) }}</td>

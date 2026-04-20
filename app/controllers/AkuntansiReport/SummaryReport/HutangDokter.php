@@ -2,13 +2,13 @@
 
 require_once APPPATH . '/libraries/BaseController.php';
 
-class HutangSupplier extends BaseController
+class HutangDokter extends BaseController
 {
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
-        $this->load->model('AkuntansiReport/SummaryReport/HutangSupplierMdl');
+        $this->load->model('AkuntansiReport/SummaryReport/HutangDokterMdl');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -16,7 +16,7 @@ class HutangSupplier extends BaseController
         $data_cabang = Modules::data_cabang_all();
         $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
-        return view('akuntansi_report.summary_report.hutang_supplier.list', compact(
+        return view('akuntansi_report.summary_report.hutang_dokter.list', compact(
             'cmb_cabang'
         ));
     } /*}}}*/
@@ -30,14 +30,14 @@ class HutangSupplier extends BaseController
             'status_cabang' => get_var('status_cabang'),
         );
 
-        $rs = HutangSupplierMdl::list($data);
+        $rs = HutangDokterMdl::list($data);
 
         $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
 
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
         else $report_month = $data['month'].'-'.$data['year'];
 
-        return view('akuntansi_report.summary_report.hutang_supplier.cetak', compact(
+        return view('akuntansi_report.summary_report.hutang_dokter.cetak', compact(
             'cabang',
             'data',
             'report_month',
@@ -53,14 +53,14 @@ class HutangSupplier extends BaseController
             'year'  => get_var('year'),
         );
 
-        $rs = HutangSupplierMdl::detail($data);
+        $rs = HutangDokterMdl::detail($data);
 
         $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
 
         if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
         else $report_month = $data['month'].'-'.$data['year'];
 
-        return view('akuntansi_report.summary_report.hutang_supplier.detail', compact(
+        return view('akuntansi_report.summary_report.hutang_dokter.detail', compact(
             'cabang',
             'data',
             'report_month',
