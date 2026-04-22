@@ -12,7 +12,8 @@
 		"yidas/codeigniter-psr4-autoload": "^2.0",
 		"geekcom/phpjasper": "^3.3",
 		"phpoffice/phpspreadsheet": "^1.29",
-		"aranyasen/hl7": "^2.1"
+		"aranyasen/hl7": "^2.1",
+		"guzzlehttp/guzzle": "^7.10"
 	},
 	"require-dev": {
 		"mikey179/vfsstream": "1.1.*",
