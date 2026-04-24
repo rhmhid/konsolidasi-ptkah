@@ -139,6 +139,35 @@ class LabaRugiMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
+            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
+
+            $endpoint = 'pass/income_statement_monthly';
+            $payload = [
+                'data' => [
+                    'rmonth' => $emonth,
+                    'ryear'  => $eyear
+                ]
+            ];
+
+            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+
+            if ($response['status'] === 'success' && !empty($response['data']))
+            {
+                foreach ($response['data'] as $row)
+                {
+                    $default_debet = $row['posisi_coa'] == 'Dr' ? 't' : 'f';
+
+                    $record[] = array(
+                        'branch_code'       => $rsjk_code,
+                        'coacode'           => $row['coa_id'], 
+                        'coaname'           => $row['coa_name'],
+                        'default_debet'     => $default_debet,
+                        'amount_bln_prev'   => floatval($row['month_prev']),
+                        'amount_bln'        => floatval($row['month_curr']),
+                        'closingbal'        => floatval($row['closingbal']),
+                    );
+                }
+            }
         }
         /* E: Get Data RSJK */
 
@@ -312,6 +341,35 @@ class LabaRugiMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
+            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
+
+            $endpoint = 'pass/income_statement_daily';
+            $payload = [
+                'data' => [
+                    'sdate' => $sdate,
+                    'edate' => $edate
+                ]
+            ];
+
+            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+
+            if ($response['status'] === 'success' && !empty($response['data']))
+            {
+                foreach ($response['data'] as $row)
+                {
+                    $default_debet = $row['posisi_coa'] == 'Dr' ? 't' : 'f';
+
+                    $record[] = array(
+                        'branch_code'       => $rsjk_code,
+                        'coacode'           => $row['coa_id'], 
+                        'coaname'           => $row['coa_name'],
+                        'default_debet'     => $default_debet,
+                        'amount_bln_prev'   => floatval($row['month_prev']),
+                        'amount_bln'        => floatval($row['month_curr']),
+                        'closingbal'        => floatval($row['closingbal']),
+                    );
+                }
+            }
         }
         /* E: Get Data RSJK */
 

@@ -1230,7 +1230,7 @@ class Modules
                     SELECT 'All Summary ( PT. JKK )' AS branch_name, -3 AS bid, 'ALL_JKK' AS branch_code, 't' AS is_primary, 3 AS idx, NULL AS kdbid
                 ) br
                 WHERE 1 = 1 $addsql2
-                ORDER BY br.idx, br.is_primary DESC, br.branch_name";
+                ORDER BY br.idx, br.is_primary DESC, br.bid";
         $rs = self::$db->Execute($sql);
 
         return $rs;

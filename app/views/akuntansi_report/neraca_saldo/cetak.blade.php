@@ -66,8 +66,10 @@
 </h2>
 
 @php
-    $jml_bid = 1;
+    $is_multi_branch = count($data_cabang) > 1;
+    $jml_bid = $is_multi_branch ? count($data_cabang) + 1 : count($data_cabang);
 @endphp
+
 <table width="100%" class="bdr2 pad">
     <thead>
         <tr>
@@ -79,15 +81,15 @@
             @foreach ($data_cabang as $head)
                 @php
                     $head = FieldsToObject($head);
-                    $jml_bid++;
                 @endphp
 
                 <th colspan="4">{{ $head->branch_name }}</th>
             @endforeach
 
-            <th colspan="4">Total</th>
+            @if ($is_multi_branch)
+                <th colspan="4">Total</th>
+            @endif
         </tr>
-
         <tr>
             @for ($idx = 1; $idx <= $jml_bid; $idx++)
                 <th>Beginning Balance</th>
@@ -122,10 +124,12 @@
                     <td align="right">{{ format_uang($row['branch'][$bcode]['balance'], 2) }}</td>
                 @endforeach
 
-                <td align="right">{{ format_uang($row['opening'], 2) }}</td>
-                <td align="right">{{ format_uang($row['debet'], 2) }}</td>
-                <td align="right">{{ format_uang($row['credit'], 2) }}</td>
-                <td align="right">{{ format_uang($row['balance'], 2) }}</td>
+                @if ($is_multi_branch)
+                    <td align="right">{{ format_uang($row['opening'], 2) }}</td>
+                    <td align="right">{{ format_uang($row['debet'], 2) }}</td>
+                    <td align="right">{{ format_uang($row['credit'], 2) }}</td>
+                    <td align="right">{{ format_uang($row['balance'], 2) }}</td>
+                @endif
             </tr>
         @endforeach
 
@@ -147,10 +151,12 @@
                 <td align="right"><b></b></td>
             @endforeach
 
-            <td align="right"><b></b></td>
-            <td align="right"><b>{{ format_uang($tot_deb, 2) }}</b></td>
-            <td align="right"><b>{{ format_uang($tot_cre, 2) }}</b></td>
-            <td align="right"><b></b></td>
+            @if ($is_multi_branch)
+                <td align="right"><b></b></td>
+                <td align="right"><b>{{ format_uang($tot_deb, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_cre, 2) }}</b></td>
+                <td align="right"><b></b></td>
+            @endif
         </tr>
     </tbody>
 </table>

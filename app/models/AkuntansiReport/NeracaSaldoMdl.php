@@ -136,6 +136,36 @@ class NeracaSaldoMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
+            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
+
+            $endpoint = 'pass/trial_balance';
+            $payload = [
+                'data' => [
+                    'month' => $month,
+                    'year'  => $year
+                ]
+            ];
+
+            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+
+            if ($response['status'] === 'success' && !empty($response['data']))
+            {
+                foreach ($response['data'] as $row)
+                {
+                    $default_debet = $row['posisi_coa'] == 'Dr' ? 't' : 'f';
+
+                    $record[] = array(
+                        'branch_code'   => $rsjk_code,
+                        'coacode'       => $row['coa_id'], 
+                        'coaname'       => $row['coa_name'],
+                        'default_debet' => $default_debet,
+                        'openingbal'    => floatval($row['openingbal']),
+                        'debet'         => floatval($row['debet']),
+                        'credit'        => floatval($row['credit']),
+                        'closingbal'    => floatval($row['closingbal']),
+                    );
+                }
+            }
         }
         /* E: Get Data RSJK */
 

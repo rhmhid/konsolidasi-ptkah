@@ -137,6 +137,34 @@ class NeracaMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
+            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
+
+            $endpoint = 'pass/balance_sheet';
+            $payload = [
+                'data' => [
+                    'rmonth' => $month,
+                    'ryear'  => $year
+                ]
+            ];
+
+            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+
+            if ($response['status'] === 'success' && !empty($response['data']))
+            {
+                foreach ($response['data'] as $row)
+                {
+                    $default_debet = $row['posisi_coa'] == 'Dr' ? 't' : 'f';
+
+                    $record[] = array(
+                        'branch_code'   => $rsjk_code,
+                        'coacode'       => $row['coa_id'], 
+                        'coaname'       => $row['coa_name'],
+                        'default_debet' => $default_debet,
+                        'openingbal'    => floatval($row['openingbal']),
+                        'closingbal'    => floatval($row['closingbal']),
+                    );
+                }
+            }
         }
         /* E: Get Data RSJK */
 
