@@ -31,6 +31,7 @@ class NeracaMdl extends DB
 
         /* B: Create Temp Table */
         DB::Execute("DROP TABLE IF EXISTS temp_balance_sheet");
+        // myprint_r("DROP TABLE IF EXISTS temp_balance_sheet;");
 
         $sqli = "CREATE TEMPORARY TABLE temp_balance_sheet (
                     branch_code     VARCHAR,
@@ -45,6 +46,7 @@ class NeracaMdl extends DB
                     pnid            INT
                 ) ON COMMIT PRESERVE ROWS;";
         DB::Execute($sqli);
+        // myprint_r($sqli);
         /* E: Create Temp Table */
 
         /* B: Get Data PT. JKK */
@@ -164,6 +166,8 @@ class NeracaMdl extends DB
                         'closingbal'    => floatval($row['closingbal']),
                     );
                 }
+
+                // myprint_r($response['data']);
             }
         }
         /* E: Get Data RSJK */
@@ -191,6 +195,7 @@ class NeracaMdl extends DB
                 $rsi = DB::Execute($sqli);
                 $sqli = DB::InsertSQL($rsi, $data);
                 if ($ok) $ok = DB::Execute($sqli);
+                // myprint_r($sqli.";");
             }
         }
         /* E: Insert To Temp Table */
@@ -216,6 +221,8 @@ class NeracaMdl extends DB
                 ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
                 ORDER BY b.coatid, b.coacode";
         $rs = DB::Execute($sql);
+        // myprint_r($sql);
+        // die;
 
         return $rs;
     } /*}}}*/

@@ -68,7 +68,7 @@ class LabaRugi extends BaseController
         else
         {
             $edate = $data['year'].'-'.$data['month'].'-01';
-            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+            $sdate = date("Y-m-d", strtotime("-1 month", strtotime($edate)));
 
             $edate = date("Y-m-t", strtotime($edate));
             $sdate = date("Y-m-t", strtotime($sdate));
@@ -239,7 +239,7 @@ class LabaRugi extends BaseController
         else
         {
             $edate = $data['year'].'-'.$data['month'].'-01';
-            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+            $sdate = date("Y-m-d", strtotime("-1 month", strtotime($edate)));
 
             $edate = date("Y-m-t", strtotime($edate));
             $sdate = date("Y-m-t", strtotime($sdate));
@@ -477,7 +477,7 @@ class LabaRugi extends BaseController
         else
         {
             $edate = $data['year'].'-'.$data['month'].'-01';
-            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+            $sdate = date("Y-m-d", strtotime("-1 month", strtotime($edate)));
 
             $edate = date("Y-m-t", strtotime($edate));
             $sdate = date("Y-m-t", strtotime($sdate));
@@ -721,7 +721,7 @@ class LabaRugi extends BaseController
         else
         {
             $edate = $data['year'].'-'.$data['month'].'-01';
-            $sdate = $data['month'] == 1 ? $edate : date("Y-m-d", strtotime("-1 month", strtotime($edate)));
+            $sdate = date("Y-m-d", strtotime("-1 month", strtotime($edate)));
 
             $edate = date("Y-m-t", strtotime($edate));
             $sdate = date("Y-m-t", strtotime($sdate));

@@ -216,7 +216,7 @@ class NeracaSaldoMdl extends DB
                     LEFT JOIN branch br ON mcb.bid = br.bid
                     WHERE mc.allow_post = 't' $addsql
                 ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
-                ORDER BY tmp.coacode";
+                ORDER BY b.coacode";
         $rs = DB::Execute($sql);
         /* E: Showing Data From Temp Table */
 
