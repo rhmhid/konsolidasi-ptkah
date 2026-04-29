@@ -3089,21 +3089,21 @@
                 'query'     => " AND br.bid = ".$bid,
             ];
 
-            if ($bid == 1) // Default KAH
-            {
-                $ret['conn_rsjk'] = FALSE;
-                $ret['conn_jkk'] = FALSE;
-            }
-            elseif ($bid == 2) // Default RSJK
-            {
-                $ret['conn_kah'] = FALSE;
-                $ret['conn_jkk'] = FALSE;
-            }
-            elseif ($bid >= 3) // Default JKK
-            {
-                $ret['conn_kah'] = FALSE;
-                $ret['conn_rsjk'] = FALSE;
-            }
+            // if ($bid == 1) // Default KAH
+            // {
+            //     $ret['conn_rsjk'] = FALSE;
+            //     $ret['conn_jkk'] = FALSE;
+            // }
+            // elseif ($bid == 2) // Default RSJK
+            // {
+            //     $ret['conn_kah'] = FALSE;
+            //     $ret['conn_jkk'] = FALSE;
+            // }
+            // elseif ($bid >= 3) // Default JKK
+            // {
+            //     $ret['conn_kah'] = FALSE;
+            //     $ret['conn_rsjk'] = FALSE;
+            // }
         }
 
         return $ret;
