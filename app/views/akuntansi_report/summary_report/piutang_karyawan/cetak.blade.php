@@ -14,31 +14,16 @@
 
 @push('script')
 <script type="text/javascript">
-    function ParamsForm ()
+    function DetailSummary (bid)
     {
-        return {
-            bid: {{ $data['bid'] }},
-            month: {{ $data['month'] }},
-            year: {{ $data['year'] }}
-        }
-    }
+        let $param = 'bid=' + bid
+            $param += '&month={{ $data['month'] }}'
+            $param += '&year={{ $data['year'] }}'
 
-    function ExportExcel ()
-    {
-        setTimeout((function ()
-        {
-            const name = 'Summary Report AP Doctor Detail - ' + moment().format('DD-MM-YYYY') + '.xlsx'
+        let $link = "{{ route('summary_report.ar_emp.detail') }}"
 
-            let href = "{{ route('api.summary_report.ap_dokter.detail.excel') }}"
-
-            exportExcel({
-                name,
-                url: href,
-                params: ParamsForm()
-            }).finally(() => {
-                Swal.close()
-            })
-        }), 2e3)
+        popFullScreen2($link + '?' + $param)
+        return false
     }
 </script>
 @endpush
@@ -46,9 +31,8 @@
 @push('function')
 <div id="functions">
     <ul>
-        <li><a href="javascript:void(0)" onclick="window.print();">Print</a></li>
-        <li><a href="javascript:void(0)" onclick="window.close();">Close</a></li>
-        <li><a href="javascript:void(0)" onclick="ExportExcel();">Export Excel</a></li>
+        <li><a href="javascript:void(0)" onclick="JavaScript:window.print();">Print</a></li>
+        <li><a href="javascript:void(0)" onclick="JavaScript:window.close();">Close</a></li>
     </ul>        
 </div>
 @endpush
@@ -73,7 +57,7 @@
 
 @section('content')
 <h2 class="bdr">
-    Summary Report A/P Doctor ( Detail )
+    Summary Report A/R Karyawan
     <span style="text-transform: uppercase;">Cabang : {{ $cabang }}</span>
     <span style="text-transform: uppercase;">Periode : {{ $report_month }}</span>
 </h2>
@@ -82,17 +66,17 @@
     <thead>
         <tr>
             <th>No.</th>
-            <th>Nama Dokter</th>
+            <th>Cabang</th>
             <th>Begining Balance Total</th>
-            <th>A/P Doctor Invoice</th>
-            <th>A/P Doctor Payment</th>
+            <th>A/R Karyawan Invoice</th>
+            <th>A/R Karyawan Payment</th>
             <th>Ending Balance</th>
         </tr>
     </thead>
     <tbody>
         @php
             $no = 1;
-            $tot_opbal = $tot_ap_inv = $tot_ap_pay = $tot_closbal = 0;
+            $tot_opbal = $tot_ar_inv = $tot_ar_pay = $tot_closbal = 0;
         @endphp
 
         @forelse ($rs as $row)
@@ -100,17 +84,18 @@
                 $row = FieldsToObject($row);
 
                 $tot_opbal += $row->opbal ?? 0;
-                $tot_ap_inv += $row->ap_inv ?? 0;
-                $tot_ap_pay += $row->ap_pay ?? 0;
+                $tot_ar_inv += $row->ar_inv ?? 0;
+                $tot_ar_pay += $row->ar_pay ?? 0;
                 $tot_closbal += $row->closbal ?? 0;
             @endphp
 
             <tr>
                 <td align="center">{{ $no++ }}</td>
-                <td>{{ $row->nama_dokter }}</td>
+                <td>
+                    <a href="javascript:void(0)" onclick="DetailSummary('{{ $row->bid }}');">{{ $row->branch_name }}</a></td>
                 <td align="right">{{ format_uang($row->opbal, 2) }}</td>
-                <td align="right">{{ format_uang($row->ap_inv, 2) }}</td>
-                <td align="right">{{ format_uang($row->ap_pay, 2) }}</td>
+                <td align="right">{{ format_uang($row->ar_inv, 2) }}</td>
+                <td align="right">{{ format_uang($row->ar_pay, 2) }}</td>
                 <td align="right">{{ format_uang($row->closbal, 2) }}</td>
             </tr>
         @empty
@@ -124,8 +109,8 @@
             <tr>
                 <td colspan="2" align="right"><b>TOTAL</b></td>
                 <td align="right"><b>{{ format_uang($tot_opbal, 2) }}</b></td>
-                <td align="right"><b>{{ format_uang($tot_ap_inv, 2) }}</b></td>
-                <td align="right"><b>{{ format_uang($tot_ap_pay, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_ar_inv, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_ar_pay, 2) }}</b></td>
                 <td align="right"><b>{{ format_uang($tot_closbal, 2) }}</b></td>
             </tr>
         </tfoot>
