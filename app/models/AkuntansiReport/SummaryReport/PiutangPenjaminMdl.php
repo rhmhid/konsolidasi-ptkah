@@ -119,7 +119,7 @@ class PiutangPenjaminMdl extends DB
                     WHERE gl.jtid IN (25, 26, 27, 28) AND gld.gltype = (CASE WHEN gl.jtid IN (26, 28) THEN 1 ELSE 2 END)
                         AND DATE(gl.gldate) <= '$edate' AND mc.custid NOT IN (-1, -2)
                     GROUP BY br.branch_code, mc.nama_customer
-                    HAVING SUM(gld.credit - gld.debet) <> 0";
+                    HAVING SUM(gld.debet - gld.credit) <> 0";
             $rs = DB2::Execute($sql);
 
             while (!$rs->EOF)
@@ -152,7 +152,7 @@ class PiutangPenjaminMdl extends DB
                     WHERE gl.jtid IN (25, 26, 27, 28) AND gld.gltype = (CASE WHEN gl.jtid IN (26, 28) THEN 1 ELSE 2 END)
                         AND DATE(gl.gldate) <= '$edate' AND mc.custid NOT IN (-1, -2)
                     GROUP BY mc.nama_customer
-                    HAVING SUM(gld.credit - gld.debet) <> 0";
+                    HAVING SUM(gld.debet - gld.credit) <> 0";
             $rs = DB3::Execute($sql);
 
             while (!$rs->EOF)
