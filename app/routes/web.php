@@ -39,7 +39,6 @@ $files = Auth_library::glob_recursive(APPPATH.'/routes/Web/*.php');
 foreach ($files as $file) require_once $file;
 
 Route::get('dashboard', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('dashboard');
-Route::get('summary-report/ar-company', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('summary_report.ar_company');
 Route::get('summary-report/ar-karyawan', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('summary_report.ar_emp');
 
 // Masterdata
