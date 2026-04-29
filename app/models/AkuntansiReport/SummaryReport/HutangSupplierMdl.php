@@ -107,7 +107,7 @@ class HutangSupplierMdl extends DB
         if ($optionsCabang['conn_jkk'])
         {
             $sql = "SELECT br.branch_code, ms.nama_supp
-                        , SUM(CASE WHEN DATE(gl.gldate) < '$edate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
+                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
                         , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (20, 22) THEN (gld.credit - gld.debet) ELSE 0 END) AS ap_inv
                         , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (21, 23) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_pay
                         , SUM(gld.credit - gld.debet) AS closbal
@@ -141,7 +141,7 @@ class HutangSupplierMdl extends DB
         /* B: Get Data PT. KAH */
         if ($optionsCabang['conn_kah'])
         {
-            $sql = "SELECT ms.nama_supp, SUM(CASE WHEN DATE(gl.gldate) < '$edate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
+            $sql = "SELECT ms.nama_supp, SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
                         , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (20, 22) THEN (gld.credit - gld.debet) ELSE 0 END) AS ap_inv
                         , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (21, 23) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_pay
                         , SUM(gld.credit - gld.debet) AS closbal

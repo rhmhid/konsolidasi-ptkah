@@ -107,7 +107,7 @@ class HutangDokterMdl extends DB
         if ($optionsCabang['conn_jkk'])
         {
             $sql = "SELECT br.branch_code, pd.nama_lengkap AS nama_dokter
-                        , SUM(CASE WHEN DATE(gl.gldate) < '$edate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
+                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
                         , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (22) THEN (gld.credit - gld.debet) ELSE 0 END) AS ap_inv
                         , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (23) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_pay
                         , SUM(gld.credit - gld.debet) AS closbal
