@@ -82,7 +82,7 @@
     <thead>
         <tr>
             <th>No.</th>
-            <th>Supplier</th>
+            <th>Nama Penjamin</th>
             <th>Begining Balance Total</th>
             <th>A/R Company Invoice</th>
             <th>A/R Company Payment</th>

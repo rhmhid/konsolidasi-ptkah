@@ -82,7 +82,7 @@
     <thead>
         <tr>
             <th>No.</th>
-            <th>Supplier</th>
+            <th>Nama Dokter</th>
             <th>Begining Balance Total</th>
             <th>A/P Doctor Invoice</th>
             <th>A/P Doctor Payment</th>
