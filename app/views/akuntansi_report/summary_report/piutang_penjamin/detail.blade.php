@@ -92,7 +92,7 @@
     <tbody>
         @php
             $no = 1;
-            $tot_opbal = $tot_ap_inv = $tot_ap_pay = $tot_closbal = 0;
+            $tot_opbal = $tot_ar_inv = $tot_ar_pay = $tot_closbal = 0;
         @endphp
 
         @forelse ($rs as $row)
@@ -100,8 +100,8 @@
                 $row = FieldsToObject($row);
 
                 $tot_opbal += $row->opbal ?? 0;
-                $tot_ap_inv += $row->ap_inv ?? 0;
-                $tot_ap_pay += $row->ap_pay ?? 0;
+                $tot_ar_inv += $row->ar_inv ?? 0;
+                $tot_ar_pay += $row->ar_pay ?? 0;
                 $tot_closbal += $row->closbal ?? 0;
             @endphp
 
@@ -109,8 +109,8 @@
                 <td align="center">{{ $no++ }}</td>
                 <td>{{ $row->nama_customer }}</td>
                 <td align="right">{{ format_uang($row->opbal, 2) }}</td>
-                <td align="right">{{ format_uang($row->ap_inv, 2) }}</td>
-                <td align="right">{{ format_uang($row->ap_pay, 2) }}</td>
+                <td align="right">{{ format_uang($row->ar_inv, 2) }}</td>
+                <td align="right">{{ format_uang($row->ar_pay, 2) }}</td>
                 <td align="right">{{ format_uang($row->closbal, 2) }}</td>
             </tr>
         @empty
@@ -124,8 +124,8 @@
             <tr>
                 <td colspan="2" align="right"><b>TOTAL</b></td>
                 <td align="right"><b>{{ format_uang($tot_opbal, 2) }}</b></td>
-                <td align="right"><b>{{ format_uang($tot_ap_inv, 2) }}</b></td>
-                <td align="right"><b>{{ format_uang($tot_ap_pay, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_ar_inv, 2) }}</b></td>
+                <td align="right"><b>{{ format_uang($tot_ar_pay, 2) }}</b></td>
                 <td align="right"><b>{{ format_uang($tot_closbal, 2) }}</b></td>
             </tr>
         </tfoot>

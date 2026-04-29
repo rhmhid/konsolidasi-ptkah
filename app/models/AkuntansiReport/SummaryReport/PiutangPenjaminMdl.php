@@ -32,8 +32,8 @@ class PiutangPenjaminMdl extends DB
         $addsql .= $optionsCabang['query'];
 
         /* B: Showing Data From Temp Table */
-        $sql = "SELECT tmp.branch_code, SUM(tmp.opbal) AS opbal, SUM(tmp.ap_inv) AS ap_inv
-                    , SUM(tmp.ap_pay) AS ap_pay, SUM(tmp.closbal) AS closbal
+        $sql = "SELECT tmp.branch_code, SUM(tmp.opbal) AS opbal, SUM(tmp.ar_inv) AS ar_inv
+                    , SUM(tmp.ar_pay) AS ar_pay, SUM(tmp.closbal) AS closbal
                     , br.bid, br.branch_name
                 FROM temp_summary_ar tmp
                 INNER JOIN branch br ON br.branch_code = tmp.branch_code
@@ -64,7 +64,7 @@ class PiutangPenjaminMdl extends DB
 
         /* B: Showing Data From Temp Table */
         $sql = "SELECT tmp.branch_code, tmp.nama_customer, SUM(tmp.opbal) AS opbal
-                    , SUM(tmp.ap_inv) AS ap_inv, SUM(tmp.ap_pay) AS ap_pay
+                    , SUM(tmp.ar_inv) AS ar_inv, SUM(tmp.ar_pay) AS ar_pay
                     , SUM(tmp.closbal) AS closbal, br.bid, br.branch_name
                 FROM temp_summary_ar tmp
                 INNER JOIN branch br ON br.branch_code = tmp.branch_code
@@ -94,8 +94,8 @@ class PiutangPenjaminMdl extends DB
                     branch_code VARCHAR,
                     nama_customer VARCHAR,
                     opbal NUMERIC(18, 2) DEFAULT 0,
-                    ap_inv NUMERIC(18, 2) DEFAULT 0,
-                    ap_pay NUMERIC(18, 2) DEFAULT 0,
+                    ar_inv NUMERIC(18, 2) DEFAULT 0,
+                    ar_pay NUMERIC(18, 2) DEFAULT 0,
                     closbal NUMERIC(18, 2) DEFAULT 0
                 );";
         DB::Execute($sqli);
@@ -107,10 +107,10 @@ class PiutangPenjaminMdl extends DB
         if ($optionsCabang['conn_jkk'])
         {
             $sql = "SELECT br.branch_code, mc.nama_customer
-                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
-                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (25, 27) THEN (gld.credit - gld.debet) ELSE 0 END) AS ap_inv
-                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (26, 28) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_pay
-                        , SUM(gld.credit - gld.debet) AS closbal
+                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.debet - gld.credit ELSE 0 END) AS opbal
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (25, 27) THEN (gld.debet - gld.credit) ELSE 0 END) AS ar_inv
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (26, 28) THEN (gld.credit - gld.debet) ELSE 0 END) AS ar_pay
+                        , SUM(gld.debet - gld.credit) AS closbal
                     FROM general_ledger_d gld
                     INNER JOIN general_ledger gl ON gl.glid = gld.glid
                     INNER JOIN journal_type jt ON jt.jtid = gl.jtid
@@ -128,8 +128,8 @@ class PiutangPenjaminMdl extends DB
                     'branch_code'   => $rs->fields['branch_code'],
                     'nama_customer' => $rs->fields['nama_customer'],
                     'opbal'         => floatval($rs->fields['opbal']),
-                    'ap_inv'        => floatval($rs->fields['ap_inv']),
-                    'ap_pay'        => floatval($rs->fields['ap_pay']),
+                    'ar_inv'        => floatval($rs->fields['ar_inv']),
+                    'ar_pay'        => floatval($rs->fields['ar_pay']),
                     'closbal'       => floatval($rs->fields['closbal'])
                 );
 
@@ -141,10 +141,10 @@ class PiutangPenjaminMdl extends DB
         /* B: Get Data PT. KAH */
         if ($optionsCabang['conn_kah'])
         {
-            $sql = "SELECT mc.nama_customer, SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
-                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (25, 27) THEN (gld.credit - gld.debet) ELSE 0 END) AS ap_inv
-                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (26, 28) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_pay
-                        , SUM(gld.credit - gld.debet) AS closbal
+            $sql = "SELECT mc.nama_customer, SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.debet - gld.credit ELSE 0 END) AS opbal
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (25, 27) THEN (gld.debet - gld.credit) ELSE 0 END) AS ar_inv
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (26, 28) THEN (gld.credit - gld.debet) ELSE 0 END) AS ar_pay
+                        , SUM(gld.debet - gld.credit) AS closbal
                     FROM general_ledger_d gld
                     INNER JOIN general_ledger gl ON gl.glid = gld.glid
                     INNER JOIN journal_type jt ON jt.jtid = gl.jtid
@@ -161,8 +161,8 @@ class PiutangPenjaminMdl extends DB
                     'branch_code'   => self::$kode_kah,
                     'nama_customer' => $rs->fields['nama_customer'],
                     'opbal'         => floatval($rs->fields['opbal']),
-                    'ap_inv'        => floatval($rs->fields['ap_inv']),
-                    'ap_pay'        => floatval($rs->fields['ap_pay']),
+                    'ar_inv'        => floatval($rs->fields['ar_inv']),
+                    'ar_pay'        => floatval($rs->fields['ar_pay']),
                     'closbal'       => floatval($rs->fields['closbal'])
                 );
 
@@ -187,8 +187,8 @@ class PiutangPenjaminMdl extends DB
                     'branch_code'   => $row['branch_code'],
                     'nama_customer' => $row['nama_customer'],
                     'opbal'         => floatval($row['opbal']),
-                    'ap_inv'        => floatval($row['ap_inv']),
-                    'ap_pay'        => floatval($row['ap_pay']),
+                    'ar_inv'        => floatval($row['ar_inv']),
+                    'ar_pay'        => floatval($row['ar_pay']),
                     'closbal'       => floatval($row['closbal']),
                 );
 

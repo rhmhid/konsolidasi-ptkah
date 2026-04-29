@@ -98,27 +98,27 @@ class PiutangPenjaminAPI extends BaseAPIController
 
         $row_pos = 6;
         $no = 1;
-        $tot_opbal = $tot_ap_inv = $tot_ap_pay = $tot_closbal = 0;
+        $tot_opbal = $tot_ar_inv = $tot_ar_pay = $tot_closbal = 0;
 
         while (!$rs->EOF)
         {
             $row = FieldsToObject($rs->fields);
 
             $opbal = floatval($row->opbal ?? 0);
-            $ap_inv = floatval($row->ap_inv ?? 0);
-            $ap_pay = floatval($row->ap_pay ?? 0);
+            $ar_inv = floatval($row->ar_inv ?? 0);
+            $ar_pay = floatval($row->ar_pay ?? 0);
             $closbal = floatval($row->closbal ?? 0);
 
             $tot_opbal += $opbal;
-            $tot_ap_inv += $ap_inv;
-            $tot_ap_pay += $ap_pay;
+            $tot_ar_inv += $ar_inv;
+            $tot_ar_pay += $ar_pay;
             $tot_closbal += $closbal;
 
             $sheet->setCellValue('A'.$row_pos, $no++);
             $sheet->setCellValue('B'.$row_pos, $row->branch_name);
             $sheet->setCellValue('C'.$row_pos, $opbal);
-            $sheet->setCellValue('D'.$row_pos, $ap_inv);
-            $sheet->setCellValue('E'.$row_pos, $ap_pay);
+            $sheet->setCellValue('D'.$row_pos, $ar_inv);
+            $sheet->setCellValue('E'.$row_pos, $ar_pay);
             $sheet->setCellValue('F'.$row_pos, $closbal);
 
             $sheet->getStyle('A'.$row_pos.':F'.$row_pos)->applyFromArray($style_row);
@@ -136,8 +136,8 @@ class PiutangPenjaminAPI extends BaseAPIController
             $sheet->mergeCells('A'.$row_pos.':B'.$row_pos);
             
             $sheet->setCellValue('C'.$row_pos, $tot_opbal);
-            $sheet->setCellValue('D'.$row_pos, $tot_ap_inv);
-            $sheet->setCellValue('E'.$row_pos, $tot_ap_pay);
+            $sheet->setCellValue('D'.$row_pos, $tot_ar_inv);
+            $sheet->setCellValue('E'.$row_pos, $tot_ar_pay);
             $sheet->setCellValue('F'.$row_pos, $tot_closbal);
 
             $sheet->getStyle('A'.$row_pos.':F'.$row_pos)->applyFromArray($style_row);
@@ -246,27 +246,27 @@ class PiutangPenjaminAPI extends BaseAPIController
 
         $row_pos = 6;
         $no = 1;
-        $tot_opbal = $tot_ap_inv = $tot_ap_pay = $tot_closbal = 0;
+        $tot_opbal = $tot_ar_inv = $tot_ar_pay = $tot_closbal = 0;
 
         while (!$rs->EOF)
         {
             $row = FieldsToObject($rs->fields);
 
             $opbal = floatval($row->opbal ?? 0);
-            $ap_inv = floatval($row->ap_inv ?? 0);
-            $ap_pay = floatval($row->ap_pay ?? 0);
+            $ar_inv = floatval($row->ar_inv ?? 0);
+            $ar_pay = floatval($row->ar_pay ?? 0);
             $closbal = floatval($row->closbal ?? 0);
 
             $tot_opbal += $opbal;
-            $tot_ap_inv += $ap_inv;
-            $tot_ap_pay += $ap_pay;
+            $tot_ar_inv += $ar_inv;
+            $tot_ar_pay += $ar_pay;
             $tot_closbal += $closbal;
 
             $sheet->setCellValue('A'.$row_pos, $no++);
             $sheet->setCellValue('B'.$row_pos, $row->nama_customer);
             $sheet->setCellValue('C'.$row_pos, $opbal);
-            $sheet->setCellValue('D'.$row_pos, $ap_inv);
-            $sheet->setCellValue('E'.$row_pos, $ap_pay);
+            $sheet->setCellValue('D'.$row_pos, $ar_inv);
+            $sheet->setCellValue('E'.$row_pos, $ar_pay);
             $sheet->setCellValue('F'.$row_pos, $closbal);
 
             $sheet->getStyle('A'.$row_pos.':F'.$row_pos)->applyFromArray($style_row);
@@ -284,8 +284,8 @@ class PiutangPenjaminAPI extends BaseAPIController
             $sheet->mergeCells('A'.$row_pos.':B'.$row_pos);
             
             $sheet->setCellValue('C'.$row_pos, $tot_opbal);
-            $sheet->setCellValue('D'.$row_pos, $tot_ap_inv);
-            $sheet->setCellValue('E'.$row_pos, $tot_ap_pay);
+            $sheet->setCellValue('D'.$row_pos, $tot_ar_inv);
+            $sheet->setCellValue('E'.$row_pos, $tot_ar_pay);
             $sheet->setCellValue('F'.$row_pos, $tot_closbal);
 
             $sheet->getStyle('A'.$row_pos.':F'.$row_pos)->applyFromArray($style_row);
