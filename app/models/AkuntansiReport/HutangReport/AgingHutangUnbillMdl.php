@@ -4,94 +4,195 @@ require_once APPPATH . '/libraries/DB.php';
 
 class AgingHutangUnbillMdl extends DB
 {
+    static $kode_kah, $kode_rsjk;
+
     public function __construct () /*{{{*/
     {
         parent::__construct();
+
+        self::$kode_kah = dataConfigs('default_kode_branch_kah');
+
+        self::$kode_rsjk = dataConfigs('default_kode_branch_rsjk');
     } /*}}}*/
 
     public static function list ($data) /*{{{*/
     {
-        //         if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
 
-        $sdate = date('Y-m-d', strtotime($data['sdate']));
+        $addsql = "";
         $bid = $data['bid'];
-
+        $status_cabang = $data['status_cabang'];
         $optionsCabang = FilterCabang($bid);
+        $data['optionsCabang'] = $optionsCabang;
 
-//        print_R($optionsCabang);
+        self::_DataSummary($data);
 
+        if ($status_cabang) $addsql .= " AND br.is_aktif = '$status_cabang'";
+
+        $addsql .= $optionsCabang['query'];
+
+        /* B: Showing Data From Temp Table */
+        $sql = "SELECT tmp.branch_code, SUM(tmp.opbal) AS opbal, SUM(tmp.grn) AS grn
+                    , SUM(tmp.ap_inv) AS ap_inv, SUM(tmp.closbal) AS closbal
+                    , br.bid, br.branch_name
+                FROM temp_aging_hutang_unbill tmp
+                INNER JOIN branch br ON br.branch_code = tmp.branch_code
+                WHERE 1 = 1 $addsql
+                GROUP BY tmp.branch_code, br.bid, br.is_primary, br.branch_name
+                ORDER BY br.is_primary DESC, br.branch_name";
+        $rs = DB::Execute($sql);
+        /* E: Showing Data From Temp Table */
+
+        return $rs;
+    } /*}}}*/
+
+    public static function detail ($data) /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+
+        $addsql = "";
+        $bid = $data['bid'];
+        $status_cabang = $data['status_cabang'];
+        $optionsCabang = FilterCabang($bid);
+        $data['optionsCabang'] = $optionsCabang;
+
+        self::_DataSummary($data);
+
+        if ($status_cabang) $addsql .= " AND br.is_aktif = '$status_cabang'";
+
+        $addsql .= $optionsCabang['query'];
+
+        /* B: Showing Data From Temp Table */
+        $sql = "SELECT tmp.branch_code, tmp.nama_supp, SUM(tmp.opbal) AS opbal
+                    , SUM(tmp.grn) AS grn, SUM(tmp.ap_inv) AS ap_inv
+                    , SUM(tmp.closbal) AS closbal, br.bid, br.branch_name
+                FROM temp_aging_hutang_unbill tmp
+                INNER JOIN branch br ON br.branch_code = tmp.branch_code
+                WHERE 1 = 1 $addsql
+                GROUP BY tmp.branch_code, tmp.nama_supp, br.bid, br.is_primary, br.branch_name
+                ORDER BY tmp.nama_supp";
+        $rs = DB::Execute($sql);
+        /* E: Showing Data From Temp Table */
+
+        return $rs;
+    } /*}}}*/
+
+    private static function _DataSummary ($data) /*{{{*/
+    {
+        $bid = $data['bid'];
+        $month = $data['month'];
+        $year = $data['year'];
+        $sdate = date('Y-m-d', strtotime($data['year'].'-'.$data['month'].'-01'));
+        $edate = date('Y-m-t', strtotime($sdate));
+        $record = [];
+        $optionsCabang = $data['optionsCabang'];
+
+        /* B: Create Temp Table */
         DB::Execute("DROP TABLE IF EXISTS temp_aging_hutang_unbill");
 
         $sqli = "CREATE TEMPORARY TABLE temp_aging_hutang_unbill (
-                    branch_code   VARCHAR,
-                    bid           INT,
-                    grid          INT,
-                    suppid        INT,
-                    grdate        TIMESTAMP,
-                    grcode        VARCHAR,
-                    nama_supp     VARCHAR,
-                    no_faktur     VARCHAR,
-                    nominal       NUMERIC(18,2) DEFAULT 0
-                ) ON COMMIT PRESERVE ROWS";
+                    branch_code VARCHAR,
+                    nama_supp VARCHAR,
+                    opbal NUMERIC(18, 2) DEFAULT 0,
+                    grn NUMERIC(18, 2) DEFAULT 0,
+                    ap_inv NUMERIC(18, 2) DEFAULT 0,
+                    closbal NUMERIC(18, 2) DEFAULT 0
+                );";
         DB::Execute($sqli);
 
+        DB::Execute("CREATE INDEX idx_temp_ap_cabang ON temp_aging_hutang_unbill(branch_code);");
+        /* E: Create Temp Table */
+
+        /* B: Get Data PT. JKK */
         if ($optionsCabang['conn_jkk'])
         {
-
-            $addsql = ($bid) ? ' AND a.bid = '.$bid : '';
-
-            $sql = "SELECT a.grid, a.grdate, a.grcode, b.nama_supp, a.no_faktur
-                        , (a.totalall - COALESCE(c.nominal_inv, 0)) AS nominal,
-                        d.branch_code,d.bid
-                    FROM good_receipt a
-                    INNER JOIN m_supplier b ON b.suppid = a.suppid
-                    LEFT JOIN (
-                        SELECT aa.grid, SUM(aa.nominal) AS nominal_inv
-                        FROM ap_supplier_d aa, ap_supplier bb
-                        WHERE bb.apsid = aa.apsid AND DATE(bb.apdate) <= ?
-                        GROUP BY aa.grid
-                    ) c ON a.grid = c.grid
-                    INNER JOIN branch d ON d.bid = a.bid
-                    WHERE a.cara_beli = 2 AND DATE(a.grdate) <= ? 
-                        AND (a.totalall - COALESCE(c.nominal_inv, 0)) <> 0
-                        $addsql
-                    ORDER BY a.grdate";
-            $rs = DB2::Execute($sql, [$sdate, $sdate]);
-
+            $sql = "SELECT br.branch_code, ms.nama_supp
+                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (4) THEN (gld.credit - gld.debet) ELSE 0 END) AS grn
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (20) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_inv
+                        , SUM(gld.credit - gld.debet) AS closbal
+                    FROM general_ledger_d gld
+                    INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                    INNER JOIN journal_type jt ON jt.jtid = gl.jtid
+                    INNER JOIN m_supplier ms ON ms.suppid = gl.suppid
+                    INNER JOIN branch br ON gl.bid = br.bid
+                    WHERE gl.jtid IN (4, 20)
+                        AND gld.gltype = (CASE WHEN gl.jtid IN (20) THEN 1 ELSE 2 END)
+                        AND DATE(gl.gldate) <= '$edate'
+                    GROUP BY br.branch_code, ms.nama_supp
+                    HAVING SUM(gld.credit - gld.debet) <> 0";
+            $rs = DB2::Execute($sql);
 
             while (!$rs->EOF)
             {
                 $record[] = array(
                     'branch_code'   => $rs->fields['branch_code'],
-                    'bid'           => $rs->fields['bid'],
-                    'grid'          => $rs->fields['grid'],
-                    'suppid'        => $rs->fields['suppid'],
-                    'grdate'        => $rs->fields['grdate'],
-                    'grcode'        => $rs->fields['grcode'],
                     'nama_supp'     => $rs->fields['nama_supp'],
-                    'no_faktur'     => $rs->fields['no_faktur'],
-                    'nominal'       => floatval($rs->fields['nominal']),
+                    'opbal'         => floatval($rs->fields['opbal']),
+                    'grn'           => floatval($rs->fields['grn']),
+                    'ap_inv'        => floatval($rs->fields['ap_inv']),
+                    'closbal'       => floatval($rs->fields['closbal'])
                 );
 
                 $rs->MoveNext();
             }
         }
+        /* E: Get Data PT. JKK */
 
+        /* B: Get Data PT. KAH */
+        if ($optionsCabang['conn_kah'])
+        {
+            $sql = "SELECT ms.nama_supp
+                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (4) THEN (gld.credit - gld.debet) ELSE 0 END) AS grn
+                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (20) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_inv
+                        , SUM(gld.credit - gld.debet) AS closbal
+                    FROM general_ledger_d gld
+                    INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                    INNER JOIN journal_type jt ON jt.jtid = gl.jtid
+                    INNER JOIN m_supplier ms ON ms.suppid = gl.suppid
+                    WHERE gl.jtid IN (4, 20)
+                        AND gld.gltype = (CASE WHEN gl.jtid IN (20) THEN 1 ELSE 2 END)
+                        AND DATE(gl.gldate) <= '$edate'
+                    GROUP BY ms.nama_supp
+                    HAVING SUM(gld.credit - gld.debet) <> 0";
+            $rs = DB3::Execute($sql);
+
+            while (!$rs->EOF)
+            {
+                $record[] = array(
+                    'branch_code'   => self::$kode_kah,
+                    'nama_supp'     => $rs->fields['nama_supp'],
+                    'opbal'         => floatval($rs->fields['opbal']),
+                    'grn'           => floatval($rs->fields['grn']),
+                    'ap_inv'        => floatval($rs->fields['ap_inv']),
+                    'closbal'       => floatval($rs->fields['closbal'])
+                );
+
+                $rs->MoveNext();
+            }
+        }
+        /* E: Get Data PT. KAH */
+
+        /* B: Get Data RSJK */
+        if ($optionsCabang['conn_rsjk'])
+        {
+        }
+        /* E: Get Data RSJK */
+
+        /* B: Insert To Temp Table */
         $ok = true;
         if (!empty($record))
         {
             foreach ($record as $idx => $row)
             {
                 $data = array(
-                    'branch_code'     => $row['branch_code'],
-                    'bid'             => $row['bid'],
-                    'grid'            => $row['grid'],
-                    'suppid'          => $row['suppid'],
-                    'grdate'          => $row['grdate'],
-                    'grcode'          => $row['grcode'],
-                    'nama_supp'       => $row['nama_supp'],
-                    'no_faktur'       => $row['no_faktur'],
-                    'nominal'         => floatval($row['nominal']),
+                    'branch_code'   => $row['branch_code'],
+                    'nama_supp' => $row['nama_supp'],
+                    'opbal'         => floatval($row['opbal']),
+                    'grn'        => floatval($row['grn']),
+                    'ap_inv'        => floatval($row['ap_inv']),
+                    'closbal'       => floatval($row['closbal']),
                 );
 
                 $sqli = "SELECT * FROM temp_aging_hutang_unbill WHERE 1 = 2";
@@ -100,23 +201,7 @@ class AgingHutangUnbillMdl extends DB
                 if ($ok) $ok = DB::Execute($sqli);
             }
         }
-
-
-        if ($status_cabang) $addsql .= " AND br.is_aktif = '$status_cabang'";
-
-        if ($status_coa) $addsql .= " AND mc.is_valid = '$status_coa'";
-
-        $addsql .= $optionsCabang['query'];
-
-        /* B: Showing Data From Temp Table */
-        $sql = "SELECT a.*,br.branch_name 
-                FROM temp_aging_hutang_unbill a 
-                LEFT JOIN branch br ON a.bid = br.bid
-                WHERE 1=1 $addsql";
-        $rs = DB::Execute($sql);
-        /* E: Showing Data From Temp Table */
-
-        return $rs;
+        /* E: Insert To Temp Table */
     } /*}}}*/
 }
 ?>

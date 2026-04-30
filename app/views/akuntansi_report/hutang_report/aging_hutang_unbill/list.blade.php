@@ -23,19 +23,41 @@
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
                         <div class="row g-0 gx-4">
-                            <div class="col-lg-3">
-                                <label class="text-dark fw-bold fs-7 pb-2 required">Tanggal</label>
-                                <div class="input-group">
-                                    <input type="text" id="sDate" class="form-control form-control-sm rounded-1" value="{{ $sdate }}" readonly="" required="" />
-                                    <span class="input-group-text">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </span>
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
+                                {!! $cmb_cabang !!}
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status Cabang</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
                                 </div>
                             </div>
 
-                            <div class="col-lg-9">
-                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
-                                {!! $cmb_cabang !!}
+                            <div class="col-lg-2">
+                                <label class="text-dark fw-bold fs-7 pb-2">Bulan</label>
+                                <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2" required="">
+                                    {!! get_combo_option_month_lk(date('m')) !!}
+                                </select>
+                            </div>
+
+                            <div class="col-lg-2">
+                                <label class="text-dark fw-bold fs-7 pb-2">Tahun</label>
+                                <select class="form-select form-select-sm rounded-1 w-100" id="s-Year" data-control="select2" required="">
+                                    {!! get_combo_option_year(date('Y'), 2024, date('Y')+1) !!}
+                                </select>
                             </div>
                         </div>
 
@@ -79,18 +101,29 @@
         e.preventDefault() // batalkan aksi form submit
 
         const $form = $('#form-aging-hutang-unbill')
-        const $sDate = $form.find('[id="sDate"]').val()
-        const $bid = $form.find('[id="s-Bid"] option:selected').val()
+        const $sBid = $form.find('[id="s-Bid"]').val()
+        const $sMonth = $form.find('[id="s-Month"]').val()
+        const $sYear = $form.find('[id="s-Year"]').val()
+        const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
 
-        if ($sDate == '')
+        if ($sMonth == '')
         {
-            swalShowMessage('Perhatian!', "Tanggal Harus Dipilih.", 'warning')
+            swalShowMessage('Perhatian!', "Bulan Harus Dipilih.", 'warning')
 
             return false
         }
 
-        let $param = 'sdate=' + $sDate
-            $param += '&bid=' + $bid
+        if ($sYear == '')
+        {
+            swalShowMessage('Perhatian!', "Tahun Harus Dipilih.", 'warning')
+
+            return false
+        }
+
+        var $param = 'bid=' + $sBid
+            $param += '&month=' + $sMonth
+            $param += '&year=' + $sYear
+            $param += '&status_cabang=' + $statusCabang
 
         let $link = "{{ route('hutang_report.aging_hutang_unbill.cetak') }}"
 
@@ -101,12 +134,12 @@
     function ParamsForm ()
     {
         const $form = $('#form-aging-hutang-unbill')
-        const $sDate = $form.find('[id="sDate"]').val()
-        const $bid = $form.find('[id="s-Bid"] option:selected').val()
 
         return {
-            sdate: $sDate,
-            bid: $bid
+            bid: $form.find('[id="s-Bid"]').val(),
+            month: $form.find('[id="s-Month"]').val(),
+            year: $form.find('[id="s-Year"]').val(),
+            status_cabang: $form.find('input[name="status_cabang"]:checked').val()
         }
     }
 

@@ -14,17 +14,32 @@
 
 @push('script')
 <script type="text/javascript">
-    function DetailSummary (bid)
+    function ParamsForm ()
     {
-        let $param = 'bid=' + bid
-            $param += '&month={{ $data['month'] }}'
-            $param += '&year={{ $data['year'] }}'
-            $param += '&status_cabang={{ $data['status_cabang'] }}'
+        return {
+            bid: {{ $data['bid'] }},
+            month: {{ $data['month'] }},
+            year: {{ $data['year'] }},
+            status_cabang: '{{ $data['status_cabang'] }}'
+        }
+    }
 
-        let $link = "{{ route('hutang_report.aging_hutang_unbill.detail') }}"
+    function ExportExcel ()
+    {
+        setTimeout((function ()
+        {
+            const name = 'Laporan Aging Hutang ( Unbill ) Detail - ' + moment().format('DD-MM-YYYY') + '.xlsx'
 
-        popFullScreen2($link + '?' + $param)
-        return false
+            let href = "{{ route('api.hutang_report.aging_hutang_unbill.detail.excel') }}"
+
+            exportExcel({
+                name,
+                url: href,
+                params: ParamsForm()
+            }).finally(() => {
+                Swal.close()
+            })
+        }), 2e3)
     }
 </script>
 @endpush
@@ -32,8 +47,9 @@
 @push('function')
 <div id="functions">
     <ul>
-        <li><a href="javascript:void(0)" onclick="JavaScript:window.print();">Print</a></li>
-        <li><a href="javascript:void(0)" onclick="JavaScript:window.close();">Close</a></li>
+        <li><a href="javascript:void(0)" onclick="window.print();">Print</a></li>
+        <li><a href="javascript:void(0)" onclick="window.close();">Close</a></li>
+        <li><a href="javascript:void(0)" onclick="ExportExcel();">Export Excel</a></li>
     </ul>        
 </div>
 @endpush
@@ -67,7 +83,7 @@
     <thead>
         <tr>
             <th>No.</th>
-            <th>Cabang</th>
+            <th>Nama Supplier</th>
             <th>Begining Balance Total</th>
             <th>Penerimaan Barang</th>
             <th>A/P Purchasing Invoice</th>
@@ -92,8 +108,7 @@
 
             <tr>
                 <td align="center">{{ $no++ }}</td>
-                <td>
-                    <a href="javascript:void(0)" onclick="DetailSummary('{{ $row->bid }}');">{{ $row->branch_name }}</a></td>
+                <td>{{ $row->nama_supp }}</td>
                 <td align="right">{{ format_uang($row->opbal, 2) }}</td>
                 <td align="right">{{ format_uang($row->grn, 2) }}</td>
                 <td align="right">{{ format_uang($row->ap_inv, 2) }}</td>
