@@ -75,7 +75,7 @@ class AgingHutangUnbillAPI extends BaseAPIController
             ]
         ];
 
-        $sheet->setCellValue('A1', 'AGING A/P PURCHASING');
+        $sheet->setCellValue('A1', 'AGING A/P PURCHASING ( UNBILL )');
         $sheet->mergeCells('A1:F1');
         $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true);
 
@@ -159,10 +159,10 @@ class AgingHutangUnbillAPI extends BaseAPIController
 
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
         $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-        $sheet->setTitle("Aging AP Purchasing");
+        $sheet->setTitle("Aging AP Purchasing Unbill");
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Aging AP Purchasing.xlsx"');
+        header('Content-Disposition: attachment; filename="Aging AP Purchasing Unbill.xlsx"');
         header('Cache-Control: max-age=0');
 
         $writer = new Xlsx($spreadsheet);
@@ -223,7 +223,7 @@ class AgingHutangUnbillAPI extends BaseAPIController
             ]
         ];
 
-        $sheet->setCellValue('A1', 'AGING A/P PURCHASING DETAIL');
+        $sheet->setCellValue('A1', 'AGING A/P PURCHASING DETAIL ( UNBILL )');
         $sheet->mergeCells('A1:F1');
         $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true);
 
@@ -307,10 +307,10 @@ class AgingHutangUnbillAPI extends BaseAPIController
 
         $sheet->getDefaultRowDimension()->setRowHeight(-1);
         $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
-        $sheet->setTitle("Aging AP Purchasing");
+        $sheet->setTitle("Aging AP Purchasing Unbill");
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="Aging AP Purchasing.xlsx"');
+        header('Content-Disposition: attachment; filename="Aging AP Purchasing Unbill.xlsx"');
         header('Cache-Control: max-age=0');
 
         $writer = new Xlsx($spreadsheet);

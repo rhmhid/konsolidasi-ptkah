@@ -23,40 +23,46 @@
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
                         <div class="row g-0 gx-4">
-                            <div class="col-lg-3">
-                                <label class="text-dark fw-bold fs-7 pb-2 required">Tanggal</label>
-                                <div class="input-group">
-                                    <input type="text" id="sDate" class="form-control form-control-sm rounded-1" value="{{ $sdate }}" readonly="" required="" />
-                                    <span class="input-group-text">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </span>
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
+                                {!! $cmb_cabang !!}
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status Cabang</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
                                 </div>
                             </div>
 
-                            <div class="col-lg-9">
-                                <label class="text-dark fw-bold fs-7 pb-2">Tanggal Berdasarkan</label>
-                                <div class="btn-group w-100" role="group">
-                                    <input type="radio" name="date_by" class="btn-check" id="by-invoice" value="apdate" checked="" />
-                                    <label class="btn btn-sm btn-light-dark rounded-1" for="by-invoice">Tanggal Invoice</label>
+                            <div class="col-lg-2">
+                                <label class="text-dark fw-bold fs-7 pb-2">Bulan</label>
+                                <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2" required="">
+                                    {!! get_combo_option_month_lk(date('m')) !!}
+                                </select>
+                            </div>
 
-                                    <input type="radio" name="date_by" class="btn-check" id="by-duedate" value="duedate" />
-                                    <label class="btn btn-sm btn-light-dark rounded-1" for="by-duedate">Tanggal Jatuh Tempo</label>
-                                </div>
+                            <div class="col-lg-2">
+                                <label class="text-dark fw-bold fs-7 pb-2">Tahun</label>
+                                <select class="form-select form-select-sm rounded-1 w-100" id="s-Year" data-control="select2" required="">
+                                    {!! get_combo_option_year(date('Y'), 2024, date('Y')+1) !!}
+                                </select>
                             </div>
                         </div>
 
                         <div class="row g-0 gx-4 my-3 mb-5">
-                            <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2">Nama Supplier</label>
-                                {!! $cmb_supp !!}
-                            </div>
-
-                            <div class="col-lg-4 div-doctor">
-                                <label class="text-dark fw-bold fs-7 pb-2">Nama Dokter</label>
-                                {!! $cmb_doctor !!}
-                            </div>
-
-                            <div class="col-lg-4 div-non-doctor"></div>
+                            <div class="col-lg-8"></div>
 
                             <div class="col-lg-2">
                                 <label class="text-dark fw-bold fs-8 pb-2 d-block">&nbsp;</label>
@@ -89,53 +95,35 @@
         dateFormat: "d-m-Y"
     })
 
-    SHideDoctor()
-
-    $("#suppid").change(function ()
-    {
-        SHideDoctor()
-    })
-
-    function SHideDoctor ()
-    {
-        let suppid = $('#suppid option:selected').val()
-
-        if (suppid == -1)
-        {
-            $('.div-doctor').show()
-            $('.div-non-doctor').hide()
-        }
-        else
-        {
-            $('.div-doctor').hide()
-            $('.div-non-doctor').show()
-        }
-
-        $('#doctor-id').val(null).trigger('change');
-    }
-
     // aksi submit cari
     $('#btnCetak').click(function (e)
     {
         e.preventDefault() // batalkan aksi form submit
 
         const $form = $('#form-aging-hutang')
-        const $sDate = $form.find('[id="sDate"]').val()
-        const $dateBy = $form.find('[name="date_by"]:checked').val()
-        const $suppid = $form.find('[id="suppid"] option:selected').val()
-        const $doctorId = $form.find('[id="doctor-id"] option:selected').val()
+        const $sBid = $form.find('[id="s-Bid"]').val()
+        const $sMonth = $form.find('[id="s-Month"]').val()
+        const $sYear = $form.find('[id="s-Year"]').val()
+        const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
 
-        if ($sDate == '')
+        if ($sMonth == '')
         {
-            swalShowMessage('Perhatian!', "Tanggal Harus Dipilih.", 'warning')
+            swalShowMessage('Perhatian!', "Bulan Harus Dipilih.", 'warning')
 
             return false
         }
 
-        let $param = 'sdate=' + $sDate
-            $param += '&date_by=' + $dateBy
-            $param += '&suppid=' + $suppid
-            $param += '&doctor_id=' + $doctorId
+        if ($sYear == '')
+        {
+            swalShowMessage('Perhatian!', "Tahun Harus Dipilih.", 'warning')
+
+            return false
+        }
+
+        var $param = 'bid=' + $sBid
+            $param += '&month=' + $sMonth
+            $param += '&year=' + $sYear
+            $param += '&status_cabang=' + $statusCabang
 
         let $link = "{{ route('hutang_report.aging_hutang.cetak') }}"
 
@@ -146,16 +134,12 @@
     function ParamsForm ()
     {
         const $form = $('#form-aging-hutang')
-        const $sDate = $form.find('[id="sDate"]').val()
-        const $dateBy = $form.find('[name="date_by"]:checked').val()
-        const $suppid = $form.find('[id="suppid"] option:selected').val()
-        const $doctorId = $form.find('[id="doctor-id"] option:selected').val()
 
         return {
-            sdate: $sDate,
-            date_by: $dateBy,
-            suppid: $suppid,
-            doctor_id: $doctorId
+            bid: $form.find('[id="s-Bid"]').val(),
+            month: $form.find('[id="s-Month"]').val(),
+            year: $form.find('[id="s-Year"]').val(),
+            status_cabang: $form.find('input[name="status_cabang"]:checked').val()
         }
     }
 
