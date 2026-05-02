@@ -13,7 +13,6 @@ class NeracaSaldo extends BaseController
         $this->load->model('AkuntansiReport/NeracaSaldoMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
-
         self::$ho_kah = dataConfigs('default_kode_branch_kah');
     } /*}}}*/
 
@@ -40,6 +39,7 @@ class NeracaSaldo extends BaseController
         $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
         $data_cabang = [];
+
         while (!$rs_cabang->EOF)
         {
             $data_cabang[$rs_cabang->fields['branch_code']] = $rs_cabang->fields;
@@ -61,68 +61,63 @@ class NeracaSaldo extends BaseController
             $data['edate']  = date('Y-m-t', strtotime($data['sdate']));
 
             $rs = NeracaSaldoMdl::list($data);
-
             $data_db = array();
+
             while (!$rs->EOF)
             {
                 $coacode = $rs->fields['coacode'];
-                // $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
-                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
-                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
-                else $branch_code = $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
 
                 if (!isset($data_db[$coacode]))
                 {
                     $data_db[$coacode] = array(
                         'coaid'         => $rs->fields['coaid'],
                         'coaname'       => $rs->fields['coaname'],
-                        'default_debet' => $rs->fields['default_debet']
+                        'default_debet' => $rs->fields['default_debet'],
+                        'branch'        => []
                     );
                 }
 
-                $data_db[$coacode]['branch'][$branch_code] = [
-                    'openingbal'    => floatval($rs->fields['openingbal']),
-                    'debet'         => floatval($rs->fields['debet']),
-                    'credit'        => floatval($rs->fields['credit']),
-                    'closingbal'    => floatval($rs->fields['closingbal']),
-                ];
+                $op = floatval($rs->fields['openingbal']);
+                $db = floatval($rs->fields['debet']);
+                $cr = floatval($rs->fields['credit']);
+
+                $data_db[$coacode]['branch'][$bc]['openingbal'] = ($data_db[$coacode]['branch'][$bc]['openingbal'] ?? 0) + $op;
+                $data_db[$coacode]['branch'][$bc]['debet']      = ($data_db[$coacode]['branch'][$bc]['debet'] ?? 0) + $db;
+                $data_db[$coacode]['branch'][$bc]['credit']     = ($data_db[$coacode]['branch'][$bc]['credit'] ?? 0) + $cr;
 
                 $rs->MoveNext();
             }
 
             $rss = Modules::laba_rugi($data);
+
             $coaid_laba_periode_lalu = Modules::$laba_periode_lalu;
 
             while (!$rss->EOF)
             {
-                $coacode = $rss->fields['coacode'];
-                // $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
-                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
-                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
-                else $branch_code = $rss->fields['branch_code'];
-
                 if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
                 {
+                    $coacode = $rss->fields['coacode'];
+                    // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                    if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                    elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                    else $bc = $rss->fields['branch_code'];
+
                     if (!isset($data_db[$coacode]))
                     {
                         $data_db[$coacode] = array(
                             'coaid'         => $rss->fields['coaid'],
                             'coaname'       => $rss->fields['coaname'],
-                            'default_debet' => $rss->fields['default_debet']
+                            'default_debet' => $rss->fields['default_debet'],
+                            'branch'        => []
                         );
                     }
 
-                    if (isset($data_db[$coacode]['branch'][$branch_code]))
-                        $data_db[$coacode]['branch'][$branch_code]['openingbal'] += floatval($rss->fields['openingbal']);
-                    else
-                    {
-                        $data_db[$coacode]['branch'][$branch_code] = [
-                            'openingbal'    => floatval($rss->fields['openingbal']),
-                            'debet'         => 0,
-                            'credit'        => 0,
-                            'closingbal'    => 0,
-                        ];
-                    }
+                    $op = floatval($rss->fields['closingbal']);
+                    $data_db[$coacode]['branch'][$bc]['openingbal'] = ($data_db[$coacode]['branch'][$bc]['openingbal'] ?? 0) + $op;
                 }
 
                 $rss->MoveNext();
@@ -155,31 +150,22 @@ class NeracaSaldo extends BaseController
 
                     foreach ($data_cabang as $bcode => $cab)
                     {
-                        if (isset($tmp['branch'][$bcode]))
-                        {
-                            $b = $tmp['branch'][$bcode];
-                            $balance = $tmp['default_debet'] == 't' ? ($b['debet'] - $b['credit']) : ($b['credit'] - $b['debet']);
-                            $balance += $b['openingbal'];
+                        $b_op = floatval($tmp['branch'][$bcode]['openingbal'] ?? 0);
+                        $b_db = floatval($tmp['branch'][$bcode]['debet'] ?? 0);
+                        $b_cr = floatval($tmp['branch'][$bcode]['credit'] ?? 0);
 
-                            $row['branch'][$bcode] = [
-                                'opening' => $b['openingbal'],
-                                'debet'   => $b['debet'],
-                                'credit'  => $b['credit'],
-                                'balance' => $balance
-                            ];
+                        $balance = $tmp['default_debet'] == 't' ? ($b_db - $b_cr) : ($b_cr - $b_db);
+                        $balance += $b_op;
 
-                            $data_sum[$bcode]['debet'] += $b['debet'];
-                            $data_sum[$bcode]['credit'] += $b['credit'];
-                        }
-                        else
-                        {
-                            $row['branch'][$bcode] = [
-                                'opening' => 0,
-                                'debet'   => 0,
-                                'credit'  => 0,
-                                'balance' => 0
-                            ];
-                        }
+                        $row['branch'][$bcode] = [
+                            'opening' => $b_op,
+                            'debet'   => $b_db,
+                            'credit'  => $b_cr,
+                            'balance' => $balance
+                        ];
+
+                        $data_sum[$bcode]['debet']  += $b_db;
+                        $data_sum[$bcode]['credit'] += $b_cr;
                     }
 
                     $data_tb[] = $row;

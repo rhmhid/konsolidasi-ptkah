@@ -36,7 +36,7 @@
     <ul>
         <li><a href="javascript:void(0)" onclick="JavaScript:window.print();">Print</a></li>
         <li><a href="javascript:void(0)" onclick="JavaScript:window.close();">Close</a></li>
-    </ul>        
+    </ul>       
 </div>
 @endpush
 
@@ -87,7 +87,7 @@
             @endforeach
 
             @if ($is_multi_branch)
-                <th colspan="4">Total</th>
+                <th colspan="4">Total All Branch</th>
             @endif
         </tr>
         <tr>
@@ -113,8 +113,8 @@
                         $bcode = $cab->branch_code;
 
                         $row['opening'] += $row['branch'][$bcode]['opening'];
-                        $row['debet'] += $row['branch'][$bcode]['debet'];
-                        $row['credit'] += $row['branch'][$bcode]['credit'];
+                        $row['debet']   += $row['branch'][$bcode]['debet'];
+                        $row['credit']  += $row['branch'][$bcode]['credit'];
                         $row['balance'] += $row['branch'][$bcode]['balance'];
                     @endphp
 
@@ -134,11 +134,10 @@
         @endforeach
 
         <tr>
-            <td colspan="4" align="right"><b>&nbsp;</b></td>
+            <td colspan="4" align="right"><b>SUBTOTAL</b></td>
 
             @php
-                $tot_deb = 0;
-                $tot_cre = 0;
+                $tot_deb = $tot_cre = 0;
             @endphp
 
             @foreach ($data_cabang as $cab)
