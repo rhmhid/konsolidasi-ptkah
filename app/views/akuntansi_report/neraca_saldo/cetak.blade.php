@@ -136,6 +136,11 @@
         <tr>
             <td colspan="4" align="right"><b>&nbsp;</b></td>
 
+            @php
+                $tot_deb = 0;
+                $tot_cre = 0;
+            @endphp
+
             @foreach ($data_cabang as $cab)
                 @php
                     $cab = FieldsToObject($cab);
