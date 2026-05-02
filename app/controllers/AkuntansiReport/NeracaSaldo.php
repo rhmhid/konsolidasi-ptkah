@@ -10,7 +10,7 @@ class NeracaSaldo extends BaseController
     {
         parent::__construct();
 
-        $this->load->model('AkuntansiReport/LabaRugiMdl');
+        $this->load->model('AkuntansiReport/NeracaSaldoMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
 
