@@ -197,9 +197,9 @@ class NeracaSaldoAPI extends BaseAPIController
                 {
                     $coacode = $rss->fields['coacode'];
                     // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
-                    if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
-                    elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
-                    else $branch_code = $rss->fields['branch_code'];
+                    if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                    elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                    else $bc = $rss->fields['branch_code'];
 
                     if (!isset($data_db[$coacode]))
                     {
