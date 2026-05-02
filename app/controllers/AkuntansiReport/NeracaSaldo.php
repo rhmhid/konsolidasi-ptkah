@@ -97,7 +97,7 @@ class NeracaSaldo extends BaseController
             {
                 $coacode = $rss->fields['coacode'];
                 // $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
-                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                iif ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
                 elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
                 else $branch_code = $rss->fields['branch_code'];
 
@@ -112,19 +112,26 @@ class NeracaSaldo extends BaseController
                         );
                     }
 
-                    $data_db[$coacode]['branch'][$branch_code] = [
-                        'openingbal'    => floatval($rss->fields['openingbal']),
-                        'debet'         => 0,
-                        'credit'        => 0,
-                        'closingbal'    => 0,
-                    ];
+                    if (isset($data_db[$coacode]['branch'][$branch_code]))
+                        $data_db[$coacode]['branch'][$branch_code]['openingbal'] += floatval($rss->fields['openingbal']);
+                    else
+                    {
+                        $data_db[$coacode]['branch'][$branch_code] = [
+                            'openingbal'    => floatval($rss->fields['openingbal']),
+                            'debet'         => 0,
+                            'credit'        => 0,
+                            'closingbal'    => 0,
+                        ];
+                    }
                 }
 
                 $rss->MoveNext();
             }
 
-            // ORDER BY lagi
             ksort($data_db);
+
+            foreach ($data_cabang as $bcode => $cab)
+                $data_sum[$bcode] = ['debet' => 0, 'credit' => 0];
 
             if (!empty($data_db))
             {
@@ -139,23 +146,40 @@ class NeracaSaldo extends BaseController
                         'coacode' => $coacode,
                         'coaname' => $tmp['coaname'],
                         'posisi'  => $tmp['default_debet'] == 't' ? 'Dr' : 'Cr',
-                        'branch'  => []
+                        'branch'  => [],
+                        'opening' => 0,
+                        'debet'   => 0,
+                        'credit'  => 0,
+                        'balance' => 0
                     ];
 
-                    foreach ($tmp['branch'] as $branch_code => $b)
+                    foreach ($data_cabang as $bcode => $cab)
                     {
-                        $balance = $tmp['default_debet'] == 't' ? ($b['debet'] - $b['credit']) : ($b['credit'] - $b['debet']);
-                        $balance += $b['openingbal'];
+                        if (isset($tmp['branch'][$bcode]))
+                        {
+                            $b = $tmp['branch'][$bcode];
+                            $balance = $tmp['default_debet'] == 't' ? ($b['debet'] - $b['credit']) : ($b['credit'] - $b['debet']);
+                            $balance += $b['openingbal'];
 
-                        $row['branch'][$branch_code] = [
-                            'opening' => $b['openingbal'],
-                            'debet'   => $b['debet'],
-                            'credit'  => $b['credit'],
-                            'balance' => $balance
-                        ];
+                            $row['branch'][$bcode] = [
+                                'opening' => $b['openingbal'],
+                                'debet'   => $b['debet'],
+                                'credit'  => $b['credit'],
+                                'balance' => $balance
+                            ];
 
-                        $data_sum[$branch_code]['debet'] += $b['debet'];
-                        $data_sum[$branch_code]['credit'] += $b['credit'];
+                            $data_sum[$bcode]['debet'] += $b['debet'];
+                            $data_sum[$bcode]['credit'] += $b['credit'];
+                        }
+                        else
+                        {
+                            $row['branch'][$bcode] = [
+                                'opening' => 0,
+                                'debet'   => 0,
+                                'credit'  => 0,
+                                'balance' => 0
+                            ];
+                        }
                     }
 
                     $data_tb[] = $row;
