@@ -4,15 +4,17 @@ require_once APPPATH . '/libraries/BaseController.php';
 
 class Neraca extends BaseController
 {
-    static $ho_jkk;
+    static $ho_jkk, $ho_kah;
 
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
-        $this->load->model('AkuntansiReport/NeracaMdl');
+        $this->load->model('AkuntansiReport/LabaRugiMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
+
+        self::$ho_kah = dataConfigs('default_kode_branch_kah');
     } /*}}}*/
 
     public function list () /*{{{*/
@@ -65,7 +67,10 @@ class Neraca extends BaseController
             {
                 $coatid      = $rs->fields['coatid'];
                 $coaid       = $rs->fields['coaid'];
-                $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $branch_code = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                else $branch_code = $rs->fields['branch_code'];
 
                 $data_db[$coatid]['coatype'] = $rs->fields['coatype'];
 
@@ -92,7 +97,10 @@ class Neraca extends BaseController
             {
                 $coatid      = $rss->fields['coatid'];
                 $coaid       = $rss->fields['coaid'];
-                $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                // $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                else $branch_code = $rss->fields['branch_code'];
 
                 $data_db[$coatid]['coatype'] = $rss->fields['coatype'];
 
@@ -271,7 +279,10 @@ class Neraca extends BaseController
 
             while (!$rs->EOF)
             {
-                $bc = $rs->fields['branch_code'] ?? '';
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
 
                 if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
                 {
@@ -299,7 +310,11 @@ class Neraca extends BaseController
 
             while (!$rss->EOF)
             {
-                $bc = $rss->fields['branch_code'] ?? '';
+                // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                else $branch_code = $rss->fields['branch_code'];
+
                 $pnid = $rss->fields['pnid'];
 
                 $data_db[$pnid]['branches'][$bc]['openingbal'] = ($data_db[$pnid]['branches'][$bc]['openingbal'] ?? 0) + $rss->fields['openingbal'];
@@ -514,7 +529,11 @@ class Neraca extends BaseController
 
             while (!$rs->EOF)
             {
-                $bc = $rs->fields['branch_code'] ?? '';
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $pnid = $rs->fields['pnid'];
                 $coaid = $rs->fields['coaid'];
 
@@ -550,7 +569,11 @@ class Neraca extends BaseController
 
             while (!$rss->EOF)
             {
-                $bc = $rss->fields['branch_code'] ?? '';
+                // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rss->fields['branch_code'];
+
                 $pnid = $rss->fields['pnid'];
                 $coaid = $rss->fields['coaid'];
                 $op = $rss->fields['openingbal'];

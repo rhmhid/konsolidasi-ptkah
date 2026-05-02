@@ -1220,7 +1220,7 @@ class Modules
 
                     UNION ALL
 
-                    SELECT 'All Summary ( RSJK, PT. KAH, PT. JKK)' AS branch_name, -1 AS bid, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx, NULL AS kdbid
+                    SELECT 'PT. KAH Konsolidasi' AS branch_name, -1 AS bid, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx, NULL AS kdbid
 
                     UNION ALL
 

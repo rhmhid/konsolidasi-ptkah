@@ -7,15 +7,17 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class NeracaAPI extends BaseAPIController
 {
-    static $ho_jkk;
+    static $ho_jkk, $ho_kah;
 
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
-        $this->load->model('AkuntansiReport/NeracaMdl');
+        $this->load->model('AkuntansiReport/LabaRugiMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
+
+        self::$ho_kah = dataConfigs('default_kode_branch_kah');
     } /*}}}*/
 
     public function excel_get ($mytipe) /*{{{*/
@@ -170,7 +172,11 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $coaid = $rs->fields['coaid'];
                 $coatid = $rs->fields['coatid'];
                 $op = floatval($rs->fields['openingbal']);
@@ -229,7 +235,11 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rss->EOF)
             {
-                $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                else $branch_code = $rss->fields['branch_code'];
+
                 $coaid = $rss->fields['coaid'];
                 $coatid = $rss->fields['coatid'];
                 $op = floatval($rss->fields['openingbal']);
@@ -590,7 +600,11 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $pnid = $rs->fields['pnid'];
 
                 if ($rs->fields['coatid'] == 1 && $rs->fields['default_debet'] == 'f')
@@ -617,7 +631,11 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rss->EOF)
             {
-                $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                else $branch_code = $rss->fields['branch_code'];
+
                 $pnid = $rss->fields['pnid'];
                 $op = $rss->fields['openingbal'];
                 $cl = $rss->fields['closingbal'];
@@ -964,7 +982,11 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $pnid = $rs->fields['pnid'];
                 $coaid = $rs->fields['coaid'];
 
@@ -1000,7 +1022,11 @@ class NeracaAPI extends BaseAPIController
 
             while (!$rss->EOF)
             {
-                $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                else $branch_code = $rss->fields['branch_code'];
+
                 $pnid = $rss->fields['pnid'];
                 $coaid = $rss->fields['coaid'];
                 $op = $rss->fields['openingbal'];
