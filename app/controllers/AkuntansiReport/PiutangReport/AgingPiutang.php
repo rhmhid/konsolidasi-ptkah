@@ -13,47 +13,59 @@ class AgingPiutang extends BaseController
 
     public function list () /*{{{*/
     {
-        $sdate = date('d-m-Y');
+        $data_cabang = Modules::data_cabang_all();
+        $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Cabang..."');
 
-        $data_customer = Modules::data_customer();
-        $cmb_cust = $data_customer->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sCust" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Customer..."');
-
-        $data_bank = Modules::data_bank_cc();
-        $cmb_bank = $data_bank->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sbank_id" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Bank..."');
-
-        $data_karyawan = Modules::data_karyawan();
-        $cmb_karyawan = $data_karyawan->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="spegawai_id" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Karyawan..."');
-
-        return view('akuntansi_report/piutang_report/aging_piutang.list', compact(
-            'sdate',
-            'cmb_cust',
-            'cmb_bank',
-            'cmb_karyawan'
+        return view('akuntansi_report.piutang_report.aging_piutang.list', compact(
+            'cmb_cabang'
         ));
     } /*}}}*/
 
     public function cetak () /*{{{*/
     {
         $data = array(
-            'sdate'         => get_var('sdate', date('d-m-Y')),
-            'custid'        => get_var('custid'),
-<<<<<<< Updated upstream
-            'bank_id'       => get_var('bank_id'),
-            'pegawai_id'    => get_var('pegawai_id'),
-=======
-            'bank_id'      => get_var('bank_id'),
-            'pegawai_id'   => get_var('pegawai_id'),
->>>>>>> Stashed changes
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
         );
-
-        $sdate = dbtstamp2stringina(date('Y-m-d', strtotime($data['sdate'])));
 
         $rs = AgingPiutangMdl::list($data);
 
-        return view('akuntansi_report/piutang_report/aging_piutang.cetak', compact(
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
+
+        if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
+        else $report_month = $data['month'].'-'.$data['year'];
+
+        return view('akuntansi_report.piutang_report.aging_piutang.cetak', compact(
+            'cabang',
             'data',
-            'sdate',
-            'rs',
+            'report_month',
+            'rs'
+        ));
+    } /*}}}*/
+
+    public function detail () /*{{{*/
+    {
+        $data = array(
+            'bid'           => get_var('bid'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'status_cabang' => get_var('status_cabang'),
+        );
+
+        $rs = AgingPiutangMdl::detail($data);
+
+        $cabang = $data['bid'] ? Modules::data_cabang_all($data['status_cabang'], $data['bid'])->fields['branch_name'] : 'All';
+
+        if ($data['month'] <= 12) $report_month = monthnamelong($data['month']).' '.$data['year'];
+        else $report_month = $data['month'].'-'.$data['year'];
+
+        return view('akuntansi_report.piutang_report.aging_piutang.detail', compact(
+            'cabang',
+            'data',
+            'report_month',
+            'rs'
         ));
     } /*}}}*/
 }
