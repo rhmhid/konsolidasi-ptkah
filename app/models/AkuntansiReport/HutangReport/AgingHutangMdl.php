@@ -144,7 +144,6 @@ class AgingHutangMdl extends DB
                         , (CASE WHEN gl.jtid IN (20, 21) THEN aps.no_invoice ELSE map.no_inv END) AS no_inv
                         , (CASE WHEN gl.jtid IN (20, 21) THEN aps.apdate ELSE map.apdate END) AS apdate
                         , (CASE WHEN gl.jtid IN (20, 21) THEN aps.duedate ELSE map.duedate END) AS duedate
-                        , (DATE('$edate') - DATE((CASE WHEN gl.jtid IN (20, 21) THEN aps.duedate ELSE map.duedate END))) AS up
                         , SUM(gld.credit - gld.debet) AS saldo
                     FROM general_ledger_d gld
                     INNER JOIN general_ledger gl ON gl.glid = gld.glid
@@ -155,7 +154,7 @@ class AgingHutangMdl extends DB
                     LEFT JOIN manual_ap map ON gld.reff_id = map.maid AND gl.jtid IN (22, 23)
                     WHERE gl.jtid IN (20, 21, 22, 23) AND gld.gltype = (CASE WHEN gl.jtid IN (21, 23) THEN 1 ELSE 2 END)
                         AND DATE(gl.gldate) <= '$edate'
-                    GROUP BY br.branch_code, ms.nama_supp, up
+                    GROUP BY br.branch_code, ms.nama_supp
                         , (CASE WHEN gl.jtid IN (20, 21) THEN aps.no_invoice ELSE map.no_inv END)
                         , (CASE WHEN gl.jtid IN (20, 21) THEN aps.apdate ELSE map.apdate END)
                         , (CASE WHEN gl.jtid IN (20, 21) THEN aps.duedate ELSE map.duedate END)
@@ -182,18 +181,22 @@ class AgingHutangMdl extends DB
         if ($optionsCabang['conn_kah'])
         {
             $sql = "SELECT ms.nama_supp
-                        , SUM(CASE WHEN DATE(gl.gldate) < '$sdate' THEN gld.credit - gld.debet ELSE 0 END) AS opbal
-                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (4) THEN (gld.credit - gld.debet) ELSE 0 END) AS grn
-                        , SUM(CASE WHEN DATE(gl.gldate) BETWEEN '$sdate' AND '$edate' AND gl.jtid IN (20) THEN (gld.debet - gld.credit) ELSE 0 END) AS ap_inv
+                        , (CASE WHEN gl.jtid IN (20, 21) THEN aps.no_invoice ELSE map.no_inv END) AS no_inv
+                        , (CASE WHEN gl.jtid IN (20, 21) THEN aps.apdate ELSE map.apdate END) AS apdate
+                        , (CASE WHEN gl.jtid IN (20, 21) THEN aps.duedate ELSE map.duedate END) AS duedate
                         , SUM(gld.credit - gld.debet) AS saldo
                     FROM general_ledger_d gld
                     INNER JOIN general_ledger gl ON gl.glid = gld.glid
                     INNER JOIN journal_type jt ON jt.jtid = gl.jtid
                     INNER JOIN m_supplier ms ON ms.suppid = gl.suppid
-                    WHERE gl.jtid IN (4, 20)
-                        AND gld.gltype = (CASE WHEN gl.jtid IN (20) THEN 1 ELSE 2 END)
+                    LEFT JOIN ap_supplier aps ON gld.reff_id = aps.apsid AND gl.jtid IN (20, 21)
+                    LEFT JOIN manual_ap map ON gld.reff_id = map.maid AND gl.jtid IN (22, 23)
+                    WHERE gl.jtid IN (20, 21, 22, 23) AND gld.gltype = (CASE WHEN gl.jtid IN (21, 23) THEN 1 ELSE 2 END)
                         AND DATE(gl.gldate) <= '$edate'
                     GROUP BY ms.nama_supp
+                        , (CASE WHEN gl.jtid IN (20, 21) THEN aps.no_invoice ELSE map.no_inv END)
+                        , (CASE WHEN gl.jtid IN (20, 21) THEN aps.apdate ELSE map.apdate END)
+                        , (CASE WHEN gl.jtid IN (20, 21) THEN aps.duedate ELSE map.duedate END)
                     HAVING SUM(gld.credit - gld.debet) <> 0";
             $rs = DB3::Execute($sql);
 
