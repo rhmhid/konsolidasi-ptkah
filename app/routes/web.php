@@ -103,7 +103,6 @@ Route::get('hutang-report/tukar-faktur', 'HomeController@index', ['middleware' =
 
 Route::get('piutang-report/aging-piutang-unbill', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('piutang_report.aging_piutang_unbill');
 Route::get('piutang-report/piutang-pelanggan', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('piutang_report.piutang_pelanggan');
-Route::get('piutang-report/aging-karyawan', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('piutang_report.aging_karyawan');
 
 Route::get('keuangan-report/aging-advance', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('keuangan_report.aging_advance');
 Route::get('keuangan-report/laporan-advance', 'HomeController@index', ['middleware' => 'AuthMiddleware'])->name('keuangan_report.laporan_advance');
