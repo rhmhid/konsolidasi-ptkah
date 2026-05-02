@@ -7,15 +7,17 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class NeracaSaldoAPI extends BaseAPIController
 {
-    static $ho_jkk;
+    static $ho_jkk, $ho_kah;
 
     public function __construct () /*{{{*/
     {
         parent::__construct();
 
-        $this->load->model('AkuntansiReport/NeracaSaldoMdl');
+        $this->load->model('AkuntansiReport/LabaRugiMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
+
+        self::$ho_kah = dataConfigs('default_kode_branch_kah');
     } /*}}}*/
 
     public function excel_get () /*{{{*/
@@ -151,7 +153,10 @@ class NeracaSaldoAPI extends BaseAPIController
             while (!$rs->EOF)
             {
                 $coacode = $rs->fields['coacode'];
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
 
                 if (!isset($data_db[$coacode]))
                 {
@@ -191,7 +196,10 @@ class NeracaSaldoAPI extends BaseAPIController
                 if ($rss->fields['coaid'] == $coaid_laba_periode_lalu)
                 {
                     $coacode = $rss->fields['coacode'];
-                    $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                    // $bc = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
+                    if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                    elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
+                    else $branch_code = $rss->fields['branch_code'];
 
                     if (!isset($data_db[$coacode]))
                     {
