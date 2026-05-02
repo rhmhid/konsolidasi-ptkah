@@ -7,7 +7,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class LabaRugiAPI extends BaseAPIController
 {
-    static $ho_jkk;
+    static $ho_jkk, $ho_kah;
 
     public function __construct () /*{{{*/
     {
@@ -16,6 +16,8 @@ class LabaRugiAPI extends BaseAPIController
         $this->load->model('AkuntansiReport/LabaRugiMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
+
+        self::$ho_kah = dataConfigs('default_kode_branch_kah');
     } /*}}}*/
 
     public function excel_get ($mytipe) /*{{{*/
@@ -106,7 +108,11 @@ class LabaRugiAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $coatid = $rs->fields['coatid'];
                 $coaid = $rs->fields['coaid'];
 
@@ -518,7 +524,11 @@ class LabaRugiAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $pplrid = $rs->fields['pplrid'];
 
                 if ($rs->fields['coatid'] == 5)
@@ -842,7 +852,11 @@ class LabaRugiAPI extends BaseAPIController
 
             while (!$rs->EOF)
             {
-                $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+                if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+                elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+                else $bc = $rs->fields['branch_code'];
+
                 $pplid = $rs->fields['pplid'];
 
                 if ($rs->fields['coatid'] == 5)
@@ -1124,7 +1138,11 @@ class LabaRugiAPI extends BaseAPIController
 
         while (!$rs->EOF)
         {
-            $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+            // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+            if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+            elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+            else $bc = $rs->fields['branch_code'];
+
             $pplrid = $rs->fields['pplrid'];
 
             $amount_period = floatval($rs->fields['amount_period']);
@@ -1380,7 +1398,11 @@ class LabaRugiAPI extends BaseAPIController
 
         while (!$rs->EOF)
         {
-            $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+            // $bc = $data['bid'] == -1 && $rs->fields['kdbid'] == 2 ? self::$ho_jkk : $rs->fields['branch_code'];
+            if ($data['bid'] == -1 && $rs->fields['kdbid'] == 2) $bc = self::$ho_jkk;
+            elseif ($data['bid'] == -1 && $rs->fields['kdbid'] == 3) $bc = self::$ho_kah;
+            else $bc = $rs->fields['branch_code'];
+
             $pplid = $rs->fields['pplid'];
 
             $amount_period = floatval($rs->fields['amount_period']);

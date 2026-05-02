@@ -1211,7 +1211,8 @@ class Modules
         else
             if ($bid) $addsql2 .= " AND br.bid = ".$bid;
 
-        $sql = "SELECT br.branch_name, br.bid, br.branch_code, br.is_primary, br.idx, br.kdbid
+        $sql = "SELECT (CASE WHEN '$bid' = '-1' THEN REPLACE(br.branch_name, ' - Head Office', '') ELSE br.branch_name END) AS branch_name
+                    , br.bid, br.branch_code, br.is_primary, br.idx, br.kdbid
                 FROM (
                     SELECT branch_name, bid, branch_code, is_primary, 4 AS idx, kdbid
                     FROM branch
@@ -1219,7 +1220,7 @@ class Modules
 
                     UNION ALL
 
-                    SELECT 'PT. KAH KONSOLIDASI' AS branch_name, -1 AS bid, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx, NULL AS kdbid
+                    SELECT 'All Summary ( RSJK, PT. KAH, PT. JKK)' AS branch_name, -1 AS bid, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx, NULL AS kdbid
 
                     UNION ALL
 

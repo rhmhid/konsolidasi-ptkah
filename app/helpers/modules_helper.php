@@ -3077,7 +3077,8 @@
                 'conn_kah'  => TRUE,
                 'conn_rsjk' => TRUE,
                 'conn_jkk'  => TRUE,
-                'query'     => $only_head == 't' ? " AND (br.kdbid IN (1, 3) OR br.branch_code = '$ho_jkk')" : '',
+                // 'query'     => $only_head == 't' ? " AND (br.kdbid IN (1, 3) OR br.branch_code = '$ho_jkk')" : '',
+                'query'     => $only_head == 't' ? " AND (br.kdbid = 1 OR br.branch_code = '$ho_jkk')" : '',
             ];
         }
         elseif ($bid)
