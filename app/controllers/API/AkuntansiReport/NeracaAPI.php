@@ -13,7 +13,7 @@ class NeracaAPI extends BaseAPIController
     {
         parent::__construct();
 
-        $this->load->model('AkuntansiReport/LabaRugiMdl');
+        $this->load->model('AkuntansiReport/NeracaMdl');
 
         self::$ho_jkk = dataConfigs('default_kode_branch_jkk');
 
