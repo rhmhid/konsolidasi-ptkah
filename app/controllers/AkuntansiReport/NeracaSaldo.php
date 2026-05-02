@@ -97,7 +97,7 @@ class NeracaSaldo extends BaseController
             {
                 $coacode = $rss->fields['coacode'];
                 // $branch_code = $data['bid'] == -1 && $rss->fields['kdbid'] == 2 ? self::$ho_jkk : $rss->fields['branch_code'];
-                iif ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
+                if ($data['bid'] == -1 && $rss->fields['kdbid'] == 2) $branch_code = self::$ho_jkk;
                 elseif ($data['bid'] == -1 && $rss->fields['kdbid'] == 3) $branch_code = self::$ho_kah;
                 else $branch_code = $rss->fields['branch_code'];
 
