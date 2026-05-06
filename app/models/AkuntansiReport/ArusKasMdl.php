@@ -167,10 +167,10 @@ class ArusKasMdl extends DB
         $addsql .= $optionsCabang['query'];
 
         /* B: Showing Data From Temp Table */
-        $sql = "SELECT COALESCE(aaa.pcfid, 0) AS pcfid, aaa.parent_pcfid AS parent_pcfid
+        $sql = "SELECT aaa.branch_code, COALESCE(aaa.pcfid, 0) AS pcfid, aaa.parent_pcfid AS parent_pcfid
                     , aaa.pcfid_parent AS pcfid_parent, SUM(COALESCE(aaa.amount, 0)) AS amount
                 FROM (
-                    SELECT tmp.debet, tmp.amount
+                    SELECT b.branch_code, tmp.debet, tmp.amount
                         , (CASE WHEN b.coacode = '115001' AND tmp.debet > 0 THEN 26
                         WHEN b.coacode = '115002' AND tmp.debet > 0 THEN 46
                         ELSE dd.pcfid END) AS pcfid -- hardcode
@@ -191,7 +191,7 @@ class ArusKasMdl extends DB
                                                 ELSE b.pcfdid END) = dd.pcfid
                     LEFT JOIN pos_cashflow ee ON dd.parent_pcfid = ee.pcfid
                 ) aaa
-                GROUP BY pcfid, parent_pcfid, pcfid_parent";
+                GROUP BY aaa.branch_code, pcfid, parent_pcfid, pcfid_parent";
         $rs = DB::Execute($sql);
         /* E: Showing Data From Temp Table */
 // myprint_r($sql.";");
@@ -207,6 +207,11 @@ class ArusKasMdl extends DB
 
         $month = $data['month'];
         $year = $data['year'];
+        $status_cabang = $data['status_cabang'];
+        $status_coa = $data['status_coa'];
+        $record = [];
+        $addsql = "";
+        $optionsCabang = FilterCabang($bid);
 
         if ($mytipe == 'cf-direct-daily')
         {
@@ -227,19 +232,124 @@ class ArusKasMdl extends DB
             }
         }
 
-        $sql = "SELECT mc.coaid, mc.coacode, mc.coaname, SUM(gld.debet - gld.credit) AS eamount
-                    , SUM(CASE WHEN DATE(gl.gldate) < DATE('$sdate') THEN (gld.debet - gld.credit) ELSE 0 END) AS bamount
-                FROM general_ledger_d gld
-                JOIN general_ledger gl ON gl.glid = gld.glid
-                JOIN (
-                    SELECT coaid, coaname, coacode
-                    FROM m_coa
-                    WHERE coagid IN (".Modules::$cashflow_id.")
-                ) mc ON mc.coaid = gld.coaid
-                WHERE gl.is_posted = 't' AND DATE(gl.gldate) <= DATE('$edate') AND gl.bid = $bid
-                GROUP BY mc.coaid, mc.coacode, mc.coaname
-                ORDER BY mc.coacode";
+        /* B: Create Temp Table */
+        DB::Execute("DROP TABLE IF EXISTS temp_cashflow_saldo");
+
+        $sqli = "CREATE TEMPORARY TABLE temp_cashflow_saldo (
+                    branch_code     VARCHAR,
+                    coacode         VARCHAR,
+                    coaname         VARCHAR,
+                    eamount         NUMERIC(18,2) DEFAULT 0,
+                    bamount         NUMERIC(18,2) DEFAULT 0
+                ) ON COMMIT PRESERVE ROWS";
+        DB::Execute($sqli);
+        /* E: Create Temp Table */
+
+        /* B: Get Data PT. JKK */
+        if ($optionsCabang['conn_jkk'])
+        {
+            $sql = "SELECT br.branch_code, mc.coacode, mc.coaname, SUM(gld.debet - gld.credit) AS eamount
+                        , SUM(CASE WHEN DATE(gl.gldate) < DATE('$sdate') THEN (gld.debet - gld.credit) ELSE 0 END) AS bamount
+                    FROM general_ledger_d gld
+                    INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                    INNER JOIN m_coa mc ON mc.coaid = gld.coaid
+                    INNER JOIN branch br ON br.bid = gl.bid
+                    WHERE gl.is_posted = 't' AND DATE(gl.gldate) <= DATE('$edate') AND mc.coagid IN (".Modules::$cashflow_id.")
+                    GROUP BY br.branch_code, mc.coacode, mc.coaname";
+            $rs = DB2::Execute($sql);
+
+            while (!$rs->EOF)
+            {
+                $record[] = array(
+                    'branch_code'   => $rs->fields['branch_code'],
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'eamount'       => floatval($rs->fields['eamount']),
+                    'bamount'       => floatval($rs->fields['bamount'])
+                );
+
+                $rs->MoveNext();
+            }
+        }
+        /* E: Get Data PT. JKK */
+
+        /* B: Get Data PT. KAH */
+        if ($optionsCabang['conn_kah'])
+        {
+            $sql = "SELECT mc.coacode, mc.coaname, SUM(gld.debet - gld.credit) AS eamount
+                        , SUM(CASE WHEN DATE(gl.gldate) < DATE('$sdate') THEN (gld.debet - gld.credit) ELSE 0 END) AS bamount
+                    FROM general_ledger_d gld
+                    INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                    INNER JOIN m_coa mc ON mc.coaid = gld.coaid
+                    WHERE gl.is_posted = 't' AND DATE(gl.gldate) <= DATE('$edate') AND mc.coagid IN (".Modules::$cashflow_id.")
+                    GROUP BY mc.coacode, mc.coaname";
+            $rs = DB3::Execute($sql);
+
+            while (!$rs->EOF)
+            {
+                $record[] = array(
+                    'branch_code'   => self::$kode_kah,
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'eamount'       => floatval($rs->fields['eamount']),
+                    'bamount'       => floatval($rs->fields['bamount'])
+                );
+
+                $rs->MoveNext();
+            }
+        }
+        /* E: Get Data PT. KAH */
+
+        /* B: Get Data RSJK */
+        if ($optionsCabang['conn_rsjk'])
+        {
+        }
+        /* E: Get Data RSJK */
+
+        /* B: Insert To Temp Table */
+        $ok = true;
+        if (!empty($record))
+        {
+            foreach ($record as $idx => $row)
+            {
+                $data = array(
+                    'branch_code'   => $row['branch_code'],
+                    'coacode'       => $row['coacode'],
+                    'coaname'       => $row['coaname'],
+                    'eamount'       => floatval($row['eamount']),
+                    'bamount'       => floatval($row['bamount'])
+                );
+
+                $sqli = "SELECT * FROM temp_cashflow_saldo WHERE 1 = 2";
+                $rsi = DB::Execute($sqli);
+                $sqli = DB::InsertSQL($rsi, $data);
+                if ($ok) $ok = DB::Execute($sqli);
+            }
+        }
+        /* E: Insert To Temp Table */
+
+        if ($status_cabang) $addsql .= " AND br.is_aktif = '$status_cabang'";
+
+        if ($status_coa) $addsql .= " AND mc.is_valid = '$status_coa'";
+
+        $addsql .= $optionsCabang['query'];
+
+        /* B: Showing Data From Temp Table */
+        $sql = "SELECT b.*, tmp.eamount, tmp.bamount
+                FROM temp_cashflow_saldo tmp
+                INNER JOIN (
+                    SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname
+                        , mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to
+                        , mc.pcfdid
+                    FROM m_coa mc
+                    INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
+                    LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
+                    LEFT JOIN branch br ON mcb.bid = br.bid
+                    WHERE mc.allow_post = 't' $addsql
+                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
+                ORDER BY b.coacode";
         $rs = DB::Execute($sql);
+        /* E: Showing Data From Temp Table */
 
         return $rs;
     } /*}}}*/
