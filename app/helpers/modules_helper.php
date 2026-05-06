@@ -3081,7 +3081,7 @@
                 'query'     => $only_head == 't' ? " AND (br.kdbid = 1 OR br.branch_code = '$ho_jkk')" : '',
             ];
         }
-        else
+        elseif ($bid)
         {
             $ret['conn_kah']    = TRUE;
             $ret['conn_rsjk']   = TRUE;
