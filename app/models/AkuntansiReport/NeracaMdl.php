@@ -53,12 +53,8 @@ class NeracaMdl extends DB
             $paid = DB2::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
 
             $sql = "SELECT e.branch_code, c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
-                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_berjalan.") THEN
-                            0
-                        ELSE
-                            COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
-                        END) AS openingbal
-                        , (CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
+                        , COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0) AS openingbal
+                        , COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END), 0) AS closingbal
                     FROM ledger_summary a
                     INNER JOIN m_coa b ON b.coaid = a.coaid
                     INNER JOIN m_coatype c ON c.coatid = b.coatid
@@ -97,12 +93,8 @@ class NeracaMdl extends DB
             $paid = DB3::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
 
             $sql = "SELECT c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
-                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_berjalan.") THEN
-                            0
-                        ELSE
-                            COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
-                        END) AS openingbal
-                        , (CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END) AS closingbal
+                        , COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0) AS openingbal
+                        , COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE ({$opbal} + a.amount{$month}) END), 0) AS closingbal
                     FROM ledger_summary a
                     INNER JOIN m_coa b ON b.coaid = a.coaid
                     INNER JOIN m_coatype c ON c.coatid = b.coatid
