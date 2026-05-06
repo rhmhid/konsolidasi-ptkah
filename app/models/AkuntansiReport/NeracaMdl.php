@@ -53,7 +53,7 @@ class NeracaMdl extends DB
             $paid = DB2::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
 
             $sql = "SELECT e.branch_code, c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
-                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
+                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_berjalan.") THEN
                             0
                         ELSE
                             COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
@@ -97,7 +97,7 @@ class NeracaMdl extends DB
             $paid = DB3::GetOne("SELECT * FROM periode_akunting WHERE DATE('$year-$month-1') BETWEEN pbegin AND pend ORDER BY pbegin DESC");
 
             $sql = "SELECT c.coatid, UPPER(c.coatype) AS coatype, b.coaid, b.coacode, b.coaname, b.default_debet, COALESCE(b.pnid, 0) AS pnid
-                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_lalu.", ".Modules::$laba_periode_berjalan.") THEN
+                        , (CASE WHEN b.coaid IN (".Modules::$laba_periode_berjalan.") THEN
                             0
                         ELSE
                             COALESCE((CASE WHEN a.paid != {$paid} THEN a.closingbal ELSE {$opbal} END), 0)
