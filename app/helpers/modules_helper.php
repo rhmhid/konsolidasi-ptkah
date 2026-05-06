@@ -3109,4 +3109,24 @@
 
         return $ret;
     } /*}}}*/
+
+
+    if (!function_exists('formatKeJT')) {
+        function formatKeJT($input) {
+            $nilai = (float) $input;
+            if ($nilai == 0) return "Rp. 0";
+            $labelMinus = ($nilai < 0) ? "- " : "";
+            $absNilai = abs($nilai);
+
+            if ($absNilai >= 1000000000) {
+                $hasil = $absNilai / 1000000000;
+                return "Rp. " . $labelMinus . number_format($hasil, 2, ',', '.') . " M";
+            } elseif ($absNilai >= 1000000) {
+                $hasil = $absNilai / 1000000;
+                return "Rp. " . $labelMinus . number_format($hasil, 2, ',', '.') . " Jt";
+            } else {
+                return "Rp. " . $labelMinus . number_format($absNilai, 0, ',', '.');
+            }
+        }
+    }
 ?>

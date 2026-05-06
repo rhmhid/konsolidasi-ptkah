@@ -17,8 +17,13 @@ class DashboardMdl extends DB
 
     public static function list ($now,$before,$tahun) /*{{{*/
     {
-        // 
-        if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+        //         if (Auth::user()->pid == SUPER_USER) DB::Debug(true);
+
+        $optionsCabang = FilterCabang($bid);
+
+        $opbal = 'a.openingbal';
+        for ($i = 1; $i <= $emonth; $i++)
+            $opbal .= ' + a.amount'.$i;
 
         /* B: Create Temp Table */
         DB::Execute("DROP TABLE IF EXISTS temp_profit_loss_gabungan");
@@ -123,6 +128,40 @@ class DashboardMdl extends DB
                 if ($ok) $ok = DB::Execute($sqli);
             }
         }
+
+
+
+        $addsql .= $optionsCabang['query'];
+
+        $tahunbefore = $tahun - 1;
+
+        /* B: Showing Data From Temp Table */
+        $sql = "SELECT b.*, tmp.branch_code, 
+
+                (CASE WHEN tmp.tahun = $tahun then tmp.amount_bln else 0 end) as amount_bln,
+                (CASE WHEN tmp.tahun = $tahunbefore then tmp.amount_bln else 0 end) as amount_bln_before
+                FROM temp_profit_loss_gabungan tmp
+                INNER JOIN (
+                    SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname
+                        , mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to
+                        , COALESCE(mc.pplid, 0) AS pplid, COALESCE(ppl.pplrid, 0) AS pplrid
+                    FROM m_coa mc
+                    INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
+                    LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
+                    LEFT JOIN branch br ON mcb.bid = br.bid
+                    LEFT JOIN pos_pl ppl ON mc.pplid = ppl.pplid
+                    WHERE mc.allow_post = 't' AND mc.coatid > 3 $addsql
+                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
+                ORDER BY (CASE WHEN b.coatid = 5 AND b.default_debet = 'f' THEN 4 ELSE b.coatid END), b.coacode";
+
+/*                echo '<pre>';
+                echo $sql;
+                echo '</pre>';*/
+        $rs = DB::Execute($sql);
+        /* E: Showing Data From Temp Table */
+
+        return $rs;
+
 
     } /*}}}*/
 

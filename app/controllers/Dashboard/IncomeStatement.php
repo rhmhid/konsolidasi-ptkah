@@ -26,8 +26,9 @@ class IncomeStatement extends BaseController
         $data = array(
             'bid'           => get_var('bid'),
             'month'         => intval(get_var('month') ?: date('n')),
-            'year'  => get_var('year') ?: date('Y'),
+            'year'          => get_var('year') ?: date('Y'),
         );
+
 
         $rs_cabang = Modules::data_cabang_all($data['status_cabang'], $data['bid'], 'f');
 
@@ -81,7 +82,7 @@ class IncomeStatement extends BaseController
 
             $rs_now           = LabaRugiMdl::list($data);
 
-            $data2['year']    = get_var('year') -1 ?: (date('Y') - 1);
+            $data2['year']    = $data['year'] -1;
 
             $rs_before         = LabaRugiMdl::list($data2);
 
@@ -91,7 +92,6 @@ class IncomeStatement extends BaseController
 
 
             $rs               = DashboardMdl::list($data_now,$data_before,$data['year']);
-            die('sinih');
 
 
             while (!$rs->EOF)
@@ -101,24 +101,20 @@ class IncomeStatement extends BaseController
 
                 if ($rs->fields['coatid'] == 5)
                 {
-                    $amount_bln_prev = $rs->fields['amount_bln_prev'] * -1;
                     $amount_bln = $rs->fields['amount_bln'] * -1;
-                    $closingbal = $rs->fields['closingbal'] * -1;
+                    $amount_bln_before = $rs->fields['amount_bln_before'] * -1;
                 }
                 else
                 {
-                    $amount_bln_prev = $rs->fields['amount_bln_prev'];
                     $amount_bln = $rs->fields['amount_bln'];
-                    $closingbal = $rs->fields['closingbal'];
+                    $amount_bln_before = $rs->fields['amount_bln_before'];
                 }
 
-                $data_db[$pplrid]['branches'][$bc]['amount_bln_prev'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $amount_bln_prev;
                 $data_db[$pplrid]['branches'][$bc]['amount_bln'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln'] ?? 0) + $amount_bln;
-                $data_db[$pplrid]['branches'][$bc]['closingbal'] = ($data_db[$pplrid]['branches'][$bc]['closingbal'] ?? 0) + $closingbal;
+                $data_db[$pplrid]['branches'][$bc]['amount_bln_before'] = ($data_db[$pplrid]['branches'][$bc]['amount_bln_before'] ?? 0) + $amount_bln_before;
 
-                $data_db[$pplrid]['total']['amount_bln_prev'] = ($data_db[$pplrid]['total']['amount_bln_prev'] ?? 0) + $amount_bln_prev;
                 $data_db[$pplrid]['total']['amount_bln'] = ($data_db[$pplrid]['total']['amount_bln'] ?? 0) + $amount_bln;
-                $data_db[$pplrid]['total']['closingbal'] = ($data_db[$pplrid]['total']['closingbal'] ?? 0) + $closingbal;
+                $data_db[$pplrid]['total']['amount_bln_before'] = ($data_db[$pplrid]['total']['amount_bln_before'] ?? 0) + $amount_bln_before;
 
                 $rs->MoveNext();
             }
@@ -139,59 +135,50 @@ class IncomeStatement extends BaseController
                 if ($is_header == 't') $nama = '<b>'.$nama.'</b>';
 
                 $tmp_amounts = [];
-                $tot_prev = $row['total']['amount_bln_prev'] ?? 0;
-                $tot_bln  = $row['total']['amount_bln'] ?? 0;
-                $tot_cls  = $row['total']['closingbal'] ?? 0;
-
+                $tot_bln         = $row['total']['amount_bln'] ?? 0;
+                $tot_bln_before  = $row['total']['amount_bln_before'] ?? 0;
                 foreach ($data_cabang as $bc => $cabang)
                 {
-                    $amt_prev = format_uang($row['branches'][$bc]['amount_bln_prev'] ?? 0, 2);
                     $amt_bln  = format_uang($row['branches'][$bc]['amount_bln'] ?? 0, 2);
-                    $amt_cls  = format_uang($row['branches'][$bc]['closingbal'] ?? 0, 2);
+                    $amt_bln_before  = format_uang($row['branches'][$bc]['amount_bln_before'] ?? 0, 2);
 
                     if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
                     {
-                        $amt_prev = '';
                         $amt_bln = '';
-                        $amt_cls = '';
+                        $amt_bln_before = '';
                     }
 
                     if ($rs_pos->fields['sum_total'] == 't')
                     {
-                        $amt_prev = '<b><u>'.$amt_prev.'</u></b>'; 
                         $amt_bln = '<b><u>'.$amt_bln.'</u></b>'; 
-                        $amt_cls = '<b><u>'.$amt_cls.'</u></b>';
+                        $amt_bln_before = '<b><u>'.$amt_bln_before.'</u></b>';
                     }
 
                     $tmp_amounts['branches'][$bc] = [
-                        'amount_bln_prev'   => $amt_prev, 
                         'amount_bln'        => $amt_bln, 
-                        'closingbal'        => $amt_cls
+                        'amount_bln'        => $amt_bln_before
                     ];
                 }
 
-                $amt_tot_prev = format_uang($tot_prev, 2);
                 $amt_tot_bln  = format_uang($tot_bln, 2);
-                $amt_tot_cls  = format_uang($tot_cls, 2);
+                $amt_tot_bln_before  = format_uang($tot_bln_before, 2);
 
                 if ($rs_pos->fields['parent_pplrid'] == '' && $rs_pos->fields['sum_total'] == 'f')
                 {
-                    $amt_tot_prev = '';
+
                     $amt_tot_bln = '';
-                    $amt_tot_cls = '';
+                    $amt_tot_bln_before = '';
                 }
 
                 if ($rs_pos->fields['sum_total'] == 't')
                 {
-                    $amt_tot_prev = '<b><u>'.$amt_tot_prev.'</u></b>'; 
                     $amt_tot_bln = '<b><u>'.$amt_tot_bln.'</u></b>'; 
-                    $amt_tot_cls = '<b><u>'.$amt_tot_cls.'</u></b>';
+                    $amt_tot_bln_before = '<b><u>'.$amt_tot_bln_before.'</u></b>';
                 }
 
                 $tmp_amounts['total'] = [
-                    'amount_bln_prev'   => $amt_tot_prev, 
-                    'amount_bln'        => $amt_tot_bln, 
-                    'closingbal'        => $amt_tot_cls
+                    'amount_bln'               => $amt_tot_bln, 
+                    'amount_bln_before'        => $amt_tot_bln_before
                 ];
 
                 $tmpdata = array();
@@ -209,26 +196,83 @@ class IncomeStatement extends BaseController
                     {
 
                         $b = $row['branches'][$bc]['amount_bln'] ?? 0;
+                        $bf = $row['branches'][$bc]['amount_bln_before'] ?? 0;
+
                         $data_db[$parent_id]['branches'][$bc]['amount_bln'] = ($data_db[$parent_id]['branches'][$bc]['amount_bln'] ?? 0) + $b;
+                        $data_db[$parent_id]['branches'][$bc]['amount_bln_before'] = ($data_db[$parent_id]['branches'][$bc]['amount_bln_before'] ?? 0) + $bf;
+
+                          if ($rs_pos->fields['pplrid'] == 3) {
+                                $tot_pend_igd         = $b;
+                                $tot_pend_igd_before  = $bf;
+                          }
+
+                          if ($rs_pos->fields['pplrid'] == 4) {
+                                $tot_pend_ranap         = $b;
+                                $tot_pend_ranap_before  = $bf;
+                          }
+
+                          if ($rs_pos->fields['pplrid'] == 5) {
+                                $tot_pend_rajal         = $b;
+                                $tot_pend_rajal_before  = $bf;
+                          }
+
+                          if ($rs_pos->fields['pplrid'] == 6) {
+                                $tot_pend_penunjang         = $b;
+                                $tot_pend_penunjang_before  = $bf;
+                          }
+
+                          if ($rs_pos->fields['pplrid'] == 7) {
+                                $tot_pend_lainya         = $b;
+                                $tot_pend_lainya_before  = $bf;
+                          }
 
                           if ($rs_pos->fields['pplrid'] == 10) {
                                 // TOTAL PENDAPATAN
-                                $tot_pendapatan += $b;
+                                $tot_pendapatan         = $b;
+                                $tot_pendapatan_before  = $bf;
                           }
-                          if ($rs_pos->fields['pplrid'] == 27) {
-                                // TOTAL PENGURANG PENDAPATAN
-                                $tot_laba_kotor += ($b * 1);
-                          }
+
+
+
                           if ($rs_pos->fields['pplrid'] == 40) {
                                 // TOTAL EBITDA
-                                $tot_ebitda += ($b * 1);
+                                $tot_ebitda             = ($b * 1);
+                                $tot_ebitda_before      = ($bf * 1);
                           }
+
                           if ($rs_pos->fields['pplrid'] == 47) {
                                 // TOTAL EBIT
-                                $tot_ebit += ($b * 1);
+                                $tot_ebit               = ($b * 1);
+                                $tot_ebit_before        = ($bf * 1);
                           }
 
+                          if ($rs_pos->fields['pplrid'] == 50) {
+                                // TOTAL EAT
+                                $tot_eat               = ($b * 1);
+                                $tot_eat_before        = ($bf * 1);
+                          }
 
+                          if ($rs_pos->fields['pplrid'] == 26) {
+
+                                $tot_beban               = ($b * 1);
+                                $tot_beban_before        = ($bf * 1);
+                          }
+
+                          if ($rs_pos->fields['pplrid'] == 27) {
+
+                                $tot_laba_kotor               = ($b * 1);
+                                $tot_laba_kotor_before        = ($bf * 1);
+                          }
+
+                          if ($rs_pos->fields['pplrid'] == 39) {
+
+                                $tot_opex               = ($b * 1);
+                                $tot_opex_before        = ($bf * 1);
+                          }
+
+/*echo $rs_pos->fields['pplrid'].' == '. $b;
+echo '<br>';
+*/
                     }
   
                 }
@@ -236,29 +280,156 @@ class IncomeStatement extends BaseController
                 $rs_pos->MoveNext();
             }
       }
-  
-                  echo $tot_pendapatan;
-                    echo '<br>';
-                  echo $tot_laba_kotor;
-                    echo '<br>';
-                  echo $tot_ebitda;
-                    echo '<br>';
-                  echo $tot_ebit;
-                    echo '<br>';
-  
 
 
 
-        $bulan = $data['month'];
+
+        $bulan      = $data['month'];
+        $bulan_nama = date('M', mktime(0, 0, 0, $bulan, 10));
+        $tahun      = $data['year'];
+        $tahunlalu  = $data2['year'];
+        $bulana     = get_combo_option_month_lk( $bulan );
+
+        $tot_pend_igd                         = $this->formatKeJTRound($tot_pend_igd);
+        $tot_pend_ranap                       = $this->formatKeJTRound($tot_pend_ranap);
+        $tot_pend_rajal                       = $this->formatKeJTRound($tot_pend_rajal);
+        $tot_pend_lainya                      = $this->formatKeJTRound($tot_pend_lainya);
+        $tot_pend_penunjang                   = $this->formatKeJTRound($tot_pend_penunjang);
+
+        $tot_pendapatan_round                 = $this->formatKeJTRound($tot_pendapatan);
+        $tot_pendapatan_format                = formatKeJT($tot_pendapatan);
+        $tot_pendapatan_before_round          = $this->formatKeJTRound($tot_pendapatan_before);
+        $tot_pendapatan_before_format         = formatKeJT($tot_pendapatan_before);
+
+        $tot_ebitda_round                     = $this->formatKeJTRound($tot_ebitda);
+        $tot_ebitda_format                    = formatKeJT($tot_ebitda);
+        $tot_ebitda_before_round              = $this->formatKeJTRound($tot_ebitda_before);
+        $tot_ebitda_before_format             = formatKeJT($tot_ebitda_before);
+
+        $tot_eat_round                        = $this->formatKeJTRound($tot_eat);
+        $tot_eat_format                       = formatKeJT($tot_eat);
+        $tot_eat_before_round                 = $this->formatKeJTRound($tot_eat_before);
+        $tot_eat_before_format                = formatKeJT($tot_eat_before);
+
+        $tot_laba_kotor_round                        = $this->formatKeJTRound($tot_laba_kotor);
+        $tot_laba_kotor_format                       = formatKeJT($tot_laba_kotor);
+        $tot_laba_kotor_before_round                 = $this->formatKeJTRound($tot_laba_kotor_before);
+        $tot_laba_kotor_before_format                = formatKeJT($tot_laba_kotor_before);
+
+
+        $tot_beban_round                        = $this->formatKeJTRound($tot_beban);    
+        $tot_beban_format                       = formatKeJT($tot_beban);
+        $tot_beban_before_round                 = $this->formatKeJTRound($tot_beban_before);
+        $tot_beban_before_format                = formatKeJT($tot_beban_before);
+
+
+        $tot_opex_round                        = $this->formatKeJTRound($tot_opex);
+        $tot_opex_format                       = formatKeJT($tot_opex);
+        $tot_opex_before_round                 = $this->formatKeJTRound($tot_opex_before);
+        $tot_opex_before_format                = formatKeJT($tot_opex_before);
+
+
+        $net_margin = round( ($tot_pendapatan != 0) ? ($tot_eat / $tot_pendapatan) * 100 : 0 , 2);
+    
+        $tahuna        = get_combo_option_year($tahun, 2024, $tahun+1);
+
         return view('dashboard.income_statement', compact(
             'cmb_cabang',
             'sPeriod',
             'ePeriod',
-            'tot_pendapatan',
-            'tot_ebitda',
+
+            'tot_pend_igd',
+            'tot_pend_ranap',
+            'tot_pend_rajal',
+            'tot_pend_lainya',
+            'tot_pend_penunjang',
+
+            'tot_pendapatan_round',
+            'tot_pendapatan_format',
+            'tot_pendapatan_before_round',
+            'tot_pendapatan_before_format',
+
+            'tot_ebitda_round',
+            'tot_ebitda_format',
+            'tot_ebitda_before_round',
+            'tot_ebitda_before_format',
+
+            'tot_eat_round',
+            'tot_eat_format',
+            'tot_eat_before_round',
+            'tot_eat_before_format',
+
+            'tot_laba_kotor_round',
+            'tot_laba_kotor_format',
+            'tot_laba_kotor_before_round',
+            'tot_laba_kotor_before_format',
+
+            'tot_beban_round',
+            'tot_beban_format',
+            'tot_beban_before_round',
+            'tot_beban_before_format',
+
+            'tot_opex_round',
+            'tot_opex_format',
+            'tot_opex_before_round',
+
+            'net_margin',
             'bulan',
+            'bulana',
+            'bulan_nama',
+            'tahun',
+            'tahuna',
+            'tahunlalu',
         ));
     } /*}}}*/
+
+
+
+
+
+function formatKeJTRound($input) {
+    $nilai = (float) filter_var($input, FILTER_SANITIZE_NUMBER_FLOAT, 
+                FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
+    
+    if ($nilai == 0) return "0";
+
+    // Semua angka dibagi 1.000.000 agar skalanya sama (satuan Juta)
+    $hasil = $nilai / 1000000;
+    
+    // Kembalikan angka dengan 2 desimal titik (untuk JS)
+    return number_format($hasil, 2, '.', '');
+}
+
+
+    function formatKeJTRound_olds($input) {
+
+        // 1. Ambil angka murni, biarkan tanda minus (-) dan titik desimal tetap ada
+            $nilai = (float) filter_var($input, FILTER_SANITIZE_NUMBER_FLOAT, 
+                FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
+
+            if ($nilai == 0) return "0";
+
+            // 2. Tentukan apakah dia negatif
+            $labelMinus = ($nilai < 0) ? "-" : "";
+            
+            // 3. Gunakan nilai absolut (positif) untuk menentukan skala (M, Jt, atau ribuan)
+            $absNilai = abs($nilai);
+
+            if ($absNilai >= 1000000000) {
+                // Skala Miliar
+                $hasil = $absNilai / 1000000000;
+                return $labelMinus . number_format($hasil, 2, '.', '');
+            } elseif ($absNilai >= 1000000) {
+                // Skala Juta
+                $hasil = $absNilai / 1000000;
+                return $labelMinus . number_format($hasil, 2, '.', '') ;
+            } else {
+                // Skala Ribuan / Satuan
+                return $labelMinus . number_format($absNilai, 0, '.', '');
+            }
+
+
+    }
 
 }
 ?>

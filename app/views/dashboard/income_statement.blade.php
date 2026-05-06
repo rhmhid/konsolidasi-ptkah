@@ -132,13 +132,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
                         <div class="col-lg-3">
                             <label class="text-dark fw-bold fs-7 pb-2">Bulan</label>
                             <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2">
-                                {!! get_combo_option_month_lk( date('m')) !!}
+                                {!! $bulana !!}
                             </select>
                         </div>
                         <div class="col-lg-2">
                             <label class="text-dark fw-bold fs-7 pb-2">Tahun</label>
                             <select class="form-select form-select-sm rounded-1 w-100" id="s-Year" data-control="select2">
-                                {!! get_combo_option_year(date('Y'), 2024, date('Y')+1) !!}
+                                {!! $tahuna !!}
                             </select>
                         </div>
                         <div class="col-lg-3 d-flex align-items-end">
@@ -155,71 +155,42 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <div class="kpi-row">
         <div class="kpi-card" style="--accent-color:#0FA896">
           <div class="kpi-label">Total Pendapatan</div>
-          <div class="kpi-value">Rp 487,3M</div>
-          <div class="kpi-sub kpi-up">▲ 12,4% vs tahun lalu</div>
+          <div class="kpi-value">{!! $tot_pendapatan_format !!}</div>
+          <div class="kpi-sub kpi-up"></div>
         </div>
         <div class="kpi-card" style="--accent-color:#3B9B5A">
           <div class="kpi-label">Laba Bersih</div>
-          <div class="kpi-value">Rp 68,5M</div>
-          <div class="kpi-sub kpi-up">▲ 8,7% vs tahun lalu</div>
+          <div class="kpi-value">{!! $tot_eat_format !!}</div>
+          <div class="kpi-sub kpi-up"></div>
         </div>
         <div class="kpi-card" style="--accent-color:#E8A820">
           <div class="kpi-label">EBITDA</div>
-          <div class="kpi-value">Rp 112,1M</div>
-          <div class="kpi-sub kpi-up">▲ 9,2% vs tahun lalu</div>
+          <div class="kpi-value">{!! $tot_ebitda_format !!}</div>
+          <div class="kpi-sub kpi-up"></div>
         </div>
         <div class="kpi-card" style="--accent-color:#E24B4A">
           <div class="kpi-label">Net Profit Margin</div>
-          <div class="kpi-value">14,1%</div>
-          <div class="kpi-sub kpi-down">▼ 0,5pp vs tahun lalu</div>
+          <div class="kpi-value">{!! $net_margin !!} %</div>
+          <div class="kpi-sub kpi-down"></div>
         </div>
       </div>
 
       <div class="full-card card">
         <div class="section-header">
-          <div class="section-title">Laporan Laba Rugi Konsolidasi</div>
+          <div class="section-title">Waterfall Laba Rugi</div>
           <div class="tab-row" style="width:280px;margin-bottom:0">
-            <button class="tab-btn" onclick="switchLRTab(&#39;detail&#39;,this)">Detail</button>
-            <button class="tab-btn active" onclick="switchLRTab(&#39;perbandingan&#39;,this)">YoY</button>
+            <button class="tab-btn active" onclick="switchLRTab(&#39;perbandingan&#39;,this)">MoM</button>
             <button class="tab-btn" onclick="switchLRTab(&#39;cabang&#39;,this)">Per Cabang</button>
           </div>
         </div>
 
-        <div id="lr-detail" style="display: none;">
-          <table class="fin-table">
-            <thead><tr><th>Keterangan</th><th>FY 2024 (Rp Juta)</th><th>FY 2023 (Rp Juta)</th><th>Selisih</th></tr></thead>
-            <tbody>
-              <tr><td colspan="4" class="section-group" style="padding:7px 10px">PENDAPATAN OPERASIONAL</td></tr>
-              <tr><td class="indent">Pendapatan Rawat Inap</td><td>198.450</td><td>172.300</td><td class="positive">+15,2%</td></tr>
-              <tr><td class="indent">Pendapatan Rawat Jalan</td><td>143.280</td><td>131.500</td><td class="positive">+9,0%</td></tr>
-              <tr><td class="indent">Pendapatan IGD</td><td>67.940</td><td>61.200</td><td class="positive">+11,0%</td></tr>
-              <tr><td class="indent">Pendapatan Penunjang Medis</td><td>52.300</td><td>46.800</td><td class="positive">+11,8%</td></tr>
-              <tr><td class="indent">Pendapatan Farmasi</td><td>25.330</td><td>22.700</td><td class="positive">+11,6%</td></tr>
-              <tr class="row-subtotal"><td class="row-header">Total Pendapatan</td><td>487.300</td><td>434.500</td><td class="positive">+12,4%</td></tr>
-              <tr><td colspan="4" class="section-group" style="padding:7px 10px">BEBAN OPERASIONAL</td></tr>
-              <tr><td class="indent">Beban Gaji &amp; Tunjangan</td><td>156.800</td><td>138.400</td><td class="negative">+13,3%</td></tr>
-              <tr><td class="indent">Beban Obat &amp; BHP</td><td>97.450</td><td>87.200</td><td class="negative">+11,8%</td></tr>
-              <tr><td class="indent">Beban Umum &amp; Administrasi</td><td>42.600</td><td>39.100</td><td class="negative">+9,0%</td></tr>
-              <tr><td class="indent">Beban Pemeliharaan</td><td>21.300</td><td>19.800</td><td class="negative">+7,6%</td></tr>
-              <tr><td class="indent">Depresiasi &amp; Amortisasi</td><td>18.650</td><td>17.200</td><td class="negative">+8,4%</td></tr>
-              <tr class="row-subtotal"><td class="row-header">Total Beban</td><td>336.800</td><td>301.700</td><td class="negative">+11,6%</td></tr>
-              <tr><td colspan="4" class="section-group" style="padding:7px 10px">PROFITABILITAS</td></tr>
-              <tr><td class="row-header">Laba Operasional (EBIT)</td><td>93.850</td><td>84.600</td><td class="positive">+10,9%</td></tr>
-              <tr><td class="indent">Pendapatan Non-Operasional</td><td>4.200</td><td>3.800</td><td class="positive">+10,5%</td></tr>
-              <tr><td class="indent">Beban Bunga &amp; Keuangan</td><td>(12.400)</td><td>(11.800)</td><td class="negative">+5,1%</td></tr>
-              <tr><td class="indent">Pajak Penghasilan</td><td>(17.150)</td><td>(14.420)</td><td class="negative">+19,0%</td></tr>
-              <tr class="row-total"><td>LABA BERSIH</td><td>68.500</td><td>62.180</td><td class="positive">+10,2%</td></tr>
-            </tbody>
-          </table>
-        </div>
-
         <div id="lr-perbandingan" style="display: block;">
           <div class="legend-row">
-            <span><span class="legend-dot" style="background:#0FA896"></span>FY 2024</span>
-            <span><span class="legend-dot" style="background:#8899AA"></span>FY 2023</span>
+            <span><span class="legend-dot" style="background:#0FA896"></span>{!! $bulan_nama !!} {!! $tahun !!}</span>
+            <span><span class="legend-dot" style="background:#8899AA"></span>{!! $bulan_nama !!} {!! $tahunlalu !!}</span>
           </div>
           <div class="chart-wrap" style="height:280px">
-            <canvas id="lrYoYChart" role="img" aria-label="Perbandingan komponen laba rugi FY 2024 vs FY 2023" height="251" style="display: block; box-sizing: border-box; height: 280px; width: 1831px;" width="1647">Perbandingan pendapatan, beban, dan laba bersih tahun 2024 vs 2023.</canvas>
+            <canvas id="lrYoYChart" role="img" aria-label="Perbandingan komponen laba rugi FY {!! $tahun !!} vs FY {!! $tahunlalu !!}" height="251" style="display: block; box-sizing: border-box; height: 280px; width: 1831px;" width="1647">Perbandingan pendapatan, beban, dan laba bersih tahun {!! $tahun !!} vs {!! $tahunlalu !!}.</canvas>
           </div>
         </div>
 
@@ -238,10 +209,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
             <span><span class="legend-dot" style="background:#E8A820"></span>Rawat Jalan</span>
             <span><span class="legend-dot" style="background:#0B1A2E"></span>IGD</span>
             <span><span class="legend-dot" style="background:#3B9B5A"></span>Penunjang</span>
-            <span><span class="legend-dot" style="background:#E24B4A"></span>Farmasi</span>
+            <span><span class="legend-dot" style="background:#E24B4A"></span>Lainnya</span>
           </div>
           <div class="chart-wrap" style="height:200px">
-            <canvas id="revPieChart" role="img" aria-label="Komposisi pendapatan per segmen" width="802" height="179" style="display: block; box-sizing: border-box; height: 200px; width: 891px;">Rawat Inap 40.7%, Rawat Jalan 29.4%, IGD 13.9%, Penunjang 10.7%, Farmasi 5.2%.</canvas>
+            <canvas id="revPieChart" role="img" aria-label="Komposisi pendapatan per segmen" width="802" height="179" style="display: block; box-sizing: border-box; height: 200px; width: 891px;"></canvas>
           </div>
         </div>
         <div class="card">
@@ -251,7 +222,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
             <span><span class="legend-dot" style="background:#E8A820"></span>Net Margin</span>
           </div>
           <div class="chart-wrap" style="height:200px">
-            <canvas id="marginTrendChart" role="img" aria-label="Tren gross margin dan net margin sepanjang 2024" width="802" height="179" style="display: block; box-sizing: border-box; height: 200px; width: 891px;">Tren margin bulanan FY 2024.</canvas>
+            <canvas id="marginTrendChart" role="img" aria-label="Tren gross margin dan net margin sepanjang 2024" width="802" height="179" style="display: block; box-sizing: border-box; height: 200px; width: 891px;"></canvas>
           </div>
         </div>
       </div>
@@ -268,6 +239,41 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <script src="{{ asset('assets/js/chart.umd.js.download') }}"></script>
 <script>
+    $('#btnView').click(function (e)
+    {
+
+        e.preventDefault() // batalkan aksi form submit
+
+        const $form = $('#form-pl')
+        const $sBid = $form.find('[id="s-Bid"]').val()
+        const $sMonth = $form.find('[id="s-Month"]').val()
+        const $sYear = $form.find('[id="s-Year"]').val()
+
+
+            if ($sMonth == '')
+            {
+                swalShowMessage('Perhatian!', "Bulan Harus Dipilih.", 'warning')
+
+                return false
+            }
+
+            if ($sYear == '')
+            {
+                swalShowMessage('Perhatian!', "Tahun Harus Dipilih.", 'warning')
+
+                return false
+            }
+
+            var $param = 'bid=' + $sBid
+                $param += '&month=' + $sMonth
+                $param += '&year=' + $sYear
+
+        let $link = "{{ route('dashboard.income_statement', []) }}"
+        window.location.replace($link + '?' + $param);
+        return false
+    });
+
+
 const pageTitles={
   'laba-rugi':['Laporan Laba &amp; Rugi','Konsolidasi · FY 2024 · 7 Rumah Sakit'],
   'neraca':['Neraca Konsolidasi','Posisi Keuangan · 31 Desember 2024'],
@@ -291,7 +297,6 @@ function filterPeriod(v){console.log('Period:',v)}
 function switchLRTab(tab,el){
   document.querySelectorAll('#page-laba-rugi .tab-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('lr-detail').style.display='none';
   document.getElementById('lr-perbandingan').style.display='none';
   document.getElementById('lr-cabang').style.display='none';
   document.getElementById('lr-'+tab).style.display='block';
@@ -312,18 +317,94 @@ const defs={
   }
 };
 
+new Chart(document.getElementById('lrYoYChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Total Pendapatan', 'Beban Langsung', 'Laba Kotor', 'Biaya Umum & Administrasi', 'EBITDA', 'Laba Bersih'],
+    datasets: [
+      {
+        label: '{!! $bulan_nama !!} {!! $tahun !!}',
+        data: [
+          '{!! $tot_pendapatan_round !!}',
+          '{!! $tot_beban_round !!}',
+          '{!! $tot_laba_kotor_round !!}',
+          '{!! $tot_opex_round !!}',
+          '{!! $tot_ebitda_round !!}',
+          '{!! $tot_eat_round !!}'
+        ],
+        // Logika warna: Hijau jika positif, Merah jika negatif
+        backgroundColor: (context) => {
+          const value = context.raw;
+          return value < 0 ? '#dc3545' : '#0FA896'; 
+        },
+        borderRadius: 4,
+        borderSkipped: false
+      },
+      {
+        label: '{!! $bulan_nama !!} {!! $tahunlalu !!}',
+        data: [
+          {!! $tot_pendapatan_before_round !!},
+          {!! $tot_beban_before_round !!},
+          {!! $tot_laba_kotor_before_round !!},
+          {!! $tot_opex_before_round !!},
+          {!! $tot_ebitda_before_round !!},
+          {!! $tot_eat_before_round !!}
+        ],
+        // Warna abu-abu transparan untuk tahun lalu, merah transparan jika minus
+        backgroundColor: (context) => {
+          const value = context.raw;
+          return value < 0 ? 'rgba(220, 53, 69, 0.45)' : 'rgba(136, 153, 170, .45)';
+        },
+        borderRadius: 4,
+        borderSkipped: false
+      }
+    ]
+  },
+  options: {
+    ...defs, // Mengambil default config Anda
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          // Menonjolkan garis angka 0 agar batas atas/bawah jelas
+          color: (context) => context.tick.value === 0 ? '#555' : 'rgba(0, 0, 0, 0.1)',
+          lineWidth: (context) => context.tick.value === 0 ? 2 : 1
+        }
+      },
+      x: {
+        ticks: {
+          // Memastikan label teks tetap terbaca meski tertutup batang negatif
+          z: 10 
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      // Jika Anda menggunakan chartjs-plugin-datalabels
+      datalabels: {
+        anchor: (context) => context.dataset.data[context.dataIndex] < 0 ? 'start' : 'end',
+        align: (context) => context.dataset.data[context.dataIndex] < 0 ? 'bottom' : 'top',
+      }
+    }
+  }
+});
+
+/*
 new Chart(document.getElementById('lrYoYChart'),{
   type:'bar',
   data:{
-    labels:['Total Pendapatan','Total Beban','Laba Kotor','EBITDA','Laba Bersih'],
+    labels:['Total Pendapatan','Total Beban','Laba Kotor','OpEx','EBITDA','Laba Bersih'],
     datasets:[
-      {label:'FY 2024',data:[487.3,336.8,150.5,112.1,68.5],backgroundColor:'#0FA896',borderRadius:4,borderSkipped:false},
-      {label:'FY 2023',data:[434.5,301.7,132.8,102.7,62.2],backgroundColor:'rgba(136,153,170,.45)',borderRadius:4,borderSkipped:false}
+      {label:'{!! $bulan_nama !!} {!! $tahun !!}',data:[{!! $tot_pendapatan_round !!},{!! $tot_beban_round !!},{!! $tot_laba_kotor_round!!},{!! $tot_opex_round!!},{!! $tot_ebitda_round !!},{!! $tot_eat_round !!}],backgroundColor:'#0FA896',borderRadius:4,borderSkipped:false},
+      {label:'{!! $bulan_nama !!} {!! $tahunlalu !!}',data:[{!! $tot_pendapatan_before_round !!},{!! $tot_beban_before_round !!},{!! $tot_laba_kotor_before_round !!},{!! $tot_opex_before_round !!},{!! $tot_ebitda_before_round !!},{!! $tot_eat_before_round !!}],backgroundColor:'rgba(136,153,170,.45)',borderRadius:4,borderSkipped:false}
     ]
   },
   options:{...defs,plugins:{legend:{display:false}}}
 });
 
+*/
 new Chart(document.getElementById('lrCabangChart'),{
   type:'bar',
   data:{
@@ -341,15 +422,20 @@ new Chart(document.getElementById('lrCabangChart'),{
 new Chart(document.getElementById('revPieChart'),{
   type:'doughnut',
   data:{
-    labels:['Rawat Inap','Rawat Jalan','IGD','Penunjang','Farmasi'],
+    labels:['Rawat Inap','Rawat Jalan','IGD','Penunjang','Lainnya'],
     datasets:[{
-      data:[198.45,143.28,67.94,52.3,25.33],
+      data:[{!! $tot_pend_ranap !!},{!! $tot_pend_rajal !!},{!! $tot_pend_igd !!},{!! $tot_pend_penunjang !!},{!! $tot_pend_lainya !!}],
       backgroundColor:['#0FA896','#E8A820','#0B1A2E','#3B9B5A','#E24B4A'],
       borderWidth:2,borderColor:'transparent'
     }]
   },
   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}
 });
+
+
+
+
+
 
 const gm=[31.2,30.8,31.5,30.9,31.8,32.1,31.6,31.9,32.4,31.8,32.6,31.4];
 const nm=[13.2,12.8,13.5,12.9,13.8,14.2,13.6,14.0,14.8,13.9,15.1,14.3];
@@ -419,6 +505,7 @@ new Chart(document.getElementById('cfTrendChart'),{
   },
   options:{...defs,scales:{x:{stacked:true,grid:{color:gridColor()},ticks:{color:txtColor()}},y:{stacked:true,grid:{color:gridColor()},ticks:{color:txtColor(),callback:v=>v+'M'}}}}
 });
-</script>
+
+  </script>
 
 @endpush
