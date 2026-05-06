@@ -3081,14 +3081,12 @@
                 'query'     => $only_head == 't' ? " AND (br.kdbid = 1 OR br.branch_code = '$ho_jkk')" : '',
             ];
         }
-        elseif ($bid)
+        else
         {
-            $ret = [
-                'conn_kah'  => TRUE,
-                'conn_rsjk' => TRUE,
-                'conn_jkk'  => TRUE,
-                'query'     => " AND br.bid = ".$bid,
-            ];
+            $ret['conn_kah']    = TRUE;
+            $ret['conn_rsjk']   = TRUE;
+            $ret['conn_jkk']    = TRUE;
+            $ret['query']       = " AND br.bid = ".$bid;
 
             if ($bid == 1) // Default KAH
             {
@@ -3111,22 +3109,31 @@
     } /*}}}*/
 
 
-    if (!function_exists('formatKeJT')) {
-        function formatKeJT($input) {
+    if (!function_exists('formatKeJT'))
+    {
+        function formatKeJT ($input)
+        {
             $nilai = (float) $input;
+
             if ($nilai == 0) return "Rp. 0";
-            $labelMinus = ($nilai < 0) ? "- " : "";
+
+            $labelMinus = $nilai < 0 ? "- " : "";
             $absNilai = abs($nilai);
 
-            if ($absNilai >= 1000000000) {
+            if ($absNilai >= 1000000000)
+            {
                 $hasil = $absNilai / 1000000000;
+
                 return "Rp. " . $labelMinus . number_format($hasil, 2, ',', '.') . " M";
-            } elseif ($absNilai >= 1000000) {
-                $hasil = $absNilai / 1000000;
-                return "Rp. " . $labelMinus . number_format($hasil, 2, ',', '.') . " Jt";
-            } else {
-                return "Rp. " . $labelMinus . number_format($absNilai, 0, ',', '.');
             }
+            elseif ($absNilai >= 1000000)
+            {
+                $hasil = $absNilai / 1000000;
+
+                return "Rp. " . $labelMinus . number_format($hasil, 2, ',', '.') . " Jt";
+            }
+            else
+                return "Rp. " . $labelMinus . number_format($absNilai, 0, ',', '.');
         }
     }
 ?>
