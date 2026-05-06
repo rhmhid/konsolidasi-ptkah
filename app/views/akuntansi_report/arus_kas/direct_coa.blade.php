@@ -51,29 +51,72 @@
         </tr>
     </thead>
     <tbody>
+        @php
+            $tot_amount = 0;
+            $subtot_amount = 0;
+            $current_branch = null;
+        @endphp
+
         @foreach ($rs as $row)
             @php
                 $row = FieldsToObject($row);
+            @endphp
 
+            {{-- Pengecekan jika nama cabang berganti --}}
+            @if ($current_branch !== $row->branch_name)
+                
+                {{-- Cetak Subtotal cabang sebelumnya (kecuali pada looping pertama) --}}
+                @if ($current_branch !== null)
+                    <tr style="background-color: #f9f9f9;">
+                        <td align="right" colspan="6"><b>SUBTOTAL {{ strtoupper($current_branch) }}</b></td>
+                        <td align="right"><b>{{ format_uang($subtot_amount, 2) }}</b></td>
+                        <td></td>
+                    </tr>
+                @endif
+
+                {{-- Update nama cabang yang sedang aktif & reset subtotal --}}
+                @php
+                    $current_branch = $row->branch_name;
+                    $subtot_amount = 0;
+                @endphp
+
+                {{-- Cetak Header Cabang baru --}}
+                <tr style="background-color: #e0e0e0;">
+                    <td colspan="8" align="left"><b>CABANG: {{ strtoupper($current_branch) }}</b></td>
+                </tr>
+            @endif
+
+            @php
+                // Tambahkan amount ke subtotal & total
+                $subtot_amount += $row->amount;
                 $tot_amount += $row->amount;
             @endphp
 
             <tr>
                 <td align="center">{{ dbtstamp2stringlong_ina($row->gldate) }}</td>
                 <td>{{ $row->coacode.' '.$row->coaname }}</td>
-                <td align="center">{{ $row->doc_no }}</td>
-                <td align="center">{{ $row->journal_name }}</td>
+                <td align="center">{{ $row->gldoc }}</td>
+                <td align="center">{{ $row->gltype }}</td>
                 <td>{{ $row->gldesc }}</td>
-                <td>{{ $row->notes }}</td>
+                <td>{{ $row->glnotes }}</td>
                 <td align="right">{{ format_uang($row->amount, 2) }}</td>
-                <td>{{ $row->user_input }}</td>
+                <td>{{ $row->gluser }}</td>
             </tr>
         @endforeach
 
-        <tr>
-            <td align="right" colspan="6"><b>TOTAL<b></td>
-            <td align="right"><b>{{ format_uang($tot_amount, 2) }}<b></td>
-            <td align="right"><b><b></td>
+        {{-- Jangan lupa cetak Subtotal untuk cabang yang terakhir kali dilooping --}}
+        @if ($current_branch !== null)
+            <tr style="background-color: #f9f9f9;">
+                <td align="right" colspan="6"><b>SUBTOTAL {{ strtoupper($current_branch) }}</b></td>
+                <td align="right"><b>{{ format_uang($subtot_amount, 2) }}</b></td>
+                <td></td>
+            </tr>
+        @endif
+
+        <tr style="background-color: #d9d9d9;">
+            <td align="right" colspan="6"><b>TOTAL KESELURUHAN</b></td>
+            <td align="right"><b>{{ format_uang($tot_amount, 2) }}</b></td>
+            <td></td>
         </tr>
     </tbody>
 </table>

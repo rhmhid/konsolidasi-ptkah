@@ -18,13 +18,13 @@
     {
         let $mytipe = '{{ $mytipe }}'
 
-        let $param = 'month={{ $data['month'] }}'
+        let $param = 'bid={{ $data['bid'] }}'
+            $param += '&status_cabang={{ $data['status_cabang'] }}'
+            $param += '&status_coa={{ $data['status_coa'] }}'
+            $param += '&month={{ $data['month'] }}'
             $param += '&year={{ $data['year'] }}'
             $param += '&sdate={{ $data['sdate'] }}'
             $param += '&edate={{ $data['edate'] }}'
-            $param += '&bid={{ $data['bid'] }}'
-            $param += '&status_cabang={{ $data['status_cabang'] }}'
-            $param += '&status_coa={{ $data['status_coa'] }}'
 
         let $link = "{{ route('akuntansi_report.arus_kas.cetak.detail', ['mytipe' => ':mytipe', 'myid' => ':myid']) }}"
             $link = $link.replace(':mytipe', $mytipe)
