@@ -49,56 +49,46 @@ class ArusKasMdl extends DB
 
         /* B: Create Temp Table */
         DB::Execute("DROP TABLE IF EXISTS temp_cashflow");
+        // myprint_r("DROP TABLE IF EXISTS temp_cashflow;");
 
         $sqli = "CREATE TEMPORARY TABLE temp_cashflow (
                     branch_code     VARCHAR,
-                    pcfid           INT,
-                    parent_pcfid    INT,
-                    pcfid_parent    INT,
+                    coacode         VARCHAR,
+                    coaname         VARCHAR,
+                    debet           NUMERIC(18,2) DEFAULT 0,
                     amount          NUMERIC(18,2) DEFAULT 0
-                ) ON COMMIT PRESERVE ROWS;";
+                ) ON COMMIT PRESERVE ROWS";
         DB::Execute($sqli);
+        // myprint_r($sqli.";");
         /* E: Create Temp Table */
 
         /* B: Get Data PT. JKK */
         if ($optionsCabang['conn_jkk'])
         {
-            $sql = "SELECT aaa.branch_code, COALESCE(aaa.pcfid, 0) AS pcfid, aaa.parent_pcfid, aaa.pcfid_parent
-                        , SUM(COALESCE(aaa.amount, 0)) AS amount
+            $sql = "SELECT br.branch_code, cc.coacode, cc.coaname
+                        , bb.debet, (bb.credit - bb.debet) AS amount
                     FROM (
-                        SELECT br.branch_code, aa.glid, (bb.credit - bb.debet) AS amount
-                            , (CASE WHEN cc.coacode = '115001' AND bb.debet > 0 THEN 26
-                            WHEN cc.coacode = '115002' AND bb.debet > 0 THEN 46
-                            ELSE cc.pcfdid END) AS pcfid -- hardcode
-                            , dd.parent_pcfid, ee.parent_pcfid AS pcfid_parent
-                        FROM (
-                            SELECT gl.glid
-                            FROM general_ledger_d gld
-                            JOIN general_ledger gl ON gl.glid = gld.glid
-                            JOIN (SELECT coaid FROM m_coa WHERE coagid IN (".Modules::$cashflow_id.")) mc ON mc.coaid = gld.coaid
-                            WHERE DATE(gl.gldate) BETWEEN DATE('$sdate') AND DATE('$edate')
-                                AND gl.is_posted = 't'
-                            GROUP BY gl.glid
-                        ) aa
-                        JOIN general_ledger_d bb ON bb.glid = aa.glid
-                        JOIN m_coa cc ON cc.coaid = bb.coaid
-                        LEFT JOIN pos_cashflow dd ON (CASE WHEN cc.coacode = '115001' AND bb.debet > 0 THEN 26
-                                                    WHEN cc.coacode = '115002' AND bb.debet > 0 THEN 46
-                                                    ELSE cc.pcfdid END) = dd.pcfid
-                        LEFT JOIN pos_cashflow ee ON dd.parent_pcfid = ee.pcfid
-                        LEFT JOIN branch br ON bb.bid = br.bid
-                        WHERE bb.coaid NOT IN (SELECT coaid FROM m_coa WHERE coagid IN (".Modules::$cashflow_id."))
-                    ) aaa
-                    GROUP BY aaa.branch_code, aaa.pcfid, aaa.parent_pcfid, aaa.pcfid_parent";
+                        SELECT gl.glid
+                        FROM general_ledger_d gld
+                        INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                        INNER JOIN m_coa mc ON mc.coaid = gld.coaid
+                        WHERE DATE(gl.gldate) BETWEEN DATE('$sdate') AND DATE('$edate')
+                            AND mc.coagid IN (".Modules::$cashflow_id.") AND gl.is_posted = 't'
+                        GROUP BY gl.glid
+                    ) aa
+                    INNER JOIN general_ledger_d bb ON bb.glid = aa.glid
+                    INNER JOIN m_coa cc ON cc.coaid = bb.coaid
+                    INNER JOIN branch br ON bb.bid = br.bid
+                    WHERE cc.coagid NOT IN (".Modules::$cashflow_id.")";
             $rs = DB2::Execute($sql);
-
+// myprint_r($sql.";");
             while (!$rs->EOF)
             {
                 $record[] = array(
                     'branch_code'   => $rs->fields['branch_code'],
-                    'pcfid'         => $rs->fields['pcfid'],
-                    'parent_pcfid'  => $rs->fields['parent_pcfid'],
-                    'pcfid_parent'  => $rs->fields['pcfid_parent'],
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'debet'         => floatval($rs->fields['debet']),
                     'amount'        => floatval($rs->fields['amount'])
                 );
 
@@ -110,40 +100,29 @@ class ArusKasMdl extends DB
         /* B: Get Data PT. KAH */
         if ($optionsCabang['conn_kah'])
         {
-            $sql = "SELECT COALESCE(aaa.pcid, 0) AS pcfid, aaa.parent_pcid AS parent_pcfid, aaa.pcid_parent AS pcfid_parent
-                        , SUM(COALESCE(aaa.amount, 0)) AS amount
+            $sql = "SELECT cc.coacode, cc.coaname
+                        , bb.debet, (bb.credit - bb.debet) AS amount
                     FROM (
-                        SELECT aa.glid, (bb.credit - bb.debet) AS amount
-                            , (CASE WHEN cc.coacode = '115001' AND bb.debet > 0 THEN 26
-                            WHEN cc.coacode = '115002' AND bb.debet > 0 THEN 46
-                            ELSE dd.pcid END) AS pcid -- hardcode
-                            , dd.parent_pcid, ee.parent_pcid AS pcid_parent
-                        FROM (
-                            SELECT gl.glid
-                            FROM general_ledger_d gld
-                            JOIN general_ledger gl ON gl.glid = gld.glid
-                            JOIN (SELECT coaid FROM m_coa WHERE coagid IN (".Modules::$cashflow_id.")) mc ON mc.coaid = gld.coaid
-                            WHERE DATE(gl.gldate) BETWEEN DATE('$sdate') AND DATE('$edate') AND gl.is_posted = 't'
-                            GROUP BY gl.glid
-                        ) aa
-                        JOIN general_ledger_d bb ON bb.glid = aa.glid
-                        JOIN m_coa cc ON cc.coaid = bb.coaid
-                        LEFT JOIN pos_cashflow dd ON (CASE WHEN cc.coacode = '115001' AND bb.debet > 0 THEN 26
-                                                    WHEN cc.coacode = '115002' AND bb.debet > 0 THEN 46
-                                                    ELSE cc.pcdid END) = dd.pcid
-                        LEFT JOIN pos_cashflow ee ON dd.parent_pcid = ee.pcid
-                        WHERE bb.coaid NOT IN (SELECT coaid FROM m_coa WHERE coagid IN (".Modules::$cashflow_id."))
-                    ) aaa
-                    GROUP BY pcfid, parent_pcfid, pcfid_parent";
+                        SELECT gl.glid
+                        FROM general_ledger_d gld
+                        INNER JOIN general_ledger gl ON gl.glid = gld.glid
+                        INNER JOIN m_coa mc ON mc.coaid = gld.coaid
+                        WHERE DATE(gl.gldate) BETWEEN DATE('$sdate') AND DATE('$edate')
+                            AND mc.coagid IN (".Modules::$cashflow_id.") AND gl.is_posted = 't'
+                        GROUP BY gl.glid
+                    ) aa
+                    INNER JOIN general_ledger_d bb ON bb.glid = aa.glid
+                    INNER JOIN m_coa cc ON cc.coaid = bb.coaid
+                    WHERE cc.coagid NOT IN (".Modules::$cashflow_id.")";
             $rs = DB3::Execute($sql);
-
+// myprint_r($sql.";");
             while (!$rs->EOF)
             {
                 $record[] = array(
                     'branch_code'   => self::$kode_kah,
-                    'pcfid'         => $rs->fields['pcfid'],
-                    'parent_pcfid'  => $rs->fields['parent_pcfid'],
-                    'pcfid_parent'  => $rs->fields['pcfid_parent'],
+                    'coacode'       => $rs->fields['coacode'],
+                    'coaname'       => $rs->fields['coaname'],
+                    'debet'         => floatval($rs->fields['debet']),
                     'amount'        => floatval($rs->fields['amount'])
                 );
 
@@ -166,16 +145,17 @@ class ArusKasMdl extends DB
             {
                 $data = array(
                     'branch_code'   => $row['branch_code'],
-                    'pcfid'         => $row['pcfid'],
-                    'parent_pcfid'  => $row['parent_pcfid'],
-                    'pcfid_parent'  => $row['pcfid_parent'],
-                    'amount'        => floatval($row['amount_period'])
+                    'coacode'       => $row['coacode'],
+                    'coaname'       => $row['coaname'],
+                    'debet'         => floatval($row['debet']),
+                    'amount'        => floatval($row['amount'])
                 );
 
                 $sqli = "SELECT * FROM temp_cashflow WHERE 1 = 2";
                 $rsi = DB::Execute($sqli);
                 $sqli = DB::InsertSQL($rsi, $data);
                 if ($ok) $ok = DB::Execute($sqli);
+                // myprint_r($sqli.";");
             }
         }
         /* E: Insert To Temp Table */
@@ -187,21 +167,35 @@ class ArusKasMdl extends DB
         $addsql .= $optionsCabang['query'];
 
         /* B: Showing Data From Temp Table */
-        $sql = "SELECT b.*, tmp.branch_code, tmp.pcfid, tmp.parent_pcfid, tmp.pcfid_parent, tmp.amount
-                FROM temp_cashflow tmp
-                INNER JOIN (
-                    SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname
-                        , mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to
-                    FROM m_coa mc
-                    INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
-                    LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
-                    LEFT JOIN branch br ON mcb.bid = br.bid
-                    -- LEFT JOIN pos_pl ppl ON mc.pplid = ppl.pplid
-                    WHERE mc.allow_post = 't' $addsql
-                ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to";
+        $sql = "SELECT COALESCE(aaa.pcfid, 0) AS pcfid, aaa.parent_pcfid AS parent_pcfid
+                    , aaa.pcfid_parent AS pcfid_parent, SUM(COALESCE(aaa.amount, 0)) AS amount
+                FROM (
+                    SELECT tmp.debet, tmp.amount
+                        , (CASE WHEN b.coacode = '115001' AND tmp.debet > 0 THEN 26
+                        WHEN b.coacode = '115002' AND tmp.debet > 0 THEN 46
+                        ELSE dd.pcfid END) AS pcfid -- hardcode
+                        , dd.parent_pcfid, ee.parent_pcfid AS pcfid_parent
+                    FROM temp_cashflow tmp
+                    INNER JOIN (
+                        SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname
+                            , mc.default_debet, (mc.coacode || ' ' || mc.coaname) AS mycoa, mcb.coacode_from, mcb.coacode_to
+                            , mc.pcfdid
+                        FROM m_coa mc
+                        INNER JOIN m_coatype mct ON mct.coatid = mc.coatid
+                        LEFT JOIN m_coa_branch mcb ON mc.coaid = mcb.coaid
+                        LEFT JOIN branch br ON mcb.bid = br.bid
+                        WHERE mc.allow_post = 't' $addsql
+                    ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
+                    LEFT JOIN pos_cashflow dd ON (CASE WHEN b.coacode = '115001' AND tmp.debet > 0 THEN 26
+                                                WHEN b.coacode = '115002' AND tmp.debet > 0 THEN 46
+                                                ELSE b.pcfdid END) = dd.pcfid
+                    LEFT JOIN pos_cashflow ee ON dd.parent_pcfid = ee.pcfid
+                ) aaa
+                GROUP BY pcfid, parent_pcfid, pcfid_parent";
         $rs = DB::Execute($sql);
         /* E: Showing Data From Temp Table */
-
+// myprint_r($sql.";");
+// die;
         return $rs;
     } /*}}}*/
 
