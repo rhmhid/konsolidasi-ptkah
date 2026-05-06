@@ -393,7 +393,6 @@ class ArusKasMdl extends DB
 
         /* B: Create Temp Table */
         DB::Execute("DROP TABLE IF EXISTS temp_cashflow_trans");
-        // myprint_r("DROP TABLE IF EXISTS temp_cashflow_trans;");
 
         $sqli = "CREATE TEMPORARY TABLE temp_cashflow_trans (
                     branch_code VARCHAR,
@@ -409,7 +408,6 @@ class ArusKasMdl extends DB
                     gluser      VARCHAR
                 ) ON COMMIT PRESERVE ROWS";
         DB::Execute($sqli);
-        // myprint_r($sqli.";");
         /* E: Create Temp Table */
 
         /* B: Get Data PT. JKK */
@@ -476,7 +474,7 @@ class ArusKasMdl extends DB
                     INNER JOIN m_coa cc ON cc.coaid = bb.coaid
                     INNER JOIN person ps ON ps.pid = bb.create_by
                     WHERE cc.coagid NOT IN (".Modules::$cashflow_id.")";
-            $rs = DB2::Execute($sql);
+            $rs = DB3::Execute($sql);
 
             while (!$rs->EOF)
             {
@@ -529,7 +527,6 @@ class ArusKasMdl extends DB
                 $rsi = DB::Execute($sqli);
                 $sqli = DB::InsertSQL($rsi, $data);
                 if ($ok) $ok = DB::Execute($sqli);
-                // myprint_r($sqli.";");
             }
         }
         /* E: Insert To Temp Table */
@@ -554,18 +551,13 @@ class ArusKasMdl extends DB
                     LEFT JOIN branch br ON mcb.bid = br.bid
                     WHERE mc.allow_post = 't' $addsql
                 ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
-                LEFT JOIN pos_cashflow dd ON (CASE WHEN b.coacode = '115001' AND tmp.debet > 0 THEN 26
-                                            WHEN b.coacode = '115002' AND tmp.debet > 0 THEN 46
-                                            ELSE b.pcfdid END) = dd.pcfid
-                LEFT JOIN pos_cashflow ee ON dd.parent_pcfid = ee.pcfid
                 WHERE COALESCE((CASE WHEN b.coacode = '115001' AND tmp.debet > 0 THEN 26
                     WHEN b.coacode = '115002' AND tmp.debet > 0 THEN 46
                     ELSE b.pcfdid END), 0) = $pcfid
                 ORDER BY b.is_primary, b.bid, tmp.gldate";
         $rs = DB::Execute($sql);
         /* E: Showing Data From Temp Table */
-// myprint_r($sql.";");
-// die();
+
         return $rs;
     } /*}}}*/
 
