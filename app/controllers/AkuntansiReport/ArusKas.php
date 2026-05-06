@@ -250,10 +250,13 @@ class ArusKas extends BaseController
     public function direct_coa ($mytipe, $myid) /*{{{*/
     {
         $data = array(
-            'month' => intval(get_var('month')),
-            'year'  => get_var('year'),
-            'sdate' => get_var('sdate', date('d-m-Y')),
-            'edate' => get_var('edate', date('d-m-Y')),
+            'bid'           => get_var('bid'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
+            'month'         => intval(get_var('month')),
+            'year'          => get_var('year'),
+            'sdate'         => get_var('sdate', date('d-m-Y')),
+            'edate'         => get_var('edate', date('d-m-Y')),
         );
 
         $tgl_cetak = date('Y-m-d');
