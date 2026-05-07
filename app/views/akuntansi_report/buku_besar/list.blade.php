@@ -34,11 +34,6 @@
                             </div>
 
                             <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2">Tipe Jurnal</label>
-                                {!! $cmb_tipe_jurnal !!}
-                            </div>
-
-                            <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">Status Posting</label>
                                 {!! $cmb_posted !!}
                             </div>
@@ -53,11 +48,6 @@
                             <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2 required">Sampai COA</label>
                                 {!! $cmb_coa_to !!}
-                            </div>
-
-                            <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2">Cost Center</label>
-                                {!! $cmb_cost_center !!}
                             </div>
                         </div>
 
@@ -159,11 +149,9 @@
 
         let $param = 'sdate=' + sPeriod
             $param += '&edate=' + ePeriod
-            $param += '&jtid=' + $form.find('[id="sJtid"]').val()
             $param += '&is_posted=' + $form.find('[id="sPosted"]').val()
             $param += '&coaid_from=' + $coaid_from
             $param += '&coaid_to=' + $coaid_to
-            $param += '&pccid=' + $form.find('[id="sPccid"]').val()
             $param += '&with_bb=' + $form.find('[name="with_bb"]:checked').val()
             $param += '&coa_vs=' + $form.find('[name="coa_vs"]:checked').val()
 
@@ -180,11 +168,9 @@
         return {
             sdate: sPeriod,
             edate: ePeriod,
-            jtid: $form.find('[id="sJtid"]').val(),
             is_posted: $form.find('[id="sPosted"]').val(),
             coaid_from: $form.find('[id="sCoaFrom"]').val(),
             coaid_to: $form.find('[id="sCoaTo"]').val(),
-            pccid: $form.find('[id="sPccid"]').val(),
             with_bb: $form.find('[name="with_bb"]:checked').val(),
             coa_vs: $form.find('[name="coa_vs"]:checked').val()
         }

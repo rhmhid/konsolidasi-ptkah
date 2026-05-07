@@ -18,13 +18,14 @@ class BukuBesarAPI extends BaseAPIController
     public function excel_get () /*{{{*/
     {
         $data = array(
+            'bid'           => get_var('bid'),
+            'status_cabang' => get_var('status_cabang'),
+            'status_coa'    => get_var('status_coa'),
             'sdate'         => get_var('sdate'),
             'edate'         => get_var('edate'),
-            'jtid'          => get_var('jtid'),
             'is_posted'     => get_var('is_posted'),
             'coaid_from'    => get_var('coaid_from'),
             'coaid_to'      => get_var('coaid_to'),
-            'pccid'         => get_var('pccid'),
             'with_bb'       => get_var('with_bb'),
         );
 

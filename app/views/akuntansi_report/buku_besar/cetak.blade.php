@@ -31,8 +31,9 @@
 <script type="text/javascript">
     function detail_gl (glid)
     {
-        let link = "{{ route('akunting.daftar_jurnal.cetak', ['myglid' => ':myglid']) }}"
+        let link = "{{ route('akunting.daftar_jurnal.cetak', ['myglid' => ':myglid', 'mybid' => ':mybid']) }}"
             link = link.replace(':myglid', glid)
+            link = link.replace(':mybid', 1)
 
         NewWindow(link, 'jurnal_detail', 1000, 500, 'yes')
         return false
