@@ -142,9 +142,9 @@ class ArusKasMdl extends DB
 
             $response = Bridging::post(self::$kode_rsjk, $endpoint, $payload);
 
-            if ($response['status'] === 'success' && !empty($response['data']))
+            if ($response['status'] === 'success' && !empty($response['response']))
             {
-                foreach ($response['data'] as $row)
+                foreach ($response['response'] as $row)
                 {
                     $record[] = array(
                         'branch_code'   => self::$kode_rsjk,
