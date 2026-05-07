@@ -132,8 +132,6 @@ class ArusKasMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
-            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
-
             $endpoint = 'pass/cash_flow_direct';
             $payload = [
                 'data' => [
@@ -142,14 +140,14 @@ class ArusKasMdl extends DB
                 ]
             ];
 
-            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+            $response = Bridging::post(self::$kode_rsjk, $endpoint, $payload);
 
             if ($response['status'] === 'success' && !empty($response['data']))
             {
                 foreach ($response['data'] as $row)
                 {
                     $record[] = array(
-                        'branch_code'   => $rsjk_code,
+                        'branch_code'   => self::$kode_rsjk,
                         'coacode'       => $row['coacode'], 
                         'coaname'       => $row['coaname'],
                         'debet'         => floatval($row['debet']),

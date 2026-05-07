@@ -139,8 +139,6 @@ class LabaRugiMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
-            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
-
             $endpoint = 'pass/income_statement_monthly';
             $payload = [
                 'data' => [
@@ -149,7 +147,7 @@ class LabaRugiMdl extends DB
                 ]
             ];
 
-            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+            $response = Bridging::post(self::$kode_rsjk, $endpoint, $payload);
 
             if ($response['status'] === 'success' && !empty($response['data']))
             {
@@ -158,7 +156,7 @@ class LabaRugiMdl extends DB
                     $default_debet = $row['posisi_coa'] == 'Dr' ? 't' : 'f';
 
                     $record[] = array(
-                        'branch_code'       => $rsjk_code,
+                        'branch_code'       => self::$kode_rsjk,
                         'coacode'           => $row['coa_id'], 
                         'coaname'           => $row['coa_name'],
                         'default_debet'     => $default_debet,
@@ -340,8 +338,6 @@ class LabaRugiMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
-            $rsjk_code = dataConfigs('default_kode_branch_rsjk');
-
             $endpoint = 'pass/income_statement_daily';
             $payload = [
                 'data' => [
@@ -350,7 +346,7 @@ class LabaRugiMdl extends DB
                 ]
             ];
 
-            $response = Bridging::post($rsjk_code, $endpoint, $payload);
+            $response = Bridging::post(self::$kode_rsjk, $endpoint, $payload);
 
             if ($response['status'] === 'success' && !empty($response['data']))
             {
@@ -359,7 +355,7 @@ class LabaRugiMdl extends DB
                     $default_debet = $row['posisi_coa'] == 'Dr' ? 't' : 'f';
 
                     $record[] = array(
-                        'branch_code'       => $rsjk_code,
+                        'branch_code'       => self::$kode_rsjk,
                         'coacode'           => $row['coa_id'], 
                         'coaname'           => $row['coa_name'],
                         'default_debet'     => $default_debet,
