@@ -24,12 +24,11 @@ class BukuBesarAPI extends BaseAPIController
             'sdate'         => get_var('sdate'),
             'edate'         => get_var('edate'),
             'is_posted'     => get_var('is_posted'),
+            'with_bb'       => get_var('with_bb'),
             'coaid_from'    => get_var('coaid_from'),
             'coaid_to'      => get_var('coaid_to'),
-            'with_bb'       => get_var('with_bb'),
+            'coa_vs'        => get_var('coa_vs'),
         );
-
-        $coa_vs = get_var('coa_vs');
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -59,7 +58,7 @@ class BukuBesarAPI extends BaseAPIController
             ]
         ];
 
-        $huruf_header = $coa_vs == 't' ? "O" : "N";
+        $huruf_header = $data['coa_vs'] == 't' ? "O" : "N";
 
         $sheet->setCellValue('A1', "Overview Ledger");
         $sheet->mergeCells('A1:'.$huruf_header.'1');
@@ -77,7 +76,7 @@ class BukuBesarAPI extends BaseAPIController
         $sheet->setCellValue('C5', "Account Short Tex");
         $sheet->setCellValue('D5', "Description");
 
-        if ($coa_vs == 't')
+        if ($data['coa_vs'] == 't')
         {
             $sheet->setCellValue('E5', "C.O.A Lawan");
             $sheet->setCellValue('F5', "User Entry");
@@ -134,7 +133,7 @@ class BukuBesarAPI extends BaseAPIController
             $row_blank = $old_coaid != $data_db->coaid && $no > 1 ? 't' : 'f';
             $row_opening = $old_coaid != $data_db->coaid && $data['with_bb'] == 't' ? 't' : 'f';
 
-            if ($coa_vs == 't')
+            if ($data['coa_vs'] == 't')
             {
                 $rsd = BukuBesarMdl::detail_jurnal($data_db->glid, $data_db->gldid);
 
@@ -170,7 +169,7 @@ class BukuBesarAPI extends BaseAPIController
                 $sheet->setCellValue('D'.$row_idx, 'BEGINING BALANCE');
                 $sheet->setCellValue('E'.$row_idx, '');
 
-                if ($coa_vs == 't')
+                if ($data['coa_vs'] == 't')
                 {
                     $sheet->setCellValue('J'.$row_idx, floatval($data_db->opbal));
                     $sheet->setCellValue('K'.$row_idx, '');
@@ -195,7 +194,7 @@ class BukuBesarAPI extends BaseAPIController
             $sheet->setCellValue('C'.$row_idx, $data_db->coaname);
             $sheet->setCellValue('D'.$row_idx, $data_db->gldesc);
 
-            if ($coa_vs == 't')
+            if ($data['coa_vs'] == 't')
             {
                 $sheet->getStyle('E'.$row_idx)
                       ->getNumberFormat()

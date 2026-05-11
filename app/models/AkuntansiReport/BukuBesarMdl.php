@@ -20,9 +20,10 @@ class BukuBesarMdl extends DB
         $sdate = $data['sdate'];
         $edate = $data['edate'];
         $is_posted = $data['is_posted'];
+        $with_bb = $data['with_bb'];
         $coaid_from = $data['coaid_from'];
         $coaid_to = $data['coaid_to'];
-        $with_bb = $data['with_bb'];
+        $coa_vs = $data['coa_vs'];
         $record = [];
         $addsql = "";
         $optionsCabang = FilterCabang($bid);

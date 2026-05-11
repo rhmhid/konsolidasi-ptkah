@@ -15,6 +15,9 @@ class BukuBesar extends BaseController
     {
         $sPeriod = $ePeriod = date('d-m-Y');
 
+        $data_cabang = Modules::data_cabang_all();
+        $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Cabang..."');
+
         $data_posted = Modules::data_posted();
         $cmb_posted = $data_posted->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sPosted" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..."');
 
@@ -25,6 +28,7 @@ class BukuBesar extends BaseController
         $cmb_coa_to = $data_coa->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="sCoaTo" data-control="select2" data-allow-clear="true" data-placeholder="Pilih..." required=""');
 
         return view('akuntansi_report.buku_besar.list', compact(
+            'cmb_cabang',
             'sPeriod',
             'ePeriod',
             'cmb_posted',
@@ -42,12 +46,11 @@ class BukuBesar extends BaseController
             'sdate'         => get_var('sdate'),
             'edate'         => get_var('edate'),
             'is_posted'     => get_var('is_posted'),
+            'with_bb'       => get_var('with_bb'),
             'coaid_from'    => get_var('coaid_from'),
             'coaid_to'      => get_var('coaid_to'),
-            'with_bb'       => get_var('with_bb'),
+            'coa_vs'        => get_var('coa_vs'),
         );
-
-        $coa_vs = get_var('coa_vs');
 
         $rs = BukuBesarMdl::list($data);
 
@@ -58,7 +61,6 @@ class BukuBesar extends BaseController
 
         return view('akuntansi_report.buku_besar.cetak', compact(
             'data',
-            'coa_vs',
             'rs',
             'coa_from',
             'coa_to'
