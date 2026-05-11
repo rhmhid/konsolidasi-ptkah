@@ -52,7 +52,7 @@
             coaid_to: '{{ $data['coaid_to'] }}',
             pccid: '{{ $data['pccid'] }}',
             with_bb: '{{ $data['with_bb'] }}',
-            coa_vs: '{{ $coa_vs }}'
+            coa_vs: '{{ $data['coa_vs'] }}'
         }
     }
 
@@ -125,7 +125,7 @@
             <th>Account Short Tex</th>
             <th>Description</th>
 
-            @if ($coa_vs == 't')
+            @if ($data['coa_vs'] == 't')
                 <th>C.O.A Lawan</th>
             @endif
 
@@ -158,7 +158,7 @@
                 $row_opening = $old_coaid != $row->coaid && $data['with_bb'] == 't' ? 't' : 'f';
                 $old_coaid = $row->coaid;
 
-                if ($coa_vs == 't')
+                if ($data['coa_vs'] == 't')
                 {
                     $rsd = BukuBesarMdl::detail_jurnal($row->glid, $row->gldid);
 
@@ -192,7 +192,7 @@
                     <td>{{ $row->coaname }}</td>
                     <td>BEGINING BALANCE</td>
 
-                    @if ($coa_vs == 't')
+                    @if ($data['coa_vs'] == 't')
                         <td colspan="5">&nbsp;</td>
                     @else
                         <td colspan="4">&nbsp;</td>
@@ -209,7 +209,7 @@
                 <td>{{ $row->coaname }}</td>
                 <td>{{ $row->gldesc }}</td>
 
-                @if ($coa_vs == 't')
+                @if ($data['coa_vs'] == 't')
                     <td>{!! $row->coa_vs !!}</td>
                 @endif
 

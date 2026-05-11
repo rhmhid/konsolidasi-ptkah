@@ -22,8 +22,51 @@
                 <form method="post" id="form-buku-besar" novalidate="">
                     <!--begin::Compact form-->
                     <div class="p-6 pb-0">
-                        <div class="row g-0 gx-4">
+                        <div class="row g-0 gx-4 mb-5">
                             <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Cabang</label>
+                                {!! $cmb_cabang !!}
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status Cabang</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_cabang" id="status_cabang_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2">Status C.O.A</label>
+                                <div class="nav-group nav-group-sm nav-group-fluid rounded-1 border border-gray-300 bg-white p-1">
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_coa" id="status_coa_all" value="" checked="" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Semua</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_coa" id="status_coa_t" value="t" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Aktif</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" class="btn-check" name="status_coa" id="status_coa_f" value="f" />
+                                        <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fs-8 p-2 pb-1">Non Aktif</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-0 gx-4 mb-5">
+                            <div class="col-lg-3">
                                 <label class="text-dark fw-bold fs-7 pb-2">Periode</label>
                                 <div class="input-group">
                                     <input type="text" id="sDate-period" class="form-control form-control-sm rounded-1" readonly="" />
@@ -33,25 +76,11 @@
                                 </div>
                             </div>
 
-                            <div class="col-lg-4">
+                            <div class="col-lg-3">
                                 <label class="text-dark fw-bold fs-7 pb-2">Status Posting</label>
                                 {!! $cmb_posted !!}
                             </div>
-                        </div>
 
-                        <div class="row g-0 gx-4 mt-3">
-                            <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2 required">Dari COA</label>
-                                {!! $cmb_coa_from !!}
-                            </div>
-
-                            <div class="col-lg-4">
-                                <label class="text-dark fw-bold fs-7 pb-2 required">Sampai COA</label>
-                                {!! $cmb_coa_to !!}
-                            </div>
-                        </div>
-
-                        <div class="row g-0 gx-4 my-3 mb-5">
                             <div class="col-lg-6">
                                 <label class="text-dark fw-bold fs-7 pb-2">Tipe Laporan</label>
                                 <div class="btn-group w-100" role="group">
@@ -62,15 +91,27 @@
                                     <label class="btn btn-sm btn-light-dark rounded-1" for="bb-slower">With Beginning Balance</label>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="col-lg-6">
+                        <div class="row g-0 gx-4 mb-5">
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2 required">Dari COA</label>
+                                {!! $cmb_coa_from !!}
+                            </div>
+
+                            <div class="col-lg-4">
+                                <label class="text-dark fw-bold fs-7 pb-2 required">Sampai COA</label>
+                                {!! $cmb_coa_to !!}
+                            </div>
+
+                            <div class="col-lg-4">
                                 <label class="text-dark fw-bold fs-7 pb-2">C.O.A Lawan</label>
                                 <div class="btn-group w-100" role="group">
                                     <input type="radio" name="coa_vs" class="btn-check" id="coa-vs-t" value="t" />
-                                    <label class="btn btn-sm btn-light-dark rounded-1" for="coa-vs-t">Tampilkan C.O.A Lawan</label>
+                                    <label class="btn btn-sm btn-light-dark rounded-1" for="coa-vs-t">Tampilkan C.O.A</label>
 
                                     <input type="radio" name="coa_vs" class="btn-check" id="coa-vs-f" value="f" checked="" />
-                                    <label class="btn btn-sm btn-light-dark rounded-1" for="coa-vs-f">Sembunyikan C.O.A Lawan</label>
+                                    <label class="btn btn-sm btn-light-dark rounded-1" for="coa-vs-f">Sembunyikan C.O.A</label>
                                 </div>
                             </div>
                         </div>
@@ -130,8 +171,14 @@
         e.preventDefault() // batalkan aksi form submit
 
         const $form = $('#form-buku-besar')
+        const $sBid = $form.find('[id="s-Bid"]').val()
+        const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
+        const $statusCoa = $form.find('input[name="status_coa"]:checked').val()
+        const $isPosted = $form.find('[id="sPosted"]').val()
+        const $withBB = $form.find('[name="with_bb"]:checked').val()
         const $coaid_from = $form.find('[id="sCoaFrom"]').val()
         const $coaid_to = $form.find('[id="sCoaTo"]').val()
+        const $coaVS = $form.find('[name="coa_vs"]:checked').val()
 
         if ($coaid_from == '')
         {
@@ -147,13 +194,16 @@
             return false
         }
 
-        let $param = 'sdate=' + sPeriod
+        let $param = 'bid=' + $sBid
+            $param += '&status_cabang=' + $statusCabang
+            $param += '&status_coa=' + $statusCoa
+            $param += '&sdate=' + sPeriod
             $param += '&edate=' + ePeriod
-            $param += '&is_posted=' + $form.find('[id="sPosted"]').val()
+            $param += '&is_posted=' + $isPosted
+            $param += '&with_bb=' + $withBB
             $param += '&coaid_from=' + $coaid_from
             $param += '&coaid_to=' + $coaid_to
-            $param += '&with_bb=' + $form.find('[name="with_bb"]:checked').val()
-            $param += '&coa_vs=' + $form.find('[name="coa_vs"]:checked').val()
+            $param += '&coa_vs=' + $coaVS
 
         let $link = "{{ route('akuntansi_report.buku_besar.cetak') }}"
 
@@ -164,15 +214,26 @@
     function ParamsForm ()
     {
         const $form = $('#form-buku-besar')
+        const $sBid = $form.find('[id="s-Bid"]').val()
+        const $statusCabang = $form.find('input[name="status_cabang"]:checked').val()
+        const $statusCoa = $form.find('input[name="status_coa"]:checked').val()
+        const $isPosted = $form.find('[id="sPosted"]').val()
+        const $withBB = $form.find('[name="with_bb"]:checked').val()
+        const $coaid_from = $form.find('[id="sCoaFrom"]').val()
+        const $coaid_to = $form.find('[id="sCoaTo"]').val()
+        const $coaVS = $form.find('[name="coa_vs"]:checked').val()
 
         return {
+            bid: $sBid,
+            status_cabang: $statusCabang,
+            status_coa: $statusCoa,
             sdate: sPeriod,
             edate: ePeriod,
-            is_posted: $form.find('[id="sPosted"]').val(),
-            coaid_from: $form.find('[id="sCoaFrom"]').val(),
-            coaid_to: $form.find('[id="sCoaTo"]').val(),
-            with_bb: $form.find('[name="with_bb"]:checked').val(),
-            coa_vs: $form.find('[name="coa_vs"]:checked').val()
+            is_posted: $isPosted,
+            with_bb: $withBB,
+            coaid_from: $coaid_from,
+            coaid_to: $coaid_to,
+            coa_vs: $coaVS
         }
     }
 
