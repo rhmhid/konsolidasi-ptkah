@@ -46,9 +46,8 @@ class DashboardMdl extends DB
         DB::Execute($sqli);
         /* E: Create Temp Table */
 
-
-
-        foreach ($now as $row_now) {
+        foreach ($now as $row_now)
+        {
             $record = array(
                 'branch_code'     => $row['branch_code'],
                 'coaid'           => $row['coaid'],
@@ -65,17 +64,14 @@ class DashboardMdl extends DB
                 'tahun'           => $tahun
             );
 
-            foreach ($row_now as $key => $value) {
+            foreach ($row_now as $key => $value)
                 $record[$key] = $value;
-            }
 
             $final_result[] = $record;
         }
 
-
-
-
-        foreach ($before as $row_before) {
+        foreach ($before as $row_before)
+        {
             $record = array(
                 'branch_code'     => $row['branch_code'],
                 'coaid'           => $row['coaid'],
@@ -92,14 +88,11 @@ class DashboardMdl extends DB
                 'tahun'           => $tahun -1
             );
 
-            foreach ($row_before as $key => $value) {
+            foreach ($row_before as $key => $value)
                 $record[$key] = $value;
-            }
 
             $final_result[] = $record;
         }
-
-
 
         $ok = true;
         if (!empty($final_result))
@@ -119,7 +112,7 @@ class DashboardMdl extends DB
                     'closingbal'        => floatval($row['closingbal']),
                     'pplid'             => $row['pplid'],
                     'pplrid'            => $row['pplrid'],
-                    'tahun'            => $row['tahun'],
+                    'tahun'             => $row['tahun'],
                 );
 
                 $sqli = "SELECT * FROM temp_profit_loss_gabungan WHERE 1 = 2";
@@ -129,17 +122,14 @@ class DashboardMdl extends DB
             }
         }
 
-
-
         $addsql .= $optionsCabang['query'];
 
         $tahunbefore = $tahun - 1;
 
         /* B: Showing Data From Temp Table */
-        $sql = "SELECT b.*, tmp.branch_code, 
-
-                (CASE WHEN tmp.tahun = $tahun then tmp.amount_bln else 0 end) as amount_bln,
-                (CASE WHEN tmp.tahun = $tahunbefore then tmp.amount_bln else 0 end) as amount_bln_before
+        $sql = "SELECT b.*, tmp.branch_code
+                    , (CASE WHEN tmp.tahun = $tahun THEN tmp.amount_bln ELSE 0 END) AS amount_bln
+                    , (CASE WHEN tmp.tahun = $tahunbefore THEN tmp.amount_bln ELSE 0 END) AS amount_bln_before
                 FROM temp_profit_loss_gabungan tmp
                 INNER JOIN (
                     SELECT br.bid, br.branch_code, br.kdbid, mc.coaid, mct.coatype, mc.coatid, mc.coacode, mc.coaname
@@ -153,16 +143,10 @@ class DashboardMdl extends DB
                     WHERE mc.allow_post = 't' AND mc.coatid > 3 $addsql
                 ) b ON b.branch_code = tmp.branch_code AND tmp.coacode BETWEEN b.coacode_from AND b.coacode_to
                 ORDER BY (CASE WHEN b.coatid = 5 AND b.default_debet = 'f' THEN 4 ELSE b.coatid END), b.coacode";
-
-/*                echo '<pre>';
-                echo $sql;
-                echo '</pre>';*/
         $rs = DB::Execute($sql);
         /* E: Showing Data From Temp Table */
 
         return $rs;
-
-
     } /*}}}*/
 
     public static function list_daily ($data) /*{{{*/

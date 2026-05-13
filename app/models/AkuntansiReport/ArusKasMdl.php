@@ -321,6 +321,29 @@ class ArusKasMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
+            $endpoint = 'pass/cash_flow_direct_saldo';
+            $payload = [
+                'data' => [
+                    'rmonth' => $month,
+                    'ryear'  => $year
+                ]
+            ];
+
+            $response = Bridging::post(self::$kode_rsjk, $endpoint, $payload);
+
+            if ($response['status'] === 'success' && !empty($response['data']))
+            {
+                foreach ($response['data'] as $row)
+                {
+                    $record[] = array(
+                        'branch_code'   => self::$kode_rsjk,
+                        'coacode'       => $row['coacode'], 
+                        'coaname'       => $row['coaname'],
+                        'eamount'       => floatval($row['eamount']),
+                        'bamount'       => floatval($row['bamount']),
+                    );
+                }
+            }
         }
         /* E: Get Data RSJK */
 
@@ -523,6 +546,35 @@ class ArusKasMdl extends DB
         /* B: Get Data RSJK */
         if ($optionsCabang['conn_rsjk'])
         {
+            // $endpoint = 'pass/cash_flow_direct';
+            // $payload = [
+            //     'data' => [
+            //         'rmonth' => $month,
+            //         'ryear'  => $year
+            //     ]
+            // ];
+
+            // $response = Bridging::post(self::$kode_rsjk, $endpoint, $payload);
+
+            // if ($response['status'] === 'success' && !empty($response['response']))
+            // {
+            //     foreach ($response['response'] as $row)
+            //     {
+                    $record[] = array(
+                        'branch_code'   => self::$kode_rsjk,
+                        'gldate'        => $row['gldate'],
+                        'coacode'       => $row['coacode'],
+                        'coaname'       => $row['coaname'],
+                        'gldoc'         => $row['doc_no'],
+                        'gltype'        => $row['journal_name'],
+                        'gldesc'        => $row['gldesc'],
+                        'glnotes'       => $row['notes'],
+                        'debet'         => floatval($row['debet']),
+                        'credit'        => floatval($row['credit']),
+                        'gluser'        => $row['nama_lengkap']
+                    );
+            //     }
+            // }
         }
         /* E: Get Data RSJK */
 

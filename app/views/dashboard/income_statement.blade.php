@@ -179,6 +179,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <div class="section-header">
           <div class="section-title">Waterfall Laba Rugi</div>
           <div class="tab-row" style="width:280px;margin-bottom:0">
+            <button class="tab-btn active" onclick="switchLRTab(&#39;ytd&#39;,this)">YTD</button>
             <button class="tab-btn active" onclick="switchLRTab(&#39;perbandingan&#39;,this)">MoM</button>
             <button class="tab-btn" onclick="switchLRTab(&#39;cabang&#39;,this)">Per Cabang</button>
           </div>
