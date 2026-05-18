@@ -264,14 +264,6 @@
                             <div class="section-title">Komposisi Pendapatan</div>
                         </div>
 
-                        <!--<div class="legend-row">
-                            <span><span class="legend-dot" style="background: #0FA896;"></span>Rawat Inap</span>
-                            <span><span class="legend-dot" style="background: #E8A820;"></span>Rawat Jalan</span>
-                            <span><span class="legend-dot" style="background: #0B1A2E;"></span>IGD</span>
-                            <span><span class="legend-dot" style="background: #3B9B5A;"></span>Penunjang</span>
-                            <span><span class="legend-dot" style="background: #E24B4A;"></span>Lainnya</span>
-                        </div>-->
-
                         <div class="chart-wrap" style="height: 200px;">
                             <canvas id="revPieChart"></canvas>
                         </div>
@@ -295,29 +287,131 @@
                     </div>
                 </div>
 
-                <div class="full-card card m-0 per-cabang" style="display: none;">
-                    <div class="section-header">
-                        <div class="section-title">Revenue Bersih Per Cabang</div>
+                <div class="row g-4 per-cabang" style="display: none;">
+                    <div class="col-lg-7">
+                        <div class="card h-100 m-0">
+                            <div class="section-header d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="section-title">Revenue Bersih per Cabang</div>
+                                    <div class="text-muted fs-8 mt-1">&nbsp;</div>
+                                </div>
+                            </div>
+
+                            <div id="lr-cabang" class="chart-wrap" style="height: 320px;">
+                                <canvas id="lrCabangChart"></canvas>
+                            </div>
+                        </div>
                     </div>
 
-                    <div id="lr-perbandingan" style="display: block;">
-                        <div class="legend-row">
-                            <span>
-                                <span class="legend-dot" style="background: #0FA896;"></span>
-                                <span id="lbl-">Bulan/Tahun Terpilih</span>
-                            </span>
+                    <div class="col-lg-5">
+                        <div class="card h-100 m-0">
+                            <div class="section-header">
+                                <div>
+                                    <div class="section-title">Komposisi Revenue</div>
+                                    <div class="text-muted fs-8 mt-1">Proporsi per entitas (%)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="chart-wrap mt-3" style="height: 220px;">
+                                <canvas id="pieCabangChart"></canvas>
+                            </div>
 
-                            <span>
-                                <span class="legend-dot" style="background: #8899AA;"></span>
-                                <span id="lbl-">Bulan/Tahun Lalu</span>
-                            </span>
-                        </div>
-
-                        <div id="lr-cabang" class="chart-wrap" style="height: 280px;">
-                            <canvas id="lrCabangChart"></canvas>
+                            <div id="pie-cabang-keterangan" class="mt-5 d-flex flex-column"></div>
                         </div>
                     </div>
                 </div>
+
+                <div class="card m-0 mt-4 per-cabang" style="display: none;">
+                    <div class="section-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="section-title">Detail Pendapatan per Cabang (Rp)</div>
+                            <div class="text-muted fs-8 mt-1">Rincian komponen pendapatan operasional</div>
+                        </div>
+                        <div class="badge px-3 py-2" style="background: #E1EFFE; color: #1D4ED8;" id="badge-entitas">0 Entitas</div>
+                    </div>
+                    
+                    <div class="table-responsive mt-3">
+                        <table class="table table-row-dashed table-row-gray-200 align-middle gs-0 gy-4">
+                            <thead>
+                                <tr class="border-0 text-muted fw-bolder text-uppercase fs-8" style="letter-spacing: 0.5px;">
+                                    <th class="ps-0">Entitas</th>
+                                    <th class="text-end">IGD</th>
+                                    <th class="text-end">Rawat Inap</th>
+                                    <th class="text-end">Rawat Jalan</th>
+                                    <th class="text-end">Penunjang Medik</th>
+                                    <th class="text-end">Lainnya</th>
+                                    <th class="text-end">Total Bruto</th>
+                                    <th class="text-end">Pengurangan</th>
+                                    <th class="text-end">Non Operasional</th>
+                                    <th class="text-end">Total Bersih</th>
+                                    <th class="text-end pe-0">Share %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-detail-cabang">
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bolder fs-7 bg-light">
+                                    <td class="ps-3 rounded-start text-dark">Total Konsolidasi</td>
+                                    <td class="text-end text-dark" id="tf-igd">0</td>
+                                    <td class="text-end text-dark" id="tf-ranap">0</td>
+                                    <td class="text-end text-dark" id="tf-rajal">0</td>
+                                    <td class="text-end text-dark" id="tf-penunjang">0</td>
+                                    <td class="text-end text-dark" id="tf-lainnya">0</td>
+                                    <td class="text-end text-dark" id="tf-bruto">0</td>
+                                    <td class="text-end" id="tf-pengurangan">0</td> <td class="text-end text-dark" id="tf-non-operasional">0</td>
+                                    <td class="text-end text-success" id="tf-bersih">0</td>
+                                    <td class="text-end pe-3 rounded-end">
+                                        <span class="badge bg-light-success text-success fw-bolder px-2 py-1">100%</span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card m-0 mt-4 per-cabang" style="display: none;">
+                    <div class="section-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="section-title">P&L Summary per Cabang (Rp)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive mt-3">
+                        <table class="table table-row-dashed table-row-gray-200 align-middle gs-0 gy-4">
+                            <thead>
+                                <tr class="border-0 text-muted fw-bolder text-uppercase fs-8" style="letter-spacing: 0.5px;">
+                                    <th class="ps-0">Entitas</th>
+                                    <th class="text-end">Revenue</th>
+                                    <th class="text-end">Biaya Langsung</th>
+                                    <th class="text-end">Laba Kotor</th>
+                                    <th class="text-end">GPM%</th>
+                                    <th class="text-end">Biaya Umum</th>
+                                    <th class="text-end">EBITDA</th>
+                                    <th class="text-end">EBITDA%</th>
+                                    <th class="text-end">EBIT</th>
+                                    <th class="text-end">EAT</th>
+                                    <th class="text-end pe-0">NPM%</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-pl-cabang">
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bolder fs-7 bg-light">
+                                    <td class="ps-3 rounded-start text-dark">Total Konsolidasi</td>
+                                    <td class="text-end text-dark" id="tf-pl-rev">0</td>
+                                    <td class="text-end" id="tf-pl-bl">0</td> <td class="text-end" id="tf-pl-lk">0</td>
+                                    <td class="text-end" id="tf-pl-gpm">0%</td>
+                                    <td class="text-end" id="tf-pl-opex">0</td> <td class="text-end" id="tf-pl-ebitda">0</td>
+                                    <td class="text-end" id="tf-pl-ebitdapct">0%</td>
+                                    <td class="text-end" id="tf-pl-ebit">0</td>
+                                    <td class="text-end" id="tf-pl-eat">0</td>
+                                    <td class="text-end pe-3 rounded-end" id="tf-pl-npm">0%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -338,14 +432,12 @@
         if (!$sMonth)
         {
             swalShowMessage('Perhatian!', "Bulan Harus Dipilih.", 'warning')
-
             return false
         }
 
         if (!$sYear)
         {
             swalShowMessage('Perhatian!', "Tahun Harus Dipilih.", 'warning')
-
             return false
         }
 
@@ -373,26 +465,241 @@
 
                             let $tot_income = $laba_bersih = $ebitda = $net_margin = 0
 
-                            $tot_income = response.data_summary.yoy.tot_income
-                            $laba_bersih = response.data_summary.yoy.laba_bersih
-                            $ebitda = response.data_summary.yoy.ebitda
-                            $net_margin = response.data_summary.yoy.net_margin
+                            if ($byData == 'yoy')
+                            {
+                                $tot_income = response.data_summary.yoy.tot_income
+                                $laba_bersih = response.data_summary.yoy.laba_bersih
+                                $ebitda = response.data_summary.yoy.ebitda
+                                $net_margin = response.data_summary.yoy.net_margin
+                            }
+                            else
+                            {
+                                $tot_income = response.data_summary.ytd.tot_income
+                                $laba_bersih = response.data_summary.ytd.laba_bersih
+                                $ebitda = response.data_summary.ytd.ebitda
+                                $net_margin = response.data_summary.ytd.net_margin
+                            }
+
+                            $('#val-pendapatan').text($tot_income)
+                            $('#val-laba-bersih').text($laba_bersih)
+                            $('#val-ebitda').text($ebitda)
+                            $('#val-npm').text($net_margin)
 
                             if ($unitBisnis == 't')
                             {
                                 $('.per-non-cabang').fadeOut()
-
                                 $('.per-cabang').fadeIn()
 
-                                // 3. Update Chart Laba Bersih Per Cabang
-                                // lrCabangChartInstance.data.labels = response.cabang_labels
-                                // lrCabangChartInstance.data.datasets[0].data = response.cabang_data
-                                // lrCabangChartInstance.update()
+                                let $dataCabang = []
+                                let $revenueCabangName = $revenueCabangAmount = $revenueCabangWarna = []
+
+                                if ($byData == 'yoy')
+                                {
+                                    $dataCabang = response.data_revenue_cabang.yoy
+                                    $revenueCabangName = response.data_revenue_cabang.yoy.cabang
+                                    $revenueCabangAmount = response.data_revenue_cabang.yoy.amount
+                                    $revenueCabangWarna = response.data_revenue_cabang.yoy.warna
+                                }
+                                else
+                                {
+                                    $dataCabang = response.data_revenue_cabang.ytd
+                                    $revenueCabangName = response.data_revenue_cabang.ytd.cabang
+                                    $revenueCabangAmount = response.data_revenue_cabang.ytd.amount
+                                    $revenueCabangWarna = response.data_revenue_cabang.ytd.warna
+                                }
+
+                                lrCabangChartInstance.data.labels = $revenueCabangName
+                                lrCabangChartInstance.data.datasets[0].data = $revenueCabangAmount
+                                lrCabangChartInstance.data.datasets[0].backgroundColor = $revenueCabangWarna
+                                lrCabangChartInstance.update()
+
+                                pieCabangChartInstance.data.labels = $revenueCabangName
+                                pieCabangChartInstance.data.datasets[0].data = $revenueCabangAmount
+                                pieCabangChartInstance.data.datasets[0].backgroundColor = $revenueCabangWarna
+                                pieCabangChartInstance.update()
+
+                                let totalAmount = $dataCabang.amount.reduce((a, b) => a + parseFloat(b || 0), 0)
+                                let combinedData = []
+
+                                for (let i = 0; i < $dataCabang.cabang.length; i++)
+                                {
+                                    let val = parseFloat($dataCabang.amount[i]) || 0
+                                    let pct = totalAmount > 0 ? ((val / totalAmount) * 100).toFixed(1) : 0
+                                    
+                                    combinedData.push({
+                                        label: $dataCabang.cabang[i],
+                                        color: $dataCabang.warna[i],
+                                        detail: $dataCabang.detail[i],
+                                        rawVal: val,
+                                        fmtVal: formatKeJT(val),
+                                        pct: pct
+                                    })
+                                }
+
+                                // Urutkan dari yang pendapatannya paling besar
+                                combinedData.sort((a, b) => b.rawVal - a.rawVal)
+
+                                let htmlLegenda = ''
+                                combinedData.forEach(item => {
+                                    htmlLegenda += `<div class="d-flex justify-content-between align-items-center py-3 border-bottom border-gray-200">
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="legend-dot" style="background: ${item.color}; width: 12px; height: 12px; border-radius: 50%;"></span>
+                                                            <span class="text-dark fw-bold ms-3 fs-7">${item.label}</span>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <span class="text-dark fw-bolder fs-7">${item.fmtVal}</span>
+                                                            <span class="badge fw-bolder fs-8 px-2 py-1" style="background: #E1EFFE; color: #1D4ED8; min-width: 45px;">${item.pct}%</span>
+                                                        </div>
+                                                    </div>`
+                                })
+
+                                $('#pie-cabang-keterangan').html(htmlLegenda)
+                                $('#badge-entitas').text(combinedData.length + ' Entitas')
+
+                                // ==========================================
+                                // Helper Fungsi Khusus Biaya (Positif=Hijau, Negatif=Merah & Tanda Kurung)
+                                // ==========================================
+                                const formatKolomKhusus = (val) => {
+                                    let num = parseFloat(val) || 0
+                                    if (num > 0) return `<span class="text-success">${MoneyFormat(num)}</span>`
+                                    if (num < 0) return `<span class="text-danger">(${MoneyFormat(Math.abs(num))})</span>`
+                                    return '0'
+                                }
+
+                                let htmlTabel = ''
+                                let sumIgd = 0, sumRanap = 0, sumRajal = 0, sumPenunjang = 0, sumLainnya = 0
+                                let sumBruto = 0, sumPengurangan = 0, sumNonOp = 0, sumBersih = 0
+
+                                let htmlTabelPL = ''
+                                let sumPlRev = 0, sumPlbl = 0, sumPlLk = 0, sumPlOpex = 0, sumPlEbitda = 0, sumPlEbit = 0, sumPlEat = 0
+
+                                combinedData.forEach(item => {
+                                    if (item.detail)
+                                    {
+                                        // --- TABEL 1: DETAIL PENDAPATAN ---
+                                        sumIgd += parseFloat(item.detail.igd) || 0
+                                        sumRanap += parseFloat(item.detail.ranap) || 0
+                                        sumRajal += parseFloat(item.detail.rajal) || 0
+                                        sumPenunjang += parseFloat(item.detail.penunjang) || 0
+                                        sumLainnya += parseFloat(item.detail.lainnya) || 0
+                                        sumBruto += parseFloat(item.detail.bruto) || 0
+                                        sumPengurangan += parseFloat(item.detail.pengurangan) || 0
+                                        sumNonOp += parseFloat(item.detail.non_operasional) || 0
+                                        sumBersih += parseFloat(item.detail.bersih) || 0
+
+                                        htmlTabel += `<tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="legend-dot" style="background: ${item.color}; width: 10px; height: 10px; border-radius: 50%;"></span>
+                                                                <span class="text-dark fs-7 ms-3">${item.label}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-end text-dark fs-7">${item.detail.igd == 0 ? '0' : MoneyFormat(item.detail.igd)}</td>
+                                                        <td class="text-end text-dark fs-7">${item.detail.ranap == 0 ? '0' : MoneyFormat(item.detail.ranap)}</td>
+                                                        <td class="text-end text-dark fs-7">${item.detail.rajal == 0 ? '0' : MoneyFormat(item.detail.rajal)}</td>
+                                                        <td class="text-end text-dark fs-7">${item.detail.penunjang == 0 ? '0' : MoneyFormat(item.detail.penunjang)}</td>
+                                                        <td class="text-end text-dark fs-7">${item.detail.lainnya == 0 ? '0' : MoneyFormat(item.detail.lainnya)}</td>
+                                                        <td class="text-end text-dark fw-bold fs-7">${MoneyFormat(item.detail.bruto)}</td>
+                                                        <td class="text-end fs-7">${formatKolomKhusus(item.detail.pengurangan)}</td>
+                                                        <td class="text-end text-dark fs-7">${item.detail.non_operasional == 0 ? '0' : MoneyFormat(item.detail.non_operasional)}</td>
+                                                        <td class="text-end text-success fw-bold fs-7">${MoneyFormat(item.detail.bersih)}</td>
+                                                        <td class="text-end pe-0">
+                                                            <span class="badge fw-bolder fs-8 px-2 py-1" style="background: #E1EFFE; color: #1D4ED8;">${item.pct}%</span>
+                                                        </td>
+                                                    </tr>`
+
+                                        // --- TABEL 2: P&L SUMMARY ---
+                                        let rev = parseFloat(item.detail.bersih) || 0
+                                        let bl = parseFloat(item.detail.langsung) || 0
+                                        let lk = parseFloat(item.detail.kotor) || 0
+                                        let opex = parseFloat(item.detail.opex) || 0
+                                        let ebitda = parseFloat(item.detail.ebitda) || 0
+                                        let ebit = parseFloat(item.detail.ebit) || 0
+                                        let eat = parseFloat(item.detail.eat) || 0
+
+                                        sumPlRev += rev
+                                        sumPlbl += bl
+                                        sumPlLk += lk
+                                        sumPlOpex += opex
+                                        sumPlEbitda += ebitda
+                                        sumPlEbit += ebit
+                                        sumPlEat += eat
+
+                                        let gpm = rev !== 0 ? ((lk / rev) * 100).toFixed(1) : 0
+                                        let ebitdapct = rev !== 0 ? ((ebitda / rev) * 100).toFixed(1) : 0
+                                        let npm = rev !== 0 ? ((eat / rev) * 100).toFixed(1) : 0
+
+                                        const formatWarna = (val) => {
+                                            if (val > 0) return `<span class="text-success fw-bold">${MoneyFormat(val)}</span>`
+                                            if (val < 0) return `<span class="text-danger fw-bold">(${MoneyFormat(Math.abs(val))})</span>`
+                                            return `<span class="text-dark fw-bold">0</span>`
+                                        }
+
+                                        const badgePct = (val) => {
+                                            if (val > 0) return `<span class="badge bg-light-success text-success fw-bolder px-2 py-1">${val}%</span>`
+                                            if (val < 0) return `<span class="badge bg-light-danger text-danger fw-bolder px-2 py-1">${val}%</span>`
+                                            return `<span class="badge bg-light-primary text-primary fw-bolder px-2 py-1">${val}%</span>`
+                                        }
+
+                                        htmlTabelPL += `<tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <span class="legend-dot" style="background: ${item.color}; width: 10px; height: 10px; border-radius: 50%;"></span>
+                                                                    <span class="text-dark fs-7 ms-3">${item.label}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-end text-dark fw-bold fs-7">${rev == 0 ? '0' : MoneyFormat(rev)}</td>
+                                                            <td class="text-end fs-7">${formatKolomKhusus(bl)}</td>
+                                                            <td class="text-end fs-7">${formatWarna(lk)}</td>
+                                                            <td class="text-end pe-0">${badgePct(gpm)}</td>
+                                                            <td class="text-end fs-7">${formatKolomKhusus(opex)}</td>
+                                                            <td class="text-end fs-7">${formatWarna(ebitda)}</td>
+                                                            <td class="text-end pe-0">${badgePct(ebitdapct)}</td>
+                                                            <td class="text-end fs-7">${formatWarna(ebit)}</td>
+                                                            <td class="text-end fs-7">${formatWarna(eat)}</td>
+                                                            <td class="text-end pe-0">${badgePct(npm)}</td>
+                                                        </tr>`
+                                    }
+                                }) // Akhir Loop
+
+                                // --- TEMPEL DATA TABEL 1 ---
+                                $('#tbody-detail-cabang').html(htmlTabel)
+                                $('#tf-igd').text(MoneyFormat(sumIgd))
+                                $('#tf-ranap').text(MoneyFormat(sumRanap))
+                                $('#tf-rajal').text(MoneyFormat(sumRajal))
+                                $('#tf-penunjang').text(MoneyFormat(sumPenunjang))
+                                $('#tf-lainnya').text(MoneyFormat(sumLainnya))
+                                $('#tf-bruto').text(MoneyFormat(sumBruto))
+                                $('#tf-non-operasional').text(MoneyFormat(sumNonOp))
+                                $('#tf-bersih').text(MoneyFormat(sumBersih))
+                                $('#tf-pengurangan').html(formatKolomKhusus(sumPengurangan))
+
+                                // --- TEMPEL DATA TABEL 2 ---
+                                $('#tbody-pl-cabang').html(htmlTabelPL)
+                                $('#tf-pl-rev').text(MoneyFormat(sumPlRev))
+                                $('#tf-pl-bl').html(formatKolomKhusus(sumPlbl))
+                                $('#tf-pl-opex').html(formatKolomKhusus(sumPlOpex))
+
+                                $('#tf-pl-lk').html(sumPlLk < 0 ? `<span class="text-danger fw-bold">(${MoneyFormat(Math.abs(sumPlLk))})</span>` : `<span class="text-success fw-bold">${MoneyFormat(sumPlLk)}</span>`)
+                                
+                                let totalGpm = sumPlRev !== 0 ? ((sumPlLk / sumPlRev) * 100).toFixed(1) : 0
+                                $('#tf-pl-gpm').html(totalGpm < 0 ? `<span class="text-danger fw-bolder">${totalGpm}%</span>` : `<span class="text-success fw-bolder">${totalGpm}%</span>`)
+                                
+                                $('#tf-pl-ebitda').html(sumPlEbitda < 0 ? `<span class="text-danger fw-bold">(${MoneyFormat(Math.abs(sumPlEbitda))})</span>` : `<span class="text-success fw-bold">${MoneyFormat(sumPlEbitda)}</span>`)
+                                
+                                let totalEbitdaPct = sumPlRev !== 0 ? ((sumPlEbitda / sumPlRev) * 100).toFixed(1) : 0
+                                $('#tf-pl-ebitdapct').html(totalEbitdaPct < 0 ? `<span class="text-danger fw-bolder">${totalEbitdaPct}%</span>` : `<span class="text-success fw-bolder">${totalEbitdaPct}%</span>`)
+                                
+                                $('#tf-pl-ebit').html(sumPlEbit < 0 ? `<span class="text-danger fw-bold">(${MoneyFormat(Math.abs(sumPlEbit))})</span>` : `<span class="text-success fw-bold">${MoneyFormat(sumPlEbit)}</span>`)
+                                
+                                $('#tf-pl-eat').html(sumPlEat < 0 ? `<span class="text-danger fw-bold">(${MoneyFormat(Math.abs(sumPlEat))})</span>` : `<span class="text-success fw-bold">${MoneyFormat(sumPlEat)}</span>`)
+                                
+                                let totalNpm = sumPlRev !== 0 ? ((sumPlEat / sumPlRev) * 100).toFixed(1) : 0
+                                $('#tf-pl-npm').html(totalNpm < 0 ? `<span class="text-danger fw-bolder">${totalNpm}%</span>` : `<span class="text-success fw-bolder">${totalNpm}%</span>`)
                             }
                             else
                             {
                                 $('.per-cabang').fadeOut()
-
                                 $('.per-non-cabang').fadeIn()
 
                                 let $diff_prev = $diff_curr = [0,0,0,0,0,0]
@@ -436,11 +743,6 @@
                                 }
                                 else
                                 {
-                                    $tot_income = response.data_summary.ytd.tot_income
-                                    $laba_bersih = response.data_summary.ytd.laba_bersih
-                                    $ebitda = response.data_summary.ytd.ebitda
-                                    $net_margin = response.data_summary.ytd.net_margin
-
                                     $diff_prev = [
                                         response.data_diff.ytd.pendapatan_prev,
                                         response.data_diff.ytd.beban_prev,
@@ -475,11 +777,6 @@
                                         response.data_komposisi.ytd.lainnya_txt
                                     ]
                                 }
-                                
-                                $('#val-pendapatan').text($tot_income)
-                                $('#val-laba-bersih').text($laba_bersih)
-                                $('#val-ebitda').text($ebitda)
-                                $('#val-npm').text($net_margin)
 
                                 let lblMonthCurr = response.bulan_curr + ' ' + response.year_curr
                                 let lblMonthPrev = response.bulan_prev + ' ' + response.year_curr
@@ -506,7 +803,7 @@
 
                                 lrDiffChartInstance.update()
 
-                                // 4. Update Pie Chart Komposisi
+                                // Update Pie Chart Komposisi
                                 revPieChartInstance.data.datasets[0].data = $komposisi_data
                                 revPieChartInstance.update()
 
@@ -545,7 +842,7 @@
                                 marginTrendChartInstance.data.labels = [
                                     lblMonthPrev,
                                     lblMonthCurr
-                                ];
+                                ]
 
                                 marginTrendChartInstance.data.datasets[0].data = [
                                     response.data_tren_margin.gross_margin_prev,
@@ -616,30 +913,25 @@
             ]
         },
         options: {
-            ...defs, // Mengambil default config Anda
+            ...defs,
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        // Menonjolkan garis angka 0 agar batas atas/bawah jelas
                         color: (context) => context.tick.value === 0 ? '#555' : 'rgba(0, 0, 0, 0.1)',
                         lineWidth: (context) => context.tick.value === 0 ? 2 : 1
                     }
                 },
-
                 x: {
                     ticks: {
-                        // Memastikan label teks tetap terbaca meski tertutup batang negatif
                         z: 10 
                     }
                 }
             },
-
             plugins: {
                 legend: {
                     display: false
                 },
-
                 datalabels: {
                     anchor: (context) => context.dataset.data[context.dataIndex] < 0 ? 'start' : 'end',
                     align: (context) => context.dataset.data[context.dataIndex] < 0 ? 'bottom' : 'top',
@@ -658,7 +950,7 @@
         data: {
             labels: pieLabels,
             datasets: [{
-                data: [0, 0, 0, 0, 0], // Data awal kosong
+                data: [0, 0, 0, 0, 0],
                 backgroundColor: pieColors,
                 borderWidth: 0,
                 hoverOffset: 4
@@ -667,13 +959,12 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '75%', // Mengatur seberapa besar lubang di tengahnya
+            cutout: '75%',
             plugins: {
-                legend: { display: false }, // Legenda bawaan dimatikan karena pakai HTML
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            // Menambahkan teks di tooltip
                             let val = context.raw
                             return ' ' + context.label + ': ' + val 
                         }
@@ -714,32 +1005,113 @@
             ]
         },
         options:{
-            ...defs, // Ambil base config
+            ...defs,
             scales: {
                 x: {
-                    grid: {
-                        display: false // Hilangkan garis vertikal
-                    },
-                    border: {
-                        display: false // Hilangkan garis pinggir sumbu X
-                    }
+                    grid: { display: false },
+                    border: { display: false }
                 },
                 y: {
-                    grid: {
-                        display: false // INI UNTUK HILANGKAN GARIS KE SAMPING
-                    },
-                    border: {
-                        display: false // Hilangkan garis pinggir sumbu Y
-                    },
-                    ticks: {
-                        // Jika ingin angka di samping tetap ada, jangan hapus ticks
-                        color: '#6A7A88',
-                        font: { size: 10 }
-                    }
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { color: '#6A7A88', font: { size: 10 } }
                 }
             }
         }
     })
     // E: Chart Tren Margin
+
+    // B: Chart Revenue Per Cabang
+    let lrCabangChartInstance = new Chart(document.getElementById('lrCabangChart'), {
+        type: 'bar',
+        data: {
+            labels: [], 
+            datasets: [{
+                label: 'Revenue Per Cabang',
+                data: [], 
+                backgroundColor: [], 
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 35
+            }]
+        },
+        options: {
+            ...defs,
+            layout: {
+                padding: { top: 25 }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let rawValue = context.raw || 0
+                            return ' ' + formatKeJT(rawValue) 
+                        }
+                    }
+                },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: txtColor,
+                    font: { size: 9, weight: '600' },
+                    formatter: function(value) {
+                        return formatKeJT(value)
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: txtColor, font: { size: 11 } }
+                },
+                y: {
+                    grid: { color: gridColor },
+                    beginAtZero: true,
+                    grace: '15%',
+                    ticks: { 
+                        color: txtColor, 
+                        font: { size: 10 },
+                        callback: function (value) {
+                            return formatKeJT(value)
+                        }
+                    }
+                }
+            }
+        }
+    })
+    // E: Chart Revenue Per Cabang
+
+    // B: Chart Pie Cabang
+    let pieCabangChartInstance = new Chart(document.getElementById('pieCabangChart'), {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [], 
+                backgroundColor: [],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let rawValue = context.raw || 0;
+                            return ' ' + context.label + ': ' + formatKeJT(rawValue); 
+                        }
+                    }
+                }
+            }
+        }
+    });
+    // E: Chart Pie Cabang
 </script>
 @endpush

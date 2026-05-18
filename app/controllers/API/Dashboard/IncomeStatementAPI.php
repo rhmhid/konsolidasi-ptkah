@@ -62,6 +62,7 @@ class IncomeStatementAPI extends BaseAPIController
 
         $data_pos = $data_db = [];
         $api_data_summary = $api_data_diff = $api_data_komposisi = $api_data_tren_margin = [];
+        $api_data_revenue_cabang = $api_data_detail_revenue_cabang = [];
 
         if (!$rs_period->EOF)
         {
@@ -257,7 +258,7 @@ class IncomeStatementAPI extends BaseAPIController
                         $b = $row['branches'][$bc]['amount_bln'] ?? 0;
                         $bf = $row['branches'][$bc]['amount_bln_before'] ?? 0;
 
-                        $bc = $row['branches'][$bc]['closingbal'] ?? 0;
+                        $bcc = $row['branches'][$bc]['closingbal'] ?? 0;
                         $bcf = $row['branches'][$bc]['closingbal_before'] ?? 0;
 
                         $data_db[$parent_pplrid]['branches'][$bc]['amount_bln_prev'] = ($data_db[$parent_pplrid]['branches'][$bc]['amount_bln_prev'] ?? 0) + $bp;
@@ -266,7 +267,7 @@ class IncomeStatementAPI extends BaseAPIController
                         $data_db[$parent_pplrid]['branches'][$bc]['amount_bln'] = ($data_db[$parent_pplrid]['branches'][$bc]['amount_bln'] ?? 0) + $b;
                         $data_db[$parent_pplrid]['branches'][$bc]['amount_bln_before'] = ($data_db[$parent_pplrid]['branches'][$bc]['amount_bln_before'] ?? 0) + $bf;
 
-                        $data_db[$parent_pplrid]['branches'][$bc]['closingbal'] = ($data_db[$parent_pplrid]['branches'][$bc]['closingbal'] ?? 0) + $bc;
+                        $data_db[$parent_pplrid]['branches'][$bc]['closingbal'] = ($data_db[$parent_pplrid]['branches'][$bc]['closingbal'] ?? 0) + $bcc;
                         $data_db[$parent_pplrid]['branches'][$bc]['closingbal_before'] = ($data_db[$parent_pplrid]['branches'][$bc]['closingbal_before'] ?? 0) + $bcf;
                     }
 
@@ -480,15 +481,96 @@ class IncomeStatementAPI extends BaseAPIController
         ];
         // E: Data Tren Margin
 
+        // Siapkan palet warna (Bisa disesuaikan dengan tema aplikasi)
+        $color_palette = [
+            '#0FA896', // 1. Deep Teal (Core)
+            '#E8A820', // 2. Warm Gold (Core)
+            '#0B1A2E', // 3. Midnight Navy (Core)
+            '#3B9B5A', // 4. Forest Green
+            '#E24B4A', // 5. Coral Red
+            '#4E79A7', // 6. Steel Blue (Bikin adem, kontras ama navy)
+            '#B07AA1', // 7. Elegant Plum/Purple (Mewah, bagus buat pie chart)
+            '#966B56', // 8. Earth Brown/Taupe
+            '#F28E2B', // 9. Bright Orange (Biar pop-out tapi gak norak)
+            '#8899AA'  // 10. Slate Gray (Netral untuk penutup)
+        ];
+        $color_idx = 0;
+
+        foreach ($data_cabang as $bc => $cabang)
+        {
+            $reven_cabang_name[] = $cabang['branch_name'];
+
+            $reven_cabang_color[] = $color_palette[$color_idx % count($color_palette)];
+            $color_idx++;
+
+            $reven_cabang_amount_yoy[] = $data_db[14]['branches'][$bc]['amount_bln'] ?? 0;
+
+            $reven_cabang_amount_ytd[] = $data_db[14]['branches'][$bc]['closingbal'] ?? 0;
+
+            $reven_cabang_detail_yoy[] = [
+                'igd'               => $data_db[3]['branches'][$bc]['amount_bln'] ?? 0,
+                'ranap'             => $data_db[4]['branches'][$bc]['amount_bln'] ?? 0,
+                'rajal'             => $data_db[5]['branches'][$bc]['amount_bln'] ?? 0,
+                'penunjang'         => $data_db[6]['branches'][$bc]['amount_bln'] ?? 0,
+                'lainnya'           => $data_db[7]['branches'][$bc]['amount_bln'] ?? 0,
+                'bruto'             => $data_db[8]['branches'][$bc]['amount_bln'] ?? 0,
+                'pengurangan'       => $data_db[9]['branches'][$bc]['amount_bln'] ?? 0,
+                'non_operasional'   => $data_db[13]['branches'][$bc]['amount_bln'] ?? 0,
+                'bersih'            => $data_db[14]['branches'][$bc]['amount_bln'] ?? 0,
+                'langsung'          => $data_db[26]['branches'][$bc]['amount_bln'] ?? 0,
+                'kotor'             => $data_db[27]['branches'][$bc]['amount_bln'] ?? 0,
+                'opex'              => $data_db[39]['branches'][$bc]['amount_bln'] ?? 0,
+                'ebitda'            => $data_db[40]['branches'][$bc]['amount_bln'] ?? 0,
+                'ebit'              => $data_db[47]['branches'][$bc]['amount_bln'] ?? 0,
+                'eat'               => $data_db[52]['branches'][$bc]['amount_bln'] ?? 0,
+            ];
+
+            $reven_cabang_detail_ytd[] = [
+                'igd'               => $data_db[3]['branches'][$bc]['closingbal'] ?? 0,
+                'ranap'             => $data_db[4]['branches'][$bc]['closingbal'] ?? 0,
+                'rajal'             => $data_db[5]['branches'][$bc]['closingbal'] ?? 0,
+                'penunjang'         => $data_db[6]['branches'][$bc]['closingbal'] ?? 0,
+                'lainnya'           => $data_db[7]['branches'][$bc]['closingbal'] ?? 0,
+                'bruto'             => $data_db[8]['branches'][$bc]['closingbal'] ?? 0,
+                'pengurangan'       => $data_db[9]['branches'][$bc]['closingbal'] ?? 0,
+                'non_operasional'   => $data_db[13]['branches'][$bc]['closingbal'] ?? 0,
+                'bersih'            => $data_db[14]['branches'][$bc]['closingbal'] ?? 0,
+                'langsung'          => $data_db[26]['branches'][$bc]['closingbal'] ?? 0,
+                'kotor'             => $data_db[27]['branches'][$bc]['closingbal'] ?? 0,
+                'opex'              => $data_db[39]['branches'][$bc]['closingbal'] ?? 0,
+                'ebitda'            => $data_db[40]['branches'][$bc]['closingbal'] ?? 0,
+                'ebit'              => $data_db[47]['branches'][$bc]['closingbal'] ?? 0,
+                'eat'               => $data_db[52]['branches'][$bc]['closingbal'] ?? 0,
+            ];
+        }
+
+        // B: Revenue Bersih Per Cabang
+        $api_data_revenue_cabang['yoy'] = [
+            'cabang'    => $reven_cabang_name,
+            'amount'    => $reven_cabang_amount_yoy,
+            'warna'     => $reven_cabang_color,
+            'detail'    => $reven_cabang_detail_yoy,
+        ];
+
+        $api_data_revenue_cabang['ytd'] = [
+            'cabang'    => $reven_cabang_name,
+            'amount'    => $reven_cabang_amount_ytd,
+            'warna'     => $reven_cabang_color,
+            'detail'    => $reven_cabang_detail_ytd,
+            
+        ];
+        // E: Revenue Bersih Per Cabang
+
         $data = array(
-            'bulan_prev'        => monthnamelong($data['prev_month']),
-            'bulan_curr'        => monthnamelong($data['month']),
-            'year_prev'         => $data2['year_prev'],
-            'year_curr'         => $data['year'],
-            'data_summary'      => $api_data_summary,
-            'data_diff'         => $api_data_diff,
-            'data_komposisi'    => $api_data_komposisi,
-            'data_tren_margin'  => $api_data_tren_margin
+            'bulan_prev'                    => monthnamelong($data['prev_month']),
+            'bulan_curr'                    => monthnamelong($data['month']),
+            'year_prev'                     => $data2['year_prev'],
+            'year_curr'                     => $data['year'],
+            'data_summary'                  => $api_data_summary,
+            'data_diff'                     => $api_data_diff,
+            'data_komposisi'                => $api_data_komposisi,
+            'data_tren_margin'              => $api_data_tren_margin,
+            'data_revenue_cabang'           => $api_data_revenue_cabang,
         );
 
         $this->response($data, REST::HTTP_OK);
