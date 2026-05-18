@@ -3108,7 +3108,6 @@
         return $ret;
     } /*}}}*/
 
-
     if (!function_exists('formatKeJT'))
     {
         function formatKeJT ($input)
@@ -3134,6 +3133,51 @@
             }
             else
                 return "Rp. " . $labelMinus . number_format($absNilai, 0, ',', '.');
+        }
+    }
+
+    function formatKeJTRound ($input)
+    {
+        $nilai = (float) filter_var($input, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
+
+        if ($nilai == 0) return "0";
+
+        // Semua angka dibagi 1.000.000 agar skalanya sama (satuan Juta)
+        $hasil = $nilai / 1000000;
+
+        // Kembalikan angka dengan 2 desimal titik (untuk JS)
+        return number_format($hasil, 2, '.', '');
+    }
+
+    function formatKeJTRound_olds ($input)
+    {
+        // 1. Ambil angka murni, biarkan tanda minus (-) dan titik desimal tetap ada
+        $nilai = (float) filter_var($input, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION | FILTER_FLAG_ALLOW_THOUSAND);
+
+        if ($nilai == 0) return "0";
+
+        // 2. Tentukan apakah dia negatif
+        $labelMinus = $nilai < 0 ? "-" : "";
+
+        // 3. Gunakan nilai absolut (positif) untuk menentukan skala (M, Jt, atau ribuan)
+        $absNilai = abs($nilai);
+
+        if ($absNilai >= 1000000000)
+        {
+            // Skala Miliar
+            $hasil = $absNilai / 1000000000;
+            return $labelMinus . number_format($hasil, 2, '.', '');
+        }
+        elseif ($absNilai >= 1000000)
+        {
+            // Skala Juta
+            $hasil = $absNilai / 1000000;
+            return $labelMinus . number_format($hasil, 2, '.', '');
+        }
+        else
+        {
+            // Skala Ribuan / Satuan
+            return $labelMinus . number_format($absNilai, 0, '.', '');
         }
     }
 ?>

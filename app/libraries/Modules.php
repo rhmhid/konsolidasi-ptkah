@@ -104,6 +104,21 @@ class Modules
         return $rs;
     } /*}}}*/
 
+    public static function data_cabang_executive () /*{{{*/
+    {
+        // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
+
+        $sql = "SELECT 'PT. KAH Konsolidasi' AS branch_name, -1 AS bid, 'ALL' AS branch_code, 't' AS is_primary, 1 AS idx, NULL AS kdbid
+                UNION ALL
+                SELECT 'All Summary ( PT. KAH )' AS branch_name, -2 AS bid, 'ALL_KAH' AS branch_code, 't' AS is_primary, 2 AS idx, NULL AS kdbid
+                UNION ALL
+                    SELECT 'All Summary ( PT. JKK )' AS branch_name, -3 AS bid, 'ALL_JKK' AS branch_code, 't' AS is_primary, 3 AS idx, NULL AS kdbid";
+
+        $rs = self::$db->Execute($sql);
+
+        return $rs;
+    } /*}}}*/
+
     public static function data_cabang () /*{{{*/
     {
         // if (Auth::user()->pid == SUPER_USER) self::$db->debug = true;
