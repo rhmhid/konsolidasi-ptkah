@@ -20,7 +20,7 @@ class CashFlow extends BaseController
         );
 
         $data_cabang = Modules::data_cabang_all('', '', 'f');
-        $cmb_cabang = $data_cabang->GetMenu2('', $data['bid'], false, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Cabang..."');
+        $cmb_cabang = $data_cabang->GetMenu2('', '', true, false, 0, 'class="form-select form-select-sm rounded-1 w-100" id="s-Bid" data-control="select2" data-allow-clear="true" data-placeholder="Pilih Cabang..."');
 
         return view('dashboard.cashflow', compact(
             'cmb_cabang'
