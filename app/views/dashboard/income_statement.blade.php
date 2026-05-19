@@ -151,7 +151,7 @@
                         <div class="d-flex flex-column flex-grow-1">
                             <h2 class="pt-2 text-dark">
                                 <span class="las la-chart-bar text-dark me-4"></span>
-                                Performance Dashboard (Income Statement)
+                                Performance Dashboard <span class="text-muted fw-normal ms-2 fs-5">| Income Statement</span>
                             </h2>
                         </div>
                     </div>
@@ -180,7 +180,7 @@
 
                         <div class="col-lg-3 d-flex align-items-end">
                             <button type="button" class="btn btn-sm btn-dark rounded-1 w-100" id="btnView">
-                                <i class="la la-search"></i> Lihat Report
+                                <i class="la la-search"></i> Analisis Data
                             </button>
                         </div>
                     </div>
@@ -190,12 +190,12 @@
                             <label class="text-dark fw-bold fs-7 pb-2">&nbsp;</label>
                             <label>
                                 <input type="radio" class="btn-check" name="byData" value="yoy" checked />
-                                <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fw-bold px-4">Month ( <i>YoY</i> )</span>
+                                <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fw-bold px-4">Kinerja Bulanan ( <i>YoY</i> )</span>
                             </label>
 
                             <label>
                                 <input type="radio" class="btn-check" name="byData" value="ytd" />
-                                <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fw-bold px-4">YTD ( <i>Year to Date</i> )</span>
+                                <span class="btn btn-sm btn-color-muted btn-active btn-active-dark fw-bold px-4">Kinerja Akumulatif ( <i>YTD</i> )</span>
                             </label>
                         </div>
 
@@ -203,7 +203,7 @@
                             <div class="form-check form-switch form-check-custom form-check-solid form-check-dark cursor-pointer">
                                 <input class="form-check-input cursor-pointer" type="checkbox" name="unit_bisnis" id="unit-bisnis" value="t" />
                                 <label class="form-check-label text-dark fw-bold fs-7 cursor-pointer" for="unit-bisnis">
-                                    Tampilkan Unit Bisnis
+                                    Konsolidasi Unit Bisnis
                                 </label>
                             </div>
                         </div>
@@ -211,21 +211,21 @@
                 </form>
             </div>
 
-            <div id="page-laba-rugi" class="border-top" style="display: none; padding: 20px 24px;">
+            <div id="page-laba-rugi" class="border-top" style="padding: 20px 24px;">
                 <div class="kpi-row">
                     <div class="kpi-card" style="--accent-color:#0FA896">
                         <div class="kpi-label">Total Pendapatan</div>
-                        <div class="kpi-value" id="val-pendapatan">0</div>
+                        <div class="kpi-value" id="val-pendapatan">Rp. 0</div>
                     </div>
 
                     <div class="kpi-card" style="--accent-color:#3B9B5A">
                         <div class="kpi-label">Laba Bersih</div>
-                        <div class="kpi-value" id="val-laba-bersih">0</div>
+                        <div class="kpi-value" id="val-laba-bersih">Rp. 0</div>
                     </div>
 
                     <div class="kpi-card" style="--accent-color:#E8A820">
                         <div class="kpi-label">EBITDA</div>
-                        <div class="kpi-value" id="val-ebitda">0</div>
+                        <div class="kpi-value" id="val-ebitda">Rp. 0</div>
                     </div>
 
                     <div class="kpi-card" style="--accent-color:#E24B4A">
@@ -234,7 +234,7 @@
                     </div>
                 </div>
 
-                <div class="full-card card m-0 per-non-cabang" style="display: none;">
+                <div class="full-card card m-0 per-non-cabang">
                     <div class="section-header">
                         <div class="section-title">Waterfall Laba Rugi</div>
                     </div>
@@ -258,7 +258,7 @@
                     </div>
                 </div>
 
-                <div class="two-col mt-4 per-non-cabang" style="display: none;">
+                <div class="two-col mt-4 per-non-cabang">
                     <div class="card m-0">
                         <div class="section-header">
                             <div class="section-title">Komposisi Pendapatan</div>
@@ -287,7 +287,7 @@
                     </div>
                 </div>
 
-                <div class="row g-4 per-cabang" style="display: none;">
+                <div class="row g-4 per-cabang">
                     <div class="col-lg-7">
                         <div class="card h-100 m-0">
                             <div class="section-header d-flex justify-content-between align-items-start">
@@ -444,7 +444,7 @@
         let $btn = $(this)
         let originalText = $btn.html()
 
-        $btn.html('<i class="las la-spinner la-spin"></i> Memuat Data...').prop('disabled', true)
+        $btn.html('<i class="las la-spinner la-spin"></i> Memuat...').prop('disabled', true)
 
         $.ajax({
             url         : "{{ route('api.dashboard.income_statement.data') }}",
@@ -988,8 +988,9 @@
                     backgroundColor: 'rgba(15,168,150,.08)',
                     fill: true,
                     tension: .35,
-                    pointRadius:3,
-                    borderWidth:2
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0FA896'
                 },
                 {
                     label: 'Net Margin',
@@ -998,14 +999,25 @@
                     backgroundColor: 'rgba(232,168,32,.06)',
                     fill: true,
                     tension: .35,
-                    pointRadius:3,
-                    borderWidth:2,
-                    borderDash:[5,3]
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    borderDash: [5,3],
+                    pointBackgroundColor: '#E8A820'
                 }
             ]
         },
         options:{
             ...defs,
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.raw + '%'
+                    }
+                }
+            },
             scales: {
                 x: {
                     grid: { display: false },
@@ -1014,7 +1026,7 @@
                 y: {
                     grid: { display: false },
                     border: { display: false },
-                    ticks: { color: '#6A7A88', font: { size: 10 } }
+                    ticks: { color: '#6A7A88', font: { size: 10 }, callback: v => v + '%' }
                 }
             }
         }
