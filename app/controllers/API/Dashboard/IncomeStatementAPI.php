@@ -483,17 +483,18 @@ class IncomeStatementAPI extends BaseAPIController
 
         // Siapkan palet warna (Bisa disesuaikan dengan tema aplikasi)
         $color_palette = [
-            '#0FA896', // 1. Deep Teal (Core)
-            '#E8A820', // 2. Warm Gold (Core)
-            '#0B1A2E', // 3. Midnight Navy (Core)
-            '#3B9B5A', // 4. Forest Green
-            '#E24B4A', // 5. Coral Red
-            '#4E79A7', // 6. Steel Blue (Bikin adem, kontras ama navy)
-            '#B07AA1', // 7. Elegant Plum/Purple (Mewah, bagus buat pie chart)
-            '#966B56', // 8. Earth Brown/Taupe
-            '#F28E2B', // 9. Bright Orange (Biar pop-out tapi gak norak)
-            '#8899AA'  // 10. Slate Gray (Netral untuk penutup)
+            '#1D4ED8', // 1. Royal Blue (Paling dominan/terbesar)
+            '#0B663F', // 2. Dark Green
+            '#8B4500', // 3. Ochre/Brown
+            '#5B21B6', // 4. Indigo/Medium Purple
+            '#0A6B66', // 5. Deep Teal/Muted Cyan
+            '#C2410C', // 6. Rust Orange
+            '#6D28D9', // 7. Vivid Violet/Purple (Potongan besar nomor 2)
+            '#0D9488', // 8. Deep Turquoise/Toska Tua (Potongan paling tipis di atas)
+            '#E8A820', // 9. Warm Gold (Cadangan pelengkap untuk entitas 9)
+            '#8899AA'  // 10. Slate Gray (Cadangan netral untuk entitas 10)
         ];
+
         $color_idx = 0;
 
         foreach ($data_cabang as $bc => $cabang)
