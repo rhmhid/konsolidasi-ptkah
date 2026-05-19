@@ -562,7 +562,7 @@ class IncomeStatementAPI extends BaseAPIController
         ];
         // E: Revenue Bersih Per Cabang
 
-        $data = array(
+        $dataJSON = array(
             'bulan_prev'                    => monthnamelong($data['prev_month']),
             'bulan_curr'                    => monthnamelong($data['month']),
             'year_prev'                     => $data2['year_prev'],
@@ -574,7 +574,7 @@ class IncomeStatementAPI extends BaseAPIController
             'data_revenue_cabang'           => $api_data_revenue_cabang,
         );
 
-        $this->response($data, REST::HTTP_OK);
+        $this->response($dataJSON, REST::HTTP_OK);
     } /*}}}*/
 }
 ?>
