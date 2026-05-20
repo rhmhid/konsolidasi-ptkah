@@ -30,22 +30,17 @@ class BukuBesarMdl extends DB
 
         if ($is_posted) $addsql .= " AND a.is_posted = '$is_posted'";
 
-        $rs_coa = DB::GetOne("SELECT string_agg(coacode, ';' ORDER BY coacode) FROM m_coa WHERE coaid IN (?, ?)", [$coaid_from, $coaid_to]);
-
-        $data_coa = explodeData(';', $rs_coa);
-        $coacode_from = $data_coa[0];
-        $coacode_to = $data_coa[1];
-
-        if ($coaid_from != $coaid_to)
-        {   
-            $addsql .= " AND c.coacode BETWEEN '$coacode_from' AND '$coacode_to'";
-            $sqlOpbal .= " AND x.coacode BETWEEN '$coacode_from' AND '$coacode_to'";
-        }
-        else
-        {
-            $addsql .= " AND c.coacode = '$coacode_from'";
-            $sqlOpbal .= " AND x.coacode = '$coacode_to'";
-        }
+        $sql = "SELECT br.branch_code, string_agg(mc.coacode, ';' ORDER BY mc.coacode)
+                FROM branch br
+                LEFT JOIN m_coa_branch mcb ON br.bid = mcb.bid
+                LEFT JOIN (
+                    SELECT coaid, coacode
+                    FROM m_coa
+                    WHERE coaid IN (?, ?)
+                ) mc ON mcb.coaid = mc.coaid
+                GROUP BY br.is_primary, br.bid, br.branch_code
+                ORDER BY br.is_primary DESC, br.bid";
+        $rs_coa = DB::GetOne($sql, [$coaid_from, $coaid_to]);
 
         /* B: Create Temp Table */
         DB::Execute("DROP TABLE IF EXISTS temp_ledger");
@@ -75,6 +70,21 @@ class BukuBesarMdl extends DB
         /* B: Get Data PT. JKK */
         if ($optionsCabang['conn_jkk'])
         {
+            $data_coa = explodeData(';', $rs_coa);
+            $coacode_from = $data_coa[0];
+            $coacode_to = $data_coa[1];
+
+            if ($coaid_from != $coaid_to)
+            {   
+                $addsql .= " AND c.coacode BETWEEN '$coacode_from' AND '$coacode_to'";
+                $sqlOpbal .= " AND x.coacode BETWEEN '$coacode_from' AND '$coacode_to'";
+            }
+            else
+            {
+                $addsql .= " AND c.coacode = '$coacode_from'";
+                $sqlOpbal .= " AND x.coacode = '$coacode_to'";
+            }
+
             if ($with_bb == 't')
             {
                 $opbal = "SELECT x.coaid
@@ -101,11 +111,6 @@ class BukuBesarMdl extends DB
                         , format_glcode(b.gldate, d.doc_code, b.gldoc, b.glid) AS doc_no
                         , a.reff_code, d.journal_name, a.notes
                         , (g.pcccode || ' - ' || g.pccname) AS cost_center
-
-                        -- a.gldid, b.glid, a.coaid
-                        -- , c.default_debet
-                        -- , (CASE WHEN b.jtid IN (27) THEN h.bank_nama ELSE f.nama_supp END) nama_supp
-                        -- , g.pccid, ob.opbal
                     FROM general_ledger_d a
                     INNER JOIN general_ledger b ON b.glid = a.glid
                     INNER JOIN m_coa c ON c.coaid = a.coaid
@@ -119,8 +124,7 @@ class BukuBesarMdl extends DB
                     LEFT JOIN m_bank h ON b.other_reff_id = h.bank_id
                     INNER JOIN branch br ON br.bid = b.bid
                     WHERE DATE(b.gldate) BETWEEN DATE('$sdate') AND DATE('$edate')
-                        $addsql
-                    ";
+                        $addsql";
             $rs = DB2::Execute($sql);
 
             while (!$rs->EOF)
@@ -139,15 +143,59 @@ class BukuBesarMdl extends DB
                     'gltype'        => $rs->fields['journal_name'],
                     'glnotes'       => $rs->fields['notes'],
                     'cost_center'   => $rs->fields['cost_center'],
-
-                    // 'openingbal'    => floatval($rs->fields['openingbal']),
-                    // 'closingbal'    => floatval($rs->fields['closingbal']),
                 );
 
                 $rs->MoveNext();
             }
         }
         /* E: Get Data PT. JKK */
+
+        /* B: Insert To Temp Table */
+        $ok = true;
+        if (!empty($record))
+        {
+            foreach ($record as $idx => $row)
+            {
+                $data = array(
+                    'branch_code'   => $row['branch_code'],
+                    'gldate'        => $row['gldate'],
+                    'coacode'       => $row['coacode'],
+                    'coaname'       => $row['coaname'],
+                    'gldesc'        => $row['gldesc'],
+                    'gluser'        => $row['nama_lengkap'],
+                    'debet'         => floatval($row['debet']),
+                    'credit'        => floatval($row['credit']),
+                    'gldoc'         => $row['doc_no'],
+                    'reff_code'     => $row['reff_code'],
+                    'gltype'        => $row['journal_name'],
+                    'glnotes'       => $row['notes'],
+                    'cost_center'   => $row['cost_center'],
+                );
+
+                $sqli = "SELECT * FROM temp_ledger WHERE 1 = 2";
+                $rsi = DB::Execute($sqli);
+                $sqli = DB::InsertSQL($rsi, $data);
+                if ($ok) $ok = DB::Execute($sqli);
+            }
+        }
+        /* E: Insert To Temp Table */
+
+        if ($status_cabang) $addsql2 .= " AND br.is_aktif = '$status_cabang'";
+
+        $addsql2 .= $optionsCabang['query'];
+
+        /* B: Showing Data From Temp Table */
+        $sql = "SELECT tmp.*, br.bid, br.branch_name
+                FROM temp_ledger tmp
+                INNER JOIN branch br ON br.branch_code = tmp.branch_code
+                WHERE 1 = 1 $addsql2
+                ORDER BY tmp.gldate, tmp.gldoc";
+
+        if ($istot == false) $sqlx = $sql.$lp;
+        else $sqlx = $sql;
+
+        $rs = DB::Execute($sqlx);
+        /* E: Showing Data From Temp Table */
 
         return $rs;
     } /*}}}*/
