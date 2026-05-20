@@ -467,11 +467,11 @@ class IncomeStatementAPI extends BaseAPIController
         // E: Data Komposisi
 
         // B: Data Tren Margin
-        $gross_margin_yoy_prev = $laba_kotor_yoy_month_curr == 0 ? 0 : ($laba_kotor_yoy_month_curr / $tot_income_yoy_month_curr) * 100;
-        $gross_margin_yoy_curr = $laba_kotor_yoy_curr == 0 ? 0 : ($laba_kotor_yoy_curr / $tot_income_yoy_curr) * 100;
+        $gross_margin_yoy_prev = $laba_kotor_yoy_month_curr == 0 || $tot_income_yoy_month_curr == 0 ? 0 : ($laba_kotor_yoy_month_curr / $tot_income_yoy_month_curr) * 100;
+        $gross_margin_yoy_curr = $laba_kotor_yoy_curr == 0 || $tot_income_yoy_curr == 0 ? 0 : ($laba_kotor_yoy_curr / $tot_income_yoy_curr) * 100;
 
-        $net_margin_yoy_prev = $laba_bersih_yoy_month_curr == 0 ? 0 : ($laba_bersih_yoy_month_curr / $tot_income_yoy_month_curr) * 100;
-        $net_margin_yoy_curr = $laba_bersih_yoy_curr == 0 ? 0 : ($laba_bersih_yoy_curr / $tot_income_yoy_curr) * 100;
+        $net_margin_yoy_prev = $laba_bersih_yoy_month_curr == 0 || $tot_income_yoy_month_curr == 0 ? 0 : ($laba_bersih_yoy_month_curr / $tot_income_yoy_month_curr) * 100;
+        $net_margin_yoy_curr = $laba_bersih_yoy_curr == 0 || $tot_income_yoy_curr == 0 ? 0 : ($laba_bersih_yoy_curr / $tot_income_yoy_curr) * 100;
 
         $api_data_tren_margin = [
             'gross_margin_prev' => round($gross_margin_yoy_prev, 2),
