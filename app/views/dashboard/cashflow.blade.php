@@ -134,7 +134,6 @@
 
 @section('content')
 <div class="dashboard-container">
-
     <div class="d-flex flex-column flex-lg-row mb-6">
         <div class="flex-lg-row-fluid">
             <div class="card card-custom-border rounded-2 p-0 shadow-sm">
@@ -147,13 +146,16 @@
                                 <span class="text-muted fw-normal ms-2 fs-3">| Dashboard Eksekutif</span>
                             </h1>
                         </div>
+
                         <div class="d-flex align-items-center gap-2 my-1">
                             <span class="badge badge-premium-status badge-premium-primary">
                                 <i class="las la-hospital text-dark me-1"></i> <span class="cabang-span">Cabang Name</span>
                             </span>
+
                             <span class="badge badge-premium-status badge-premium-success">
                                 <i class="las la-calendar text-success me-1"></i> <span class="periode-span">Periode</span>
                             </span>
+
                             <span class="badge badge-premium-status badge-premium-warning">
                                 <i class="las la-file-alt text-warning me-1"></i> Metode Langsung
                             </span>
@@ -166,18 +168,21 @@
                                 <label class="text-dark fw-bold fs-7 pb-2">Cabang Konsolidasi</label>
                                 {!! $cmb_cabang !!}
                             </div>
+
                             <div class="col-lg-3">
                                 <label class="text-dark fw-bold fs-7 pb-2">Periode Bulan</label>
                                 <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2" required>
                                     {!! get_combo_option_month_long(date('m')) !!}
                                 </select>
                             </div>
+
                             <div class="col-lg-2">
                                 <label class="text-dark fw-bold fs-7 pb-2">Tahun</label>
                                 <select class="form-select form-select-sm rounded-1 w-100" id="s-Year" data-control="select2" required>
                                     {!! get_combo_option_year(date('Y'), 2024, date('Y')+1) !!}
                                 </select>
                             </div>
+
                             <div class="col-lg-3">
                                 <button type="button" class="btn btn-sm btn-dark rounded-1 w-100 fw-bold py-3" id="btnView">
                                     <i class="la la-search"></i> Analisis Data
@@ -195,7 +200,7 @@
             <div class="card card-custom-border accent-operasi rounded-2 p-5 shadow-sm">
                 <span class="text-muted fw-bold fs-8 text-uppercase tracking-wide">Arus Kas Operasional</span>
                 <div class="fs-1 fw-bolder text-dark my-1 arus-kas-operasional">Rp. 0</div>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-gray-100">
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
                     <span class="badge badge-soft-success px-2 py-1 fs-8">Positif ✓</span>
                     <span class="text-gray-500 fs-7">Inflow: <strong class="text-dark inflow-operasional">Rp. 0</strong></span>
                 </div>
@@ -206,7 +211,7 @@
             <div class="card card-custom-border accent-investasi rounded-2 p-5 shadow-sm">
                 <span class="text-muted fw-bold fs-8 text-uppercase tracking-wide">Arus Kas Investasi</span>
                 <div class="fs-1 fw-bolder text-dark my-1 arus-kas-investasi">Rp. 0</div>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-gray-100">
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
                     <span class="badge badge-soft-warning px-2 py-1 fs-8">Tidak Ada</span>
                     <span class="text-gray-400 fs-7">Pengeluaran Aset</span>
                 </div>
@@ -217,7 +222,7 @@
             <div class="card card-custom-border accent-pendanaan rounded-2 p-5 shadow-sm">
                 <span class="text-muted fw-bold fs-8 text-uppercase tracking-wide">Arus Kas Pendanaan</span>
                 <div class="fs-1 fw-bolder text-dark my-1 arus-kas-pendanaan">Rp. 0</div>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-gray-100">
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
                     <span class="badge badge-soft-blue px-2 py-1 fs-8">Tidak Ada</span>
                     <span class="text-gray-400 fs-7">Bank & Provision</span>
                 </div>
@@ -228,7 +233,7 @@
             <div class="card card-custom-border accent-saldo rounded-2 p-5 shadow-sm">
                 <span class="text-muted fw-bold fs-8 text-uppercase tracking-wide">Saldo Kas Akhir</span>
                 <div class="fs-1 fw-bolder text-dark my-1 saldo-akhir">Rp. 0</div>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-gray-100">
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
                     <span class="badge badge-soft-purple px-2 py-1 fs-8 saldo-diff">▲ Rp. 0</span>
                     <span class="text-gray-500 fs-7">Awal: <strong class="text-dark saldo-awal">Rp. 0</strong></span>
                 </div>
@@ -237,7 +242,7 @@
     </div>
 
     <div class="row g-5 mb-5">
-        <div class="col-xl-7">
+        <div class="col-md-7">
             <div class="card card-custom-border rounded-2 p-0 shadow-sm h-100">
                 <div class="d-flex justify-content-between align-items-center border-bottom border-gray-200 p-5 px-6 bc-header">
                     <h3 class="text-dark fw-bolder fs-4 m-0">Waterfall Arus Kas — <span class="cabang-span">Cabang Name</span></h3>
@@ -255,7 +260,7 @@
                             <tbody>
                                 <tr>
                                     <td class="text-gray-700 fw-bold fs-6 w-200px">Inflow Operasional</td>
-                                    <td class="w-250px">
+                                    <td class="w-200px">
                                         <div class="wf-bar-container w-100">
                                             <div class="wf-bar-fill wf-fill-success inflow-operasional" style="width: 80%;">Rp. 0</div>
                                         </div>
@@ -290,7 +295,8 @@
                                 <tr>
                                     <td class="text-gray-700 fw-bold fs-6">Net Kas Pendanaan</td>
                                     <td>
-                                        <span class="badge badge-light-secondary px-3 py-1 fw-bold arus-kas-pendanaan">Rp. 0</span></td>
+                                        <span class="badge badge-light-secondary px-3 py-1 fw-bold arus-kas-pendanaan">Rp. 0</span>
+                                    </td>
                                     <td class="text-end text-dark fs-6 arus-kas-pendanaan-full">Rp. 0</td>
                                 </tr>
                                 <tr class="border-top border-gray-200">
@@ -327,15 +333,17 @@
             </div>
         </div>
 
-        <div class="col-xl-5">
+        <div class="col-md-5">
             <div class="card card-custom-border rounded-2 p-0 shadow-sm h-100 d-flex flex-column justify-content-between">
                 <div>
                     <div class="d-flex justify-content-between align-items-center border-bottom border-gray-200 p-5 px-6 bc-header">
                         <h3 class="text-dark fw-bolder fs-5 m-0">Saldo Kas <span class="cabang-span">Cabang Name</span></h3>
                     </div>
-                    
+
                     <div class="p-6 pb-0">
-                        <div id="chart_saldo_kartini" style="height: 240px;"></div>
+                        <div style="position: relative; height: 240px; width: 100%;">
+                            <canvas id="lrCashflowChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -362,7 +370,6 @@
             </div>
         </div>
     </div>
-
 </div>
 @endsection
 
@@ -401,143 +408,157 @@
         $btn.html('<i class="las la-spinner la-spin"></i> Memuat...').prop('disabled', true)
 
         $.ajax({
-            url         : "{{ route('api.dashboard.cashflow.data') }}",
-            type        : "GET",
-            data        : {
-                            bid: $sBid,
-                            month: $sMonth,
-                            year: $sYear
-                        },
-            dataType    : "json",
+            url: "{{ route('api.dashboard.cashflow.data') }}",
+            type: "GET",
+            data: {
+                bid: $sBid,
+                month: $sMonth,
+                year: $sYear
+            },
+            dataType: "json",
+            success: function (response)
+                    {
+                        $('.cabang-span').html(response.branch.branch_name)
 
-            success     : function (response)
-                        {
-                            console.log(JSON.stringify(response))
-                            console.log('branch_name : ' + response.branch.branch_name)
-                            $('.cabang-span').html(response.branch.branch_name)
+                        let $periodeCF = response.bulan + ' ' + response.year
+                        $('.periode-span').html($periodeCF)
 
-                            let $periodeCF = response.bulan + ' ' + response.year
+                        let $DataCashFlow = response.data_cashflow
+                        let $DataSaldo = response.data_saldo
 
-                            $('.periode-span').html($periodeCF)
+                        $('.arus-kas-operasional').html(formatKeJT($DataCashFlow.arus_kas_operasional))
+                        $('.arus-kas-operasional-full').html('Rp. ' + MoneyFormat($DataCashFlow.arus_kas_operasional))
+                        
+                        $('.inflow-operasional').html(formatKeJT($DataCashFlow.inflow_operasional))
+                        $('.inflow-operasional-full').html('Rp. ' + MoneyFormat($DataCashFlow.inflow_operasional))
+                        
+                        $('.outflow-operasional').html(formatKeJT($DataCashFlow.outflow_operasional))
+                        $('.outflow-operasional-full').html('Rp. ' + MoneyFormat($DataCashFlow.outflow_operasional))
 
-                            let $DataCashFlow = response.data_cashflow
+                        $('.arus-kas-investasi').html(formatKeJT($DataCashFlow.arus_kas_investasi))
+                        $('.arus-kas-investasi-full').html('Rp. ' + MoneyFormat($DataCashFlow.arus_kas_investasi))
+                        
+                        $('.arus-kas-pendanaan').html(formatKeJT($DataCashFlow.arus_kas_pendanaan))
+                        $('.arus-kas-pendanaan-full').html('Rp. ' + MoneyFormat($DataCashFlow.arus_kas_pendanaan))
 
-                            $('.arus-kas-operasional').html(formatKeJT($DataCashFlow.arus_kas_operasional))
+                        $('.saldo-awal').html(formatKeJT($DataSaldo.awal))
+                        $('.saldo-awal-full').html('Rp. ' + MoneyFormat($DataSaldo.awal))
+                        
+                        $('.saldo-akhir').html(formatKeJT($DataSaldo.akhir))
+                        $('.saldo-akhir-full').html('Rp. ' + MoneyFormat($DataSaldo.akhir))
+                        
+                        $('.saldo-diff').html(formatKeJT($DataSaldo.diff))
+                        $('.saldo-diff-full').html('Rp. ' + MoneyFormat($DataSaldo.diff))
 
-                            $('.arus-kas-operasional-full').html('Rp. ' + MoneyFormat($DataCashFlow.arus_kas_operasional))
+                        let $chartDataCabang = [
+                            $DataSaldo.awal,
+                            $DataCashFlow.arus_kas_operasional,
+                            $DataCashFlow.arus_kas_investasi,
+                            $DataCashFlow.arus_kas_pendanaan,
+                            $DataSaldo.akhir
+                        ]
 
-                            $('.inflow-operasional').html(formatKeJT($DataCashFlow.inflow_operasional))
+                        let $chartColors = [
+                            '#3b82f6',
+                            $DataCashFlow.arus_kas_operasional >= 0 ? '#10b981' : '#ef4444',
+                            $DataCashFlow.arus_kas_investasi >= 0 ? '#10b981' : '#ef4444',
+                            $DataCashFlow.arus_kas_pendanaan >= 0 ? '#10b981' : '#ef4444',
+                            '#8b5cf6' 
+                        ]
 
-                            $('.inflow-operasional-full').html('Rp. ' + MoneyFormat($DataCashFlow.inflow_operasional))
-
-                            $('.outflow-operasional').html(formatKeJT($DataCashFlow.outflow_operasional))
-
-                            $('.outflow-operasional-full').html('Rp. ' + MoneyFormat($DataCashFlow.outflow_operasional))
-
-                            $('.arus-kas-investasi').html(formatKeJT($DataCashFlow.arus_kas_investasi))
-
-                            $('.arus-kas-investasi-full').html('Rp. ' + MoneyFormat($DataCashFlow.arus_kas_investasi))
-
-                            $('.arus-kas-pendanaan').html(formatKeJT($DataCashFlow.arus_kas_pendanaan))
-
-                            $('.arus-kas-pendanaan-full').html('Rp. ' + MoneyFormat($DataCashFlow.arus_kas_pendanaan))
-
-                            let $DataSaldo = response.data_saldo
-
-                            $('.saldo-awal').html(formatKeJT($DataSaldo.awal))
-
-                            $('.saldo-awal-full').html('Rp. ' + MoneyFormat($DataSaldo.awal))
-
-                            $('.saldo-akhir').html(formatKeJT($DataSaldo.akhir))
-
-                            $('.saldo-akhir-full').html('Rp. ' + MoneyFormat($DataSaldo.akhir))
-
-                            $('.saldo-diff').html(formatKeJT($DataSaldo.diff))
-
-                            $('.saldo-diff-full').html('Rp. ' + MoneyFormat($DataSaldo.diff))
-                        },
-
-            error       : function (xhr)
-                        {
-                            swalShowMessage('Error!', "Gagal mengambil data dari server.", 'error')
-                        },
-
-            complete    : function ()
-                        {
-                            $btn.html(originalText).prop('disabled', false)
-                        }
+                        lrCashflowChartInstance.data.datasets[0].data = $chartDataCabang
+                        lrCashflowChartInstance.data.datasets[0].backgroundColor = $chartColors
+                        lrCashflowChartInstance.update()
+                    },
+            error: function (xhr)
+                {
+                    swalShowMessage('Error!', "Gagal mengambil data dari server.", 'error')
+                },
+            complete: function ()
+                {
+                    $btn.html(originalText).prop('disabled', false)
+                }
         })
     })
 
-    // var elementChart = document.getElementById('chart_saldo_kartini')
-    // if (elementChart) {
-    //     elementChart.innerHTML = ''
-        
-    //     var options = {
-    //         series: [{
-    //             name: 'Nilai Kas',
-    //             data: [46.47, 12.44, 0, 0, 58.90]
-    //         }],
-    //         chart: {
-    //             type: 'bar',
-    //             height: 230,
-    //             toolbar: { show: false },
-    //             fontFamily: 'Inter, Poppins, sans-serif'
-    //         },
-    //         colors: [
-    //             function ({ value, seriesIndex, dataPointIndex, w }) {
-    //                 if (dataPointIndex === 0) return '#64748b'
-    //                 if (dataPointIndex === 4) return '#6d28d9'
-    //                 if (value === 0) return '#e2e8f0'
-    //                 return '#0d9488'
-    //             }
-    //         ],
-    //         plotOptions: {
-    //             bar: {
-    //                 columnWidth: '50%',
-    //                 distributed: true,
-    //                 borderRadius: 3
-    //             }
-    //         },
-    //         dataLabels: { enabled: false },
-    //         legend: { show: false },
-    //         xaxis: {
-    //             categories: ['Saldo Awal', 'Net Operasi', 'Net Investasi', 'Net Pendanaan', 'Saldo Akhir'],
-    //             labels: {
-    //                 rotate: 0,
-    //                 rotateAlways: false,
-    //                 style: { colors: '#64748b', fontSize: '10px', fontWeight: 500 }
-    //             },
-    //             axisBorder: { show: false },
-    //             axisTicks: { show: false }
-    //         },
-    //         yaxis: {
-    //             min: 0,
-    //             max: 60,
-    //             tickAmount: 6,
-    //             labels: {
-    //                 style: { colors: '#64748b', fontSize: '10px' },
-    //                 formatter: function (val) {
-    //                     return val + 'M'
-    //                 }
-    //             }
-    //         },
-    //         grid: {
-    //             borderColor: '#f1f5f9',
-    //             strokeDashArray: 4,
-    //             yaxis: { lines: { show: true } }
-    //         },
-    //         tooltip: {
-    //             y: {
-    //                 formatter: function (val) {
-    //                     return "Rp " + val + " Miliar"
-    //                 }
-    //             }
-    //         }
-    //     }
+    let lrCashflowChartInstance = new Chart(document.getElementById('lrCashflowChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Saldo Awal', 'Net Operasi', 'Net Investasi', 'Net Pendanaan', 'Saldo Akhir'],
+            datasets: [{
+                label: 'Arus Kas',
+                data: [],
+                backgroundColor: [],
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 35
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: { 
+                    top: 25 
+                }
+            },
+            plugins: {
+                legend: { 
+                    display: false 
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context)
+                            {
+                                let rawValue = context.raw || 0
 
-    //     var chart = new ApexCharts(elementChart, options)
-    //     chart.render()
-    // }
+                                return ' ' + formatKeJT(rawValue)
+                            }
+                    }
+                },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    color: '#64748b',
+                    font: { 
+                        size: 9, 
+                        weight: '600' 
+                    },
+                    formatter: function (value)
+                        {
+                            return formatKeJT(value)
+                        }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { 
+                        display: false 
+                    },
+                    ticks: { 
+                        color: '#64748b', 
+                        font: { size: 9 },
+                        maxRotation: 0,
+                        minRotation: 0
+                    }
+                },
+                y: {
+                    grid: { 
+                        color: '#f1f5f9' 
+                    },
+                    beginAtZero: true,
+                    grace: '15%',
+                    ticks: {
+                        color: '#64748b',
+                        font: { size: 9 },
+                        callback: function (value)
+                            {
+                                return formatKeJT(value)
+                            }
+                    }
+                }
+            }
+        }
+    })
 </script>
 @endpush
