@@ -40,7 +40,7 @@ class DB3
         return self::$db3->RollbackTrans();
     }
 
-    public static function StartTrans ($errfn = 'ADOdb3_TransMonitor')
+    public static function StartTrans ($errfn = 'ADODB_TransMonitor')
     {
         return self::$db3->StartTrans($errfn);
     }
@@ -90,7 +90,7 @@ class DB3
         return $ret;
     }
 
-    public static function CacheExecute ($secs3cache, $sql = false, $inputarr = false)
+    public static function CacheExecute ($secs2cache, $sql = false, $inputarr = false)
     {
         $ret = self::$db3->CacheExecute($secs2cache, $sql, $inputarr);
 
@@ -126,7 +126,7 @@ class DB3
         return $ret;
     }
 
-    public static function CacheGetOne ($secs3cache, $sql = false, $inputarr = false)
+    public static function CacheGetOne ($secs2cache, $sql = false, $inputarr = false)
     {
         $ret = self::$db3->CacheGetOne($secs2cache, $sql, $inputarr);
 

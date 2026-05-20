@@ -40,7 +40,7 @@ class DB2
         return self::$db2->RollbackTrans();
     }
 
-    public static function StartTrans ($errfn = 'ADOdb2_TransMonitor')
+    public static function StartTrans ($errfn = 'ADODB_TransMonitor')
     {
         return self::$db2->StartTrans($errfn);
     }
