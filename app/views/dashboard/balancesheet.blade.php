@@ -92,10 +92,11 @@
                 <div class="d-flex justify-content-between flex-column border-bottom border-gray-300 p-4 px-6">
                     <div class="d-flex align-items-center">
                         <div class="d-flex flex-column flex-grow-1">
-                            <h2 class="pt-2 text-dark">
-                                <span class="las la-chart-bar text-primary me-4"></span>
-                                Neraca Konsolidasi
-                            </h2>
+                            <h1 class="pt-2 text-dark">
+                                <span class="las la-chart-pie text-dark me-3 fs-1"></span> 
+                                <span class="text-dark fs-1">Balance Sheet</span> 
+                                <span class="text-muted fw-normal ms-2 fs-3">| Dashboard Eksekutif</span>
+                            </h1>
                         </div>
                     </div>
                 </div>

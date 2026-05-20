@@ -149,10 +149,11 @@
                 <div class="d-flex justify-content-between flex-column border-bottom border-gray-300 p-4 px-6">
                     <div class="d-flex align-items-center">
                         <div class="d-flex flex-column flex-grow-1">
-                            <h2 class="pt-2 text-dark">
-                                <span class="las la-chart-bar text-dark me-4"></span>
-                                Performance Dashboard <span class="text-muted fw-normal ms-2 fs-5">| Income Statement</span>
-                            </h2>
+                            <h1 class="pt-2 text-dark">
+                                <span class="las la-chart-pie text-dark me-3 fs-1"></span> 
+                                <span class="text-dark fs-1">Income Statement</span> 
+                                <span class="text-muted fw-normal ms-2 fs-3">| Dashboard Eksekutif</span>
+                            </h1>
                         </div>
                     </div>
                 </div>
@@ -826,7 +827,7 @@
                                 for (let i = 0; i < combinedData.length; i++) {
                                     let item = combinedData[i]
 
-                                    htmlKeterangan += `<div class="d-flex justify-content-between align-items-center fs-7">
+                                    htmlKeterangan += `<div class="d-flex justify-content-between align-items-center fs-7 border-bottom border-gray-200">
                                                             <div class="d-flex align-items-center">
                                                                 <span class="legend-dot" style="background: ${item.color}; width: 12px; height: 12px; border-radius: 3px;"></span>
                                                                 <span class="text-muted fw-bold ms-2">${item.label}</span>
