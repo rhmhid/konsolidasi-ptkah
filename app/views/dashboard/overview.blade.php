@@ -1119,7 +1119,7 @@ canvas { display:block; }
   </div></div>
 
     <!-- Neraca Ringkas + Piutang + Rasio -->
-    <div class="g211 mb">
+    <div class="g31 mb">
       <!-- Aktiva vs Pasiva bars -->
       <div class="card">
         <div class="card-head">
@@ -1163,10 +1163,11 @@ canvas { display:block; }
                                 $nilai       = $item['amounts']['total']['amount_aktiva'];
                                 $nilaiformat = str_replace('Rp. ','',formatKeJT($item['amounts']['total']['amount_aktiva']));
                                 $persen      = round(($nilai / $total_aktiva) * 100 ,2);
+                                if($nilai  < 0 ) $persen = 0;
                             @endphp
 
                             <div class="g-row">
-                              <div class="g-label" style="width:120px;font-size:10.5px">{{ $nama_bersih }} </div>
+                              <div class="g-label" style="width:220px;font-size:10.5px">{{ $nama_bersih }} </div>
                               <div class="g-bar"><div class="g-fill" style="width:{{ $persen }}%; background:{{ $list_warna[$index] ?? '#cccccc' }}"></div></div>
                               <div class="g-val" style="width:65px;font-size:10px">{{ $nilaiformat }}</div>
                             </div>
@@ -1177,36 +1178,50 @@ canvas { display:block; }
             <div>
               <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--forest2);font-family:&#39;JetBrains Mono&#39;,monospace;margin-bottom:8px;border-left:2px solid var(--forest2);padding-left:6px">PASIVA</div>
               <div id="l-pasiva-bars">
-    <div class="g-row">
-      <div class="g-label" style="width:120px;font-size:10.5px">Hutang Usaha</div>
-      <div class="g-bar"><div class="g-fill" style="width:11.89517014366395%;background:#7A2020"></div></div>
-      <div class="g-val" style="width:65px;font-size:10px">14.61M</div>
-    </div>
-    <div class="g-row">
-      <div class="g-label" style="width:120px;font-size:10.5px">Masih Hrs Dibayar</div>
-      <div class="g-bar"><div class="g-fill" style="width:3.6346201493110577%;background:#6B4A00"></div></div>
-      <div class="g-val" style="width:65px;font-size:10px">4.46M</div>
-    </div>
-    <div class="g-row">
-      <div class="g-label" style="width:120px;font-size:10.5px">Hutang Lain-Lain</div>
-      <div class="g-bar"><div class="g-fill" style="width:9.168286605914298%;background:#4A1D60"></div></div>
-      <div class="g-val" style="width:65px;font-size:10px">11.26M</div>
-    </div>
-    <div class="g-row">
-      <div class="g-label" style="width:120px;font-size:10.5px">Hutang Pajak</div>
-      <div class="g-bar"><div class="g-fill" style="width:1.0327013958872275%;background:#1A3550"></div></div>
-      <div class="g-val" style="width:65px;font-size:10px">1.27M</div>
-    </div>
-    <div class="g-row">
-      <div class="g-label" style="width:120px;font-size:10.5px">Hutang Bank JP</div>
-      <div class="g-bar"><div class="g-fill" style="width:64.72917564998464%;background:#7A2020"></div></div>
-      <div class="g-val" style="width:65px;font-size:10px">79.49M</div>
-    </div>
-    <div class="g-row">
-      <div class="g-label" style="width:120px;font-size:10.5px">Modal+Laba+Reval</div>
-      <div class="g-bar"><div class="g-fill" style="width:75.36918699897348%;background:#2E7554"></div></div>
-      <div class="g-val" style="width:65px;font-size:10px">92.55M</div>
-    </div></div>
+
+
+              @php
+                  // Daftar warna berurutan (Index 0 = Top 1, Index 1 = Top 2, dst)
+                  $list_warna_pasiva = [
+                          '#0FA896', // 1. Teal (Utama/Lancar)
+                          '#E8A820', // 2. Orange (RAU/Perhatian)
+                          '#2B7CE9', // 3. Blue (Piutang)
+                          '#3B9B5A', // 4. Green (Persediaan)
+                          '#E24B4A', // 5. Red (Penting/Warning)
+                          '#8E44AD', // 6. Purple (Aktiva Tetap)
+                          '#2C3E50', // 7. Dark Blue (Lain-lain 1)
+                          '#F39C12', // 8. Amber (Lain-lain 2)
+                          '#BDC3C7',  // 9. Silver/Grey (Lainnya - Akumulasi)
+                          '#16A085', // 10. Dark Teal / Emerald (Lain-lain 3)
+                          '#E84393', // 11. Pink / Magenta (Kewajiban / Modal)
+                          '#D35400'  // 12. Dark Orange / Burnt Sienna (Biaya / Pengeluaran)
+                      ];
+
+                  $total_pasiva = $data_pos[1][14]['amounts']['total']['amount_aktiva'] ?? 1;
+
+              @endphp
+
+              @foreach($bar_pasiva as $index => $item)
+                  @php
+                      // Hapus &nbsp; dan spasi liar
+                      $nama_bersih = trim(str_replace('&nbsp;', '', strip_tags($item['nama_pos'])));
+                      $nilai = $item['amounts']['total']['amount_aktiva'];
+                      $nilaiformat = str_replace('Rp. ','',formatKeJT($item['amounts']['total']['amount_aktiva']));
+                      $persen_pasiva = round(($nilai / $total_pasiva) * 100 ,2);
+
+                      if($nilai  < 0 ) $persen_pasiva = 0;
+
+                  @endphp
+
+
+                        <div class="g-row">
+                          <div class="g-label" style="width:220px;font-size:10.5px">{{ $nama_bersih }}</div>
+                          <div class="g-bar"><div class="g-fill" style="width:{{ $persen_pasiva }}%;background:{{ $list_warna[$index] ?? '#cccccc' }}"></div></div>
+                          <div class="g-val" style="width:65px;font-size:10px">{{ $nilaiformat }}</div>
+                        </div>
+
+              @endforeach
+            </div>
             </div>
           </div>
         </div>
@@ -1242,6 +1257,8 @@ canvas { display:block; }
     </div></div>
         </div>
       </div>
+    </div>
+        <div class="g211 mb">
 
       <!-- Rasio -->
       <div class="card">
@@ -1254,30 +1271,19 @@ canvas { display:block; }
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;color:var(--ink3)">Current Ratio</span>
       <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:9.5px;color:var(--muted2);font-family:&#39;JetBrains Mono&#39;,monospace">≥1.5x</span>
-        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--forest2)">2.89x</span>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;color:var(--ink3)">Quick Ratio</span>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:9.5px;color:var(--muted2);font-family:&#39;JetBrains Mono&#39;,monospace">≥1.0x</span>
-        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--forest2)">0x</span>
+        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--forest2)">{!! $curr_ratio !!}</span>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;color:var(--ink3)">DAR</span>
       <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:9.5px;color:var(--muted2);font-family:&#39;JetBrains Mono&#39;,monospace">&lt;60%</span>
-        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--forest2)">54.6%</span>
+        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--forest2)">{!! $dta !!} %</span>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
       <span style="font-size:11px;color:var(--ink3)">DER</span>
       <div style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:9.5px;color:var(--muted2);font-family:&#39;JetBrains Mono&#39;,monospace">&lt;1.0x</span>
-        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--rust2)">1.20x</span>
-        <span class="pill dn">⚠</span>
+        <span style="font-size:13px;font-weight:700;font-family:&#39;Outfit&#39;,sans-serif;color:var(--rust2)">{!! $dte !!}x</span>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">

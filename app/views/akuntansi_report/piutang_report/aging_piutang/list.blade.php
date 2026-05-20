@@ -49,7 +49,7 @@
                             <div class="col-lg-2">
                                 <label class="text-dark fw-bold fs-7 pb-2">Bulan</label>
                                 <select class="form-select form-select-sm rounded-1 w-100" id="s-Month" data-control="select2" required="">
-                                    {!! get_combo_option_month_lk(date('m')) !!}
+                                    {!! get_combo_option_month_long(date('m')) !!}
                                 </select>
                             </div>
 
