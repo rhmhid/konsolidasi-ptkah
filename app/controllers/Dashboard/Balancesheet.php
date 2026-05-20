@@ -270,7 +270,6 @@ class Balancesheet extends BaseController
 echo $rs_pos->fields['pnid'].' == '.$nama;
 echo '<br>';
 */
-
                 if ($rs_pos->fields['parent_pnid'] != '')
                 {
                     $parent_id = $rs_pos->fields['parent_pnid'];
